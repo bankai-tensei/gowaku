@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="xdg_toplevel_icon_v1">
+  <copyright>
+    Copyright © 2023-2024 Matthias Klumpp
+    Copyright ©      2024 David Edmundson
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice (including the next
+    paragraph) shall be included in all copies or substantial portions of the
+    Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+  </copyright>
+
+  <description summary="protocol to assign icons to toplevels">
+    This protocol allows clients to set icons for their toplevel surfaces
+    either via the XDG icon stock (using an icon name), or from pixel data.
+
+    A toplevel icon represents the individual toplevel (unlike the application
+    or launcher icon, which represents the application as a whole), and may be
+    shown in window switchers, window overviews and taskbars that list
+    individual windows.
+
+    This file was transcribed by gowaku from the staging protocol of
+    wayland-protocols, with shortened descriptions; the requests, events and
+    their order are those of version 1.
+  </description>
+
+  <interface name="xdg_toplevel_icon_manager_v1" version="1">
+    <description summary="interface to manage toplevel icons">
+      This interface allows clients to create toplevel window icons and set
+      them on toplevel windows to be displayed to the user.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the toplevel icon manager">
+        Destroy the toplevel icon manager. This does not destroy objects
+        created with the manager.
+      </description>
+    </request>
+
+    <request name="create_icon">
+      <description summary="create a new icon instance">
+        Creates a new icon object. This icon can then be attached to a
+        xdg_toplevel via the 'set_icon' request.
+      </description>
+      <arg name="id" type="new_id" interface="xdg_toplevel_icon_v1"/>
+    </request>
+
+    <request name="set_icon">
+      <description summary="set an icon on a toplevel window">
+        This request assigns the icon 'icon' to 'toplevel', or clears the
+        toplevel icon if 'icon' was null. This state is double-buffered and
+        is applied on the next wl_surface.commit of the toplevel. After this
+        request, the icon is immutable, and the client may destroy it.
+      </description>
+      <arg name="toplevel" type="object" interface="xdg_toplevel" summary="the toplevel to act on"/>
+      <arg name="icon" type="object" interface="xdg_toplevel_icon_v1" allow-null="true"/>
+    </request>
+
+    <event name="icon_size">
+      <description summary="describes a supported &amp; preferred icon size">
+        This event indicates an icon size the compositor prefers to be
+        available if the client has scalable icons and can render to any size,
+        in surface-local coordinates.
+      </description>
+      <arg name="size" type="int" summary="the edge size of the square icon in surface-local coordinates, e.g. 64"/>
+    </event>
+
+    <event name="done">
+      <description summary="all information has been sent">
+        This event is sent after all 'icon_size' events have been sent.
+      </description>
+    </event>
+  </interface>
+
+  <interface name="xdg_toplevel_icon_v1" version="1">
+    <description summary="a toplevel window icon">
+      This interface defines a toplevel icon. An icon can have a name, and
+      multiple buffers. In order to be applied, the icon must have either a
+      name, or at least one buffer assigned.
+    </description>
+
+    <enum name="error">
+      <entry name="invalid_buffer" value="1" summary="the provided buffer does not satisfy requirements"/>
+      <entry name="immutable" value="2" summary="the icon has already been assigned to a toplevel and must not be changed"/>
+      <entry name="no_buffer" value="3" summary="the provided buffer has been destroyed before the toplevel icon"/>
+    </enum>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the icon object">
+        Destroys the icon object. A toplevel keeps an icon assigned to it.
+      </description>
+    </request>
+
+    <request name="set_name">
+      <description summary="set an icon name">
+        This request assigns an icon name to this icon, which the compositor
+        looks up in the icon theme.
+      </description>
+      <arg name="icon_name" type="string"/>
+    </request>
+
+    <request name="add_buffer">
+      <description summary="add icon data from a pixel buffer">
+        This request adds pixel data supplied as wl_buffer to the icon. The
+        buffer must be backed by wl_shm and must be square. Its contents must
+        not change, and it must not be destroyed before the icon.
+      </description>
+      <arg name="buffer" type="object" interface="wl_buffer"/>
+      <arg name="scale" type="int" summary="the scaling factor of the icon, e.g. 1"/>
+    </request>
+  </interface>
+</protocol>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gowaku preview</title>
+<style>
+:root {
+  --bg: #f4f4f6; --card: #ffffff; --ink: #1d1d22; --ink2: #5d5d68; --ink3: #8e8e99;
+  --hair: #e3e3e8; --accent: #6a4cf0; --warn: #e2513b; --warn-bg: #fdeeeb;
+  --ok: #2f9e62; --changed: #c77d00; --checker: #ececf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17171b; --card: #222228; --ink: #ececf1; --ink2: #a8a8b3; --ink3: #75757f;
+    --hair: #34343c; --accent: #9b85ff; --warn: #ff7a66; --warn-bg: #3a2420;
+    --ok: #4cc488; --changed: #f0a830; --checker: #2a2a31;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans JP", sans-serif; }
+header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 24px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hair); }
+h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: .01em; }
+.status { display: inline-flex; align-items: center; gap: 6px; color: var(--ink2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); }
+.dot.ok { background: var(--ok); } .dot.fail { background: var(--warn); } .dot.busy { background: var(--accent); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.spacer { flex: 1; }
+label.toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--ink2); cursor: pointer; user-select: none; }
+.path { color: var(--ink3); font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
+main { padding: 20px 24px 64px; max-width: 1800px; margin: 0 auto; }
+h2 { font-size: 13px; font-weight: 600; color: var(--ink2); margin: 28px 0 12px; font-family: ui-monospace, Consolas, monospace; }
+.card { background: var(--card); border: 1px solid var(--hair); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.card-head h3 { font-size: 14px; font-weight: 650; margin: 0; }
+.badge { font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--hair); color: var(--ink2); }
+.badge.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.badge.changed { color: var(--changed); border-color: color-mix(in srgb, var(--changed) 40%, transparent); }
+button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--hair); border-radius: 8px; padding: 3px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+.figures { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+figcaption { font-size: 11px; color: var(--ink3); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.shot { position: relative; display: inline-block; max-width: 100%; border-radius: 6px; overflow: hidden; outline: 1px solid var(--hair);
+  background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
+.shot img { display: block; max-width: 100%; height: auto; }
+.box { position: absolute; border: 2px solid var(--warn); border-radius: 3px; background: color-mix(in srgb, var(--warn) 12%, transparent); pointer-events: none; }
+.hide-boxes .box { display: none; }
+ul.warnings { list-style: none; padding: 0; margin: 12px 0 0; }
+ul.warnings li { display: flex; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--warn-bg); margin-top: 6px; color: var(--ink); }
+ul.warnings .kind { color: var(--warn); font-weight: 600; min-width: 64px; }
+ul.warnings .where { color: var(--ink3); font-family: ui-monospace, Consolas, monospace; font-size: 11px; margin-left: auto; white-space: nowrap; }
+pre.output { background: var(--warn-bg); color: var(--ink); padding: 12px 14px; border-radius: 10px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+.empty { color: var(--ink3); padding: 48px 0; text-align: center; }
+@media (max-width: 600px) { header, main { padding-left: 16px; padding-right: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>gowaku preview</h1>
+  <span class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></span>
+  <span class="spacer"></span>
+  <label class="toggle"><input type="checkbox" id="boxes" checked> Warnings</label>
+  <label class="toggle"><input type="checkbox" id="diffs"> Differences</label>
+  <span class="path" id="path"></span>
+</header>
+<main id="main"><div class="empty">Waiting for the first drawing…</div></main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let shown = -1, state = null;
+const prefs = (() => { try { return JSON.parse(localStorage.getItem("gowaku-preview") || "{}"); } catch { return {}; } })();
+$("boxes").checked = prefs.boxes !== false;
+$("diffs").checked = !!prefs.diffs;
+for (const id of ["boxes", "diffs"]) {
+  $(id).addEventListener("change", () => {
+    try { localStorage.setItem("gowaku-preview", JSON.stringify({ boxes: $("boxes").checked, diffs: $("diffs").checked })); } catch {}
+    render();
+  });
+}
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of kids) e.append(k);
+  return e;
+}
+
+function figure(report, img) {
+  const useDiff = $("diffs").checked && img.diff;
+  const src = report.base + encodeURIComponent(useDiff ? img.diff : img.file) + "?v=" + state.version;
+  const shot = el("div", { class: "shot" });
+  const pic = el("img", { src, width: Math.round(img.width), alt: img.preview + " " + img.theme, loading: "lazy" });
+  shot.append(pic);
+  for (const w of img.warnings) {
+    const r = w.rect;
+    shot.append(el("div", { class: "box", title: w.detail, style:
+      `left:${r.X / img.width * 100}%;top:${r.Y / img.height * 100}%;width:${r.W / img.width * 100}%;height:${r.H / img.height * 100}%` }));
+  }
+  const caption = [img.theme, img.width + "×" + img.height];
+  if (img.at) caption.push("at " + img.at);
+  const cap = el("figcaption", {}, caption.join(" · "));
+  if (img.changed) cap.append(el("span", { class: "badge changed" }, useDiff ? "showing changes" : "changed"));
+  return el("figure", {}, cap, el("a", { href: report.base + encodeURIComponent(img.file), target: "_blank" }, shot));
+}
+
+function card(report, name, images) {
+  const warns = images.flatMap((i) => i.warnings.map((w) => ({ ...w, theme: i.theme, at: i.at })));
+  const changed = images.filter((i) => i.changed).length;
+  const head = el("div", { class: "card-head" }, el("h3", {}, name));
+  if (warns.length) head.append(el("span", { class: "badge warn" }, warns.length + (warns.length === 1 ? " warning" : " warnings")));
+  if (changed) head.append(el("span", { class: "badge changed" }, changed + " changed"));
+  head.append(el("span", { class: "spacer" }), el("button", { onclick: () => fetch("/api/live?name=" + encodeURIComponent(name), { method: "POST" }) }, "Open in window"));
+  const c = el("div", { class: "card" }, head, el("div", { class: "figures" }, ...images.map((i) => figure(report, i))));
+  if (warns.length) {
+    const seen = new Set(), list = el("ul", { class: "warnings" });
+    for (const w of warns) {
+      const key = w.kind + w.detail + w.text;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const themes = warns.filter((x) => x.kind + x.detail + x.text === key).map((x) => x.theme + (x.at ? " " + x.at : ""));
+      list.append(el("li", {}, el("span", { class: "kind" }, w.kind),
+        el("span", {}, w.detail + (w.text ? ` — “${w.text}”` : "")),
+        el("span", { class: "where" }, `${Math.round(w.rect.X)},${Math.round(w.rect.Y)} ${Math.round(w.rect.W)}×${Math.round(w.rect.H)} · ${[...new Set(themes)].join(", ")}`)));
+    }
+    c.append(list);
+  }
+  return c;
+}
+
+function render() {
+  if (!state) return;
+  const main = $("main");
+  main.className = $("boxes").checked ? "" : "hide-boxes";
+  main.replaceChildren();
+  if (state.output) main.append(el("pre", { class: "output" }, state.output));
+  for (const r of state.reports || []) {
+    main.append(el("h2", {}, r.package));
+    for (const e of r.errors || []) main.append(el("pre", { class: "output" }, e));
+    const byName = new Map();
+    for (const img of r.images) {
+      if (!byName.has(img.preview)) byName.set(img.preview, []);
+      byName.get(img.preview).push(img);
+    }
+    for (const [name, images] of byName) main.append(card(r, name, images));
+  }
+  if (!main.children.length) main.append(el("div", { class: "empty" }, state.building ? "Drawing…" : "No previews."));
+}
+
+async function poll() {
+  try {
+    const res = await fetch("/api/state", { cache: "no-store" });
+    const s = await res.json();
+    const dot = $("dot");
+    dot.className = "dot " + (s.building ? "busy" : s.ok ? "ok" : "fail");
+    $("status").textContent = s.building ? "Drawing…" : s.ok ? "Up to date" : "Failed";
+    $("path").textContent = s.out;
+    if (s.version !== shown) { shown = s.version; state = s; render(); }
+  } catch {
+    $("dot").className = "dot fail";
+    $("status").textContent = "Disconnected";
+  }
+  setTimeout(poll, 700);
+}
+poll();
+</script>
+</body>
+</html>

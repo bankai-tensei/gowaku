@@ -1,0 +1,100 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "website/**"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "website/**"
+
+# A newer push to the same branch cancels the run still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Everything that needs no GPU, the pixel goldens of gpu/soft included.
+  # arm64 runs on the native runners of GitHub, not under QEMU. The
+  # race detector does not support windows/arm64, so that leg tests without it.
+  # windows-latest tests without it too: it took 40 minutes there, billed
+  # twice over, and the races are the same code that linux checks.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            race: -race
+          - os: windows-latest
+            race: ""
+          - os: ubuntu-24.04-arm
+            race: -race
+          - os: windows-11-arm
+            race: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      # The pixel goldens take long under the race detector.
+      - run: go test ${{ matrix.race }} -timeout 40m ./...
+      # The Inspector and the probe of core exist only with -tags gowakudebug
+      # (ADR 0073). The test without the tag checks that none of it is linked.
+      - run: go vet -tags gowakudebug ./...
+      - run: go test ${{ matrix.race }} -tags gowakudebug ./internal/inspect/ ./core/ .
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: test -z "$(gofmt -s -l .)"
+      # The Inspector builds only with gowakudebug, which .golangci.yml sets as
+      # well; the few stubs that build only without it are left to go vet.
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          args: --build-tags gowakudebug
+
+  cross:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+        env:
+          GOOS: linux
+          CGO_ENABLED: "0"
+      - run: go build ./...
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: "0"
+      - run: go build ./...
+        env:
+          GOOS: windows
+          GOARCH: arm64
+          CGO_ENABLED: "0"
+
+  # Vulkan against the same pictures, on the CPU driver of Mesa. D3D11 has no such
+  # driver that gowaku accepts, so it runs locally with -tags gpu.
+  vulkan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libvulkan1 libx11-6 xvfb
+      - run: xvfb-run -a -s "-screen 0 1280x1024x24" go test -tags gpu -count=1 ./internal/golden/

@@ -1,0 +1,59 @@
+{{define "catside"}}<aside class="side" id="side">
+  <div class="side-group">
+    <h4>{{t .Lang "catalog.title"}}</h4>
+    <a href="{{if eq .Lang "ja"}}{{.Base}}ja/{{else}}{{.Base}}{{end}}catalog/"{{if not .Data.Category}} class="on"{{end}}>{{t .Lang "catalog.all"}}<span class="count">{{.Data.Count}}</span></a>
+    {{range .Data.Categories}}<a href="{{.URL}}"{{if .On}} class="on" aria-current="page"{{end}}>{{.Title}}<span class="count">{{len .Entries}}</span></a>{{end}}
+  </div>
+</aside>{{end}}
+
+{{define "catalog"}}{{template "head" .}}
+<div class="shell catalog-page">
+  <button class="side-toggle" type="button" aria-controls="side" aria-expanded="false">{{t .Lang "nav.menu"}}</button>
+  {{template "catside" .}}
+  <main class="doc wide">
+    <header class="cat-head">
+      <h1>{{t .Lang "catalog.title"}}</h1>
+      <p class="lede">{{t .Lang "catalog.lede"}}</p>
+      <div class="search">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="{{t .Lang "catalog.search"}}" autocomplete="off" aria-label="{{t .Lang "catalog.search"}}">
+        <kbd>/</kbd>
+      </div>
+      <div class="chips" role="group">
+        <button class="chip on" type="button" data-cat="">{{t .Lang "catalog.all"}}</button>
+        {{range .Data.Categories}}<button class="chip" type="button" data-cat="{{.Slug}}">{{.Title}}</button>{{end}}
+      </div>
+    </header>
+    <div class="grid" id="grid">
+      {{range .Data.Categories}}{{range .Entries}}<a class="card" href="{{.URL}}" data-cat="{{.Category}}" data-search="{{.Search}}">
+        <div class="card-pic">{{if .Light}}<img class="light-only" src="{{.Light}}" width="{{.Width}}" alt="" loading="lazy"><img class="dark-only" src="{{.Dark}}" width="{{.Width}}" alt="" loading="lazy">{{else}}<span class="nopic">{{.Type}}</span>{{end}}</div>
+        <div class="card-text"><b><span class="pkg">{{.Package}}.</span>{{.Type}}</b><p>{{.Short}}</p></div>
+      </a>{{end}}{{end}}
+    </div>
+    <p class="empty" id="empty" hidden>{{t .Lang "catalog.none"}}</p>
+    <p class="note">{{t .Lang "catalog.note"}}</p>
+  </main>
+</div>
+{{template "foot" .}}{{end}}
+
+{{define "category"}}{{template "head" .}}
+<div class="shell catalog-page">
+  <button class="side-toggle" type="button" aria-controls="side" aria-expanded="false">{{t .Lang "nav.menu"}}</button>
+  {{template "catside" .}}
+  <main class="doc">
+    <article class="prose">
+      <p class="crumb"><a href="{{if eq .Lang "ja"}}{{.Base}}ja/{{else}}{{.Base}}{{end}}catalog/">{{t .Lang "catalog.title"}}</a></p>
+      <h1>{{.Data.Category.Title}}</h1>
+      <p class="lede">{{.Data.Category.About}}</p>
+      {{range .Data.Category.Entries}}<section class="entry" id="{{.ID}}">
+        <h2><a href="#{{.ID}}"><span class="pkg">{{.Package}}.</span>{{.Type}}</a></h2>
+        <p>{{.Text}}</p>
+        <p class="meta">{{t $.Lang "catalog.package"}} <a href="https://pkg.go.dev/{{.Import}}"><code>{{.Import}}</code></a>{{if .Also}} · {{t $.Lang "catalog.also"}} {{range $i, $a := .Also}}{{if $i}}, {{end}}<code>{{$a}}</code>{{end}}{{end}}</p>
+        {{if .Light}}<figure class="shot"><img class="light-only" src="{{.Light}}" width="{{.Width}}" alt="{{.Name}}" loading="lazy"><img class="dark-only" src="{{.Dark}}" width="{{.Width}}" alt="{{.Name}}" loading="lazy"></figure>{{else}}<p class="nopic-note">{{t $.Lang "catalog.nopic"}}</p>{{end}}
+        {{.Code}}
+      </section>{{end}}
+    </article>
+  </main>
+  {{template "toc" .}}
+</div>
+{{template "foot" .}}{{end}}

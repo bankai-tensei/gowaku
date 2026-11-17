@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="fade" x2="1">
+      <stop offset="0" stop-color="white"/>
+      <stop offset="1" stop-color="black"/>
+    </linearGradient>
+    <mask id="lum">
+      <rect x="0" y="0" width="200" height="100" fill="url(#fade)"/>
+    </mask>
+    <mask id="alpha" style="mask-type: alpha" maskContentUnits="objectBoundingBox">
+      <circle cx="0.5" cy="0.5" r="0.45" fill="#000" fill-opacity="0.6"/>
+      <circle cx="0.5" cy="0.5" r="0.25" fill="#000"/>
+    </mask>
+    <mask id="hole" maskUnits="userSpaceOnUse" x="105" y="105" width="90" height="90">
+      <rect x="0" y="0" width="200" height="200" fill="white"/>
+      <circle cx="150" cy="150" r="22" fill="black"/>
+    </mask>
+  </defs>
+  <g mask="url(#lum)">
+    <rect x="10" y="10" width="180" height="40" fill="#ff453a"/>
+    <rect x="10" y="55" width="180" height="40" fill="#0a84ff"/>
+  </g>
+  <rect x="10" y="105" width="85" height="85" fill="#30d158" mask="url(#alpha)"/>
+  <rect x="105" y="105" width="90" height="90" fill="#5e5ce6" mask="url(#hole)"/>
+  <g opacity="0.5">
+    <circle cx="40" cy="150" r="22" fill="#ff9f0a"/>
+    <circle cx="65" cy="150" r="22" fill="#ff9f0a"/>
+  </g>
+  <circle cx="150" cy="60" r="0" fill="black"/>
+  <rect x="120" y="120" width="60" height="20" fill="#ffd60a" stroke="#1d1d1f" stroke-width="6" opacity="0.6"/>
+</svg>

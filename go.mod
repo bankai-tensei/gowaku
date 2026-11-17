@@ -1,0 +1,12 @@
+module github.com/bankai-tensei/gowaku
+
+go 1.27.3
+
+require (
+	github.com/ebitengine/purego v0.11.3
+	github.com/go-text/typesetting v0.3.5
+	github.com/godbus/dbus/v5 v5.2.4
+	golang.org/x/image v0.47.0
+	golang.org/x/sys v0.49.0
+	golang.org/x/text v0.43.0
+)

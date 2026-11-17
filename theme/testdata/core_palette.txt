@@ -1,0 +1,14 @@
+# Extracted mechanically from github.com/material-foundation/material-color-utilities
+# at commit 194144d75ed7d34f06264a625e086db81a7ab9aa (Apache-2.0, Copyright Google LLC).
+# Source: typescript/scheme/scheme_test.ts (SchemeAndroid expectations)
+# Source: typescript/scheme/scheme_android.ts (maps each role to a CorePalette tone)
+# seed palette tone rgb
+# palette: a1, a2, a3, n1 = CorePalette.of(seed).
+0000ff a1 90 e0e0ff
+6750a4 a1 90 e9ddff
+6750a4 a2 90 e8def8
+6750a4 a3 90 ffd9e3
+6750a4 n1 98 fdf8fd
+6750a4 n1 10 1c1b1e
+6750a4 n1 20 313033
+6750a4 n1 95 f4eff4

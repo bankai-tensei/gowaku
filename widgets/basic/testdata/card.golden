@@ -1,0 +1,4 @@
+shadow x=39 y=21 w=122 h=62 radii=13,13,13,13 color=#0000004d blur=6
+rrect x=40 y=20 w=120 h=60 radii=12,12,12,12 color=#fef7ffff border=1 #00ff00ff
+rrect x=48 y=28 w=70 h=44 radii=4,4,4,4 color=#ff0000ff
+rrect x=122 y=28 w=30 h=44 gradient=0 from=122,28 #ff0000ff to=152,28 #0000ffff

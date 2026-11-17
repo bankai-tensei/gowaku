@@ -1,0 +1,1516 @@
+{
+ "categories": [
+  {
+   "slug": "actions",
+   "ja": "ボタンと操作",
+   "en": "Buttons and actions",
+   "aboutJa": "押して何かを実行するウィジェット。ボタンは `control.Button` の 1 種類だけで、`Style` で 4 種類の見た目を選ぶ。",
+   "aboutEn": "Controls that do something when pressed. One `control.Button` covers every button; its `Style` picks one of four looks."
+  },
+  {
+   "slug": "input",
+   "ja": "入力",
+   "en": "Input",
+   "aboutJa": "文字や数値を入力するウィジェット。ラベルは欄の上か、`collection.GroupRow` の左に置く。",
+   "aboutEn": "Controls that take text and numbers. Labels sit above the field or at the left of a `collection.GroupRow`."
+  },
+  {
+   "slug": "selection",
+   "ja": "選択",
+   "en": "Selection",
+   "aboutJa": "決まった選択肢から選ぶウィジェット。選択肢が 2〜4 個なら `control.SegmentedControl`、それより多ければ `field.DropdownMenu` を使う。",
+   "aboutEn": "Controls that pick from a set of choices: `control.SegmentedControl` for two to four, `field.DropdownMenu` for more."
+  },
+  {
+   "slug": "display",
+   "ja": "表示",
+   "en": "Display",
+   "aboutJa": "文字、画像、数値を表示するウィジェット。操作は受け付けない。",
+   "aboutEn": "Widgets that show text, pictures and numbers, with no action of their own."
+  },
+  {
+   "slug": "navigation",
+   "ja": "ナビゲーション",
+   "en": "Navigation",
+   "aboutJa": "画面の間を移動するためのウィジェット。アクセントの色は現在地にだけ使う。",
+   "aboutEn": "Widgets that move between pages and places. Only the current place takes the accent color."
+  },
+  {
+   "slug": "feedback",
+   "ja": "フィードバックとオーバーレイ",
+   "en": "Feedback and overlays",
+   "aboutJa": "進み具合や結果を伝えるウィジェットと、画面の上に重ねて表示するウィジェット。重ねて表示するものは `overlay.Show...` 関数で表示する。",
+   "aboutEn": "Widgets that report progress and results, and the ones that float above the page, shown with the `overlay.Show...` functions."
+  },
+  {
+   "slug": "data",
+   "ja": "データ",
+   "en": "Data",
+   "aboutJa": "多数の行を表示し、編集するウィジェット。どれも表示範囲付近の行だけを構築する。",
+   "aboutEn": "Widgets that show and edit many rows. Each builds only the rows in view."
+  },
+  {
+   "slug": "desktop",
+   "ja": "デスクトップ",
+   "en": "Desktop",
+   "aboutJa": "メニューバー、右クリックメニュー、ツールバー、タブ、分割ペインなど、デスクトップアプリに特有のウィジェット。",
+   "aboutEn": "Widgets particular to desktop applications: the menu bar, context menus, toolbars, document tabs and split panes."
+  },
+  {
+   "slug": "layout",
+   "ja": "レイアウト",
+   "en": "Layout",
+   "aboutJa": "子の位置と大きさを決めるウィジェット。余白と間隔には `theme.Space*` の偶数の値を使う。",
+   "aboutEn": "Widgets that place and size their children. Spacing uses the even steps of `theme.Space*`."
+  },
+  {
+   "slug": "effects",
+   "ja": "効果と描画",
+   "en": "Effects and painting",
+   "aboutJa": "子の見た目を変えるウィジェットと、自分で描画するウィジェット。どちらもレイアウトには影響しない。",
+   "aboutEn": "Widgets that change how their child looks, and the ones that paint on their own. None changes the layout."
+  },
+  {
+   "slug": "animation",
+   "ja": "アニメーション",
+   "en": "Animation",
+   "aboutJa": "値が変わると、補間しながら変化するウィジェット。OS が動きを減らすよう求めているときは、アニメーションせずに切り替わる。",
+   "aboutEn": "Widgets that move to new values over time. When the OS asks for less motion they jump instead."
+  },
+  {
+   "slug": "behavior",
+   "ja": "入力処理とアクセシビリティ",
+   "en": "Input handling and accessibility",
+   "aboutJa": "自分では何も描かず、ポインタ、キーボード、ドラッグの扱いや支援技術への伝え方を子に加えるウィジェット。画像は無く、例のコードだけを載せる。",
+   "aboutEn": "Widgets that draw nothing and add pointer, keyboard, drag and assistive technology behavior to their child. They have examples but no pictures."
+  },
+  {
+   "slug": "infrastructure",
+   "ja": "ウィジェットツリーの基盤",
+   "en": "Tree services",
+   "aboutJa": "配下のウィジェットに、テーマ、ウィンドウの情報、文言、重ねて表示する場所を提供するウィジェット。`gowaku.Run` がウィンドウのルートに置くため、自分で使うのは一部だけを変えたいときに限られる。",
+   "aboutEn": "Widgets that hand the theme, the window, the words and a place for overlays to the widgets below. `gowaku.Run` puts each at the root of a window; use them to change a part."
+  }
+ ],
+ "entries": [
+  {
+   "name": "control.Button",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.ButtonStyle",
+    "control.ButtonSize"
+   ],
+   "category": "actions",
+   "ja": "押すと `OnPress` を実行するボタン。`Style` で通常・主要・控えめ・破壊的の 4 種類の見た目を、`Size` で高さを選ぶ。`OnPress` を指定しないと無効になる。",
+   "en": "Runs `OnPress` when pressed. `Style` picks normal, primary, quiet or danger, and `Size` the height. Without `OnPress` it is disabled.",
+   "code": "save := func() {}\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\tcontrol.Button{Label: \"Save\", Style: control.ButtonPrimary, OnPress: save},\n\t\tcontrol.Button{Label: \"Duplicate\", OnPress: save},\n\t\tcontrol.Button{Label: \"Learn more\", Style: control.ButtonQuiet, OnPress: save},\n\t\tcontrol.Button{Label: \"Delete\", Style: control.ButtonDanger, OnPress: save},\n\t}},\n\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\tcontrol.Button{Label: \"Copy\", Icon: icons.Copy(), OnPress: save},\n\t\tcontrol.Button{Label: \"Small\", Size: control.ButtonSmall, OnPress: save},\n\t\tcontrol.Button{Label: \"Disabled\"},\n\t\tcontrol.Button{Label: \"Settings\", Icon: icons.Settings(), HideLabel: true, OnPress: save},\n\t\tcontrol.Button{Label: \"More\", Icon: icons.More(), HideLabel: true, Style: control.ButtonQuiet, OnPress: save},\n\t}},\n}}",
+   "picture": "control-button",
+   "width": 341,
+   "height": 108
+  },
+  {
+   "name": "interact.Pressable",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "also": [
+    "interact.PressState"
+   ],
+   "category": "actions",
+   "ja": "独自の見た目で押せる領域を作るための土台。`Build` は hover・押下・フォーカスの状態を表す `PressState` を受け取り、中身を返す。",
+   "en": "The base for a pressable area with a look of your own: `Build` gets the hover, press and focus `PressState` and returns the content.",
+   "code": "interact.Pressable{Label: \"Open project\", OnPress: func() {}, Build: func(s interact.PressState) core.Widget {\n\treturn themed(func(th *theme.Theme) core.Widget {\n\t\tground := th.Color.Card\n\t\tif s.Hovered {\n\t\t\tground = th.Color.AccentTint\n\t\t}\n\t\treturn interact.FocusRing{Visible: s.FocusVisible, Radius: th.Radius.Control, Child: basic.Container{\n\t\t\tWidth: 220, Padding: geom.All(theme.Space12), Radius: th.Radius.Control, Color: ground,\n\t\t\tChild: basic.Row{Spacing: theme.Space8, Children: []core.Widget{\n\t\t\t\tbasic.Icon{Path: icons.Folder(), Size: 20, Color: th.Color.AccentInk},\n\t\t\t\tbasic.Text{Content: \"Open project\", Style: colored(th.Text.Control, th.Color.Ink)},\n\t\t\t}},\n\t\t}}\n\t})\n}}",
+   "picture": "interact-pressable",
+   "width": 252,
+   "height": 76
+  },
+  {
+   "name": "control.Link",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "actions",
+   "ja": "本文に添えて置く、押せる短いテキスト。アクセントの色で表示され、ポインタを重ねると下線が付く。Enter キーでは押せるが、Space キーでは押せない。`OnPress` を指定しないと無効になる。",
+   "en": "A short text beside the text it belongs to that does something when pressed. It is set in the accent ink and underlined under the pointer. Enter presses it, Space does not. Without `OnPress` it is disabled.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space4, Children: []core.Widget{\n\tbasic.Text{Content: \"Sync is off.\", Style: note},\n\tcontrol.Link{Label: \"Turn it on\", OnPress: func() {}},\n}},\ncontrol.Link{Label: \"Release notes\", Style: th.Text.Caption, OnPress: func() {}},\ncontrol.Link{Label: \"Disabled without OnPress\"},",
+   "picture": "control-link",
+   "width": 182,
+   "height": 105
+  },
+  {
+   "name": "field.Input",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "also": [
+    "field.InputController"
+   ],
+   "category": "input",
+   "ja": "1 行または複数行のテキスト入力欄。ラベルは欄の上に表示される。IME、ルビ、縦書き、元に戻す操作に対応する。複数行の欄は、高さの決まっていない所では文字に合わせて伸び、`Expanded` などで高さを与えると、ラベルの有無にかかわらずその高さを埋める。`SubmitOnEnter` を指定した複数行の欄は、チャットの入力欄のように Enter で送信し、Shift+Enter で改行する。`Autofocus` を指定すると、ダイアログの中でも最初に現れたときにキーボードを受け取る。長い文書には `editor.Editor` を使う。",
+   "en": "A single or multiline text field with its label above. It handles IMEs, ruby, vertical text and undo. A multiline field grows with its text where nothing sets its height, and fills the height that an `Expanded` or the like gives it, with or without a label. With `SubmitOnEnter`, a multiline field sends on Enter and breaks the line on Shift+Enter, as the box of a chat does. `Autofocus` gives it the keyboard when it first appears, also in a dialog. For long documents, use `editor.Editor`.",
+   "code": "set := func(string) {}\nreturn basic.SizedBox{Width: 300, Height: 260, Child: basic.Column{Cross: layout.CrossStretch, Spacing: theme.Space16, Children: []core.Widget{\n\tfield.Input{Label: \"Name\", Value: \"Hanako Yamada\", OnChange: set},\n\tfield.Input{Label: \"Email\", Placeholder: \"name@example.com\", OnChange: set},\n\tbasic.Expanded{Child: field.Input{\n\t\tLabel: \"Notes\", Multiline: true, Value: \"A multiline field fills the height\\nthat an Expanded gives it.\", OnChange: set,\n\t}},\n}}}",
+   "picture": "field-input",
+   "width": 332,
+   "height": 287
+  },
+  {
+   "name": "field.Search",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "input",
+   "ja": "検索用のテキスト入力欄。虫眼鏡のアイコンと消去ボタンが付き、Escape キーで内容を消去する。",
+   "en": "A text field for searching, with a magnifier and a clear button. Escape empties it.",
+   "code": "basic.SizedBox{Width: 260, Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space12, Children: []core.Widget{\n\tfield.Search{OnChange: func(string) {}},\n\tfield.Search{Value: \"quarterly report\", OnChange: func(string) {}},\n}}}",
+   "picture": "field-search",
+   "width": 292,
+   "height": 104
+  },
+  {
+   "name": "field.Autocomplete",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "input",
+   "ja": "入力に応じて候補を欄の下に表示するテキスト入力欄。矢印キーで候補を選び、Enter か Tab で確定する。",
+   "en": "A text field that suggests choices below itself as you type. The arrows move through them; Enter or Tab takes one.",
+   "code": "cities := []string{\"Amsterdam\", \"Athens\", \"Berlin\", \"Lisbon\", \"Madrid\", \"Paris\", \"Prague\", \"Rome\"}\nreturn basic.SizedBox{Width: 260, Child: field.Autocomplete[string]{\n\tLabel: \"City\", Placeholder: \"Type a city\", Options: cities, OnSelect: func(string) {},\n}}",
+   "picture": "field-autocomplete",
+   "width": 354,
+   "height": 306
+  },
+  {
+   "name": "editor.Editor",
+   "import": "github.com/bankai-tensei/gowaku/widgets/editor",
+   "also": [
+    "editor.Controller",
+    "editor.Decoration",
+    "editor.TextPosition",
+    "editor.TextRange",
+    "editor.FindOptions"
+   ],
+   "category": "input",
+   "ja": "コードや長文を編集するためのエディタ。行番号、色付けなどの装飾、検索と置換に対応し、表示中の行だけをレイアウトする。検索バーを開いている間は、バーの分の余白を先頭の行の上に取り、一致した箇所をバーの下に表示する。`Controller.SetSource` に渡した行のソース（ファイルなど）は、表示する行だけを読み、編集した行だけをメモリに持つので、数 GB でもすぐに開ける。",
+   "en": "An editor for code and long text, with line numbers, decorations and find and replace. It lays out only the lines in view. While the find bar is open, the text keeps the room of the bar above its first line, and a match shows below the bar. Lines given through `Controller.SetSource`, as of a file, are read only where they are in view, and only the lines edited are held in memory, so that a file of gigabytes opens at once.",
+   "code": "var doc editor.Controller\ndoc.SetText(\"package main\\n\\nimport \\\"fmt\\\"\\n\\nfunc main() {\\n\\tfmt.Println(\\\"Hello, gowaku\\\")\\n}\")\nreturn basic.SizedBox{Width: 420, Height: 180, Child: editor.Editor{\n\tController: \u0026doc, Label: \"Source\", LineNumbers: true, Border: true, HighlightCurrentLine: true,\n}}",
+   "picture": "editor-editor",
+   "width": 452,
+   "height": 212
+  },
+  {
+   "name": "control.NumberStepper",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "input",
+   "ja": "マイナスとプラスのボタンで整数を増減するウィジェット。`Format` で単位を付けて表示できる。ウィザードの手順を示すものは `nav.Steps` である。",
+   "en": "Changes a whole number with minus and plus buttons. `Format` adds a unit. For the steps of a wizard, see `nav.Steps`.",
+   "code": "seconds := func(v int) string { return strconv.Itoa(v) + \" s\" }\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tcontrol.NumberStepper{Value: 4, Max: 12, Label: \"Copies\", OnChange: func(int) {}},\n\tcontrol.NumberStepper{Value: 30, Max: 60, Step: 5, Format: seconds, Label: \"Delay\", OnChange: func(int) {}},\n}}",
+   "picture": "control-numberstepper",
+   "width": 137,
+   "height": 94
+  },
+  {
+   "name": "control.Slider",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "input",
+   "ja": "範囲の中から値を選ぶスライダー。`Snap` を指定すると、値が `Step` の刻みに吸着する。矢印キーでも操作できる。",
+   "en": "Picks a value in a range. `Snap` holds it to the grid of `Step`. The arrow keys move it too.",
+   "code": "basic.SizedBox{Width: 260, Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space16, Children: []core.Widget{\n\tcontrol.Slider{Value: 0.35, Label: \"Volume\", OnChange: func(float32) {}},\n\tcontrol.Slider{Value: 40, Min: 0, Max: 100, Step: 10, Snap: true, Label: \"Zoom\", OnChange: func(float32) {}},\n\tcontrol.Slider{Value: 0.7, Label: \"Disabled\"},\n}}}",
+   "picture": "control-slider",
+   "width": 292,
+   "height": 128
+  },
+  {
+   "name": "control.RangeSlider",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "input",
+   "ja": "2 つのつまみで範囲を選ぶ `Slider`。つまみの間の帯をドラッグすると、幅を保ったまま範囲全体が動く。つまみ同士は `MinGap` より近づかず、それぞれが Tab キーでの移動先になる。",
+   "en": "A `Slider` with two thumbs that picks a range; dragging the band between them moves both. The thumbs stay `MinGap` apart, and each is a stop of Tab.",
+   "code": "control.RangeSlider{\n\tLabel: \"Price\", Low: 20000, High: 60000, Min: 0, Max: 100000,\n\tStep: 1000, Snap: true, MinGap: 5000, OnChange: set,\n},\ncontrol.RangeSlider{Label: \"Disabled\", Low: 0.3, High: 0.6},",
+   "picture": "control-rangeslider",
+   "width": 352,
+   "height": 90
+  },
+  {
+   "name": "field.NumberField",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "input",
+   "ja": "数値の入力欄。直接入力するほか、上下の矢印キー、フォーカス中のマウスホイール、右端のつまみのドラッグで値を増減できる。全角数字も受け付け、桁区切りと小数点の記号はロケールに従う。Enter キーで入力した文字を値として確定する。`FormItem` の中では、続けて周りの `Form` を新しい値で送信する。`FormItem` の外では確定するだけで、何も送信しない。",
+   "en": "A field for a number, typed or stepped with the arrow keys, the wheel while it has the focus, or a drag of the handle at its end. It takes full-width digits, and the separators follow the locale. Enter takes the typed text as the value; inside a `FormItem` it then submits the `Form` around with the new value, and outside one it submits nothing.",
+   "code": "basic.SizedBox{Width: 140, Child: field.NumberField{Label: \"Quantity\", Value: 3, Min: 0, Max: 99, OnChange: set}},\nbasic.SizedBox{Width: 180, Child: field.NumberField{Label: \"Price\", Value: 128000, Step: 100, Grouping: true, OnChange: set}},\nbasic.SizedBox{Width: 140, Child: field.NumberField{Label: \"Ratio\", Value: 0.25, Min: 0, Max: 1, Step: 0.05, OnChange: set}},",
+   "picture": "field-numberfield",
+   "width": 524,
+   "height": 79
+  },
+  {
+   "name": "field.TokenField",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "input",
+   "ja": "タグや宛先のような短い文字列の並びを編集する入力欄。Enter か区切り文字で入力を確定すると、チップとして表示される。IME で変換中の Enter ではトークンを作らない。先頭で Backspace を 2 回押すと、直前のトークンを削除する。",
+   "en": "Edits a list of short texts such as tags or addresses, each shown as a chip. Enter or a separator makes a token, but not while an IME converts. Two Backspaces at the start remove the last token.",
+   "code": "field.TokenField{Label: \"Tags\", Tokens: []string{\"design\", \"go\", \"typography\"}, Placeholder: \"Add a tag\", OnChange: set},\nfield.TokenField{Label: \"Disabled\", Tokens: []string{\"read only\"}},",
+   "picture": "field-tokenfield",
+   "width": 412,
+   "height": 151
+  },
+  {
+   "name": "field.Form",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "also": [
+    "field.FormItem",
+    "field.FormController"
+   ],
+   "category": "input",
+   "ja": "配下の `FormItem` をまとめて検証し、送信するフォーム。エラーは、送信時と欄からフォーカスが外れたときに、その欄の下に表示され、欄の枠が赤くなる。`Required` のエラーは中の部品に合わせて変わり、入力欄では「入力してください」、`DropdownMenu` や `DatePicker` などの選択では「選択してください」、`Checkbox` では「チェックしてください」になる。`RequiredMessage` で差し替えられる。`FormItem` の中の 1 行の入力欄で Enter キーを押すと、フォームを送信する。",
+   "en": "Checks and submits the `FormItem`s below it together. Errors show below the fields, whose borders turn red, on submit and when a field loses the focus. The error of `Required` follows the control inside: Required for a text field, Choose one for a choice such as a `DropdownMenu` or a `DatePicker`, Check this box for a `Checkbox`; `RequiredMessage` replaces it. Enter in a single-line field of a `FormItem` submits the form.",
+   "code": "var form field.FormController\nemail := regexp.MustCompile(`[^@\\s]+@[^@\\s]+\\.[^@\\s]+`)\nreturn basic.SizedBox{Width: 280, Child: field.Form{Controller: \u0026form, Child: basic.Column{\n\tSize: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space12, Children: []core.Widget{\n\t\tfield.FormItem[string]{Required: true, Child: field.Input{Label: \"Name\", OnChange: func(string) {}}},\n\t\tfield.FormItem[string]{\n\t\t\tValue:      \"taro@\",\n\t\t\tValidators: []func(string) string{field.Pattern(email, \"Enter an address like name@example.com\")},\n\t\t\tChild:      field.Input{Label: \"Email\", Value: \"taro@\", OnChange: func(string) {}},\n\t\t},\n\t\tfield.FormItem[time.Time]{Required: true, Child: field.DatePicker{\n\t\t\tLabel: \"Birth date\", Placeholder: \"Choose a date\", OnChange: func(time.Time) {},\n\t\t\tInitialMonth: time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC),\n\t\t}},\n\t\tfield.FormItem[bool]{Required: true, Child: control.Checkbox{Label: \"I agree to the terms\", OnChange: func(bool) {}}},\n\t\tbasic.Row{Main: layout.MainEnd, Children: []core.Widget{\n\t\t\tcontrol.Button{Label: \"Create account\", Style: control.ButtonPrimary, OnPress: func() { form.Submit() }},\n\t\t}},\n\t},\n}}}",
+   "picture": "field-form",
+   "width": 318,
+   "height": 371
+  },
+  {
+   "name": "field.TimePicker",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "also": [
+    "field.HourCycle"
+   ],
+   "category": "input",
+   "ja": "時刻の入力欄。時・分・秒・午前午後の部分ごとに、矢印キーか数字で編集する。12 時間制か 24 時間制かはロケールに従う。",
+   "en": "A field for a time of day, edited part by part with the arrows or digits. The locale picks the 12 or 24 hour clock.",
+   "code": "at := func(h, m int) time.Duration { return time.Duration(h)*time.Hour + time.Duration(m)*time.Minute }\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tfield.TimePicker{Label: \"Start\", Value: at(9, 30), MinuteStep: 15, OnChange: func(time.Duration) {}},\n\tfield.TimePicker{Value: at(21, 5) + 42*time.Second, Seconds: true, HourCycle: field.HourCycle24, OnChange: func(time.Duration) {}},\n}}",
+   "picture": "field-timepicker",
+   "width": 122,
+   "height": 121
+  },
+  {
+   "name": "control.Checkbox",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "selection",
+   "ja": "オンとオフを切り替えるチェックボックス。ラベルを含めた全体を押せる。",
+   "en": "A box that turns an option on and off. The label is part of the target.",
+   "code": "set := func(bool) {}\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tcontrol.Checkbox{Value: true, Label: \"Open at login\", OnChange: set},\n\tcontrol.Checkbox{Label: \"Show in menu bar\", OnChange: set},\n\tcontrol.Checkbox{Value: true, Label: \"Disabled\"},\n}}",
+   "picture": "control-checkbox",
+   "width": 161,
+   "height": 112
+  },
+  {
+   "name": "control.Switch",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "selection",
+   "ja": "すぐに反映される設定のオンとオフを切り替えるスイッチ。つまみはスプリングのアニメーションで動く。",
+   "en": "Turns a setting on and off at once, with a knob that moves on a spring.",
+   "code": "basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space12, Children: []core.Widget{\n\t\tcontrol.Switch{Value: true, Label: \"Wi-Fi\", OnChange: func(bool) {}},\n\t\tbasic.Text{Content: \"Wi-Fi\"},\n\t}},\n\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space12, Children: []core.Widget{\n\t\tcontrol.Switch{Label: \"Bluetooth\", OnChange: func(bool) {}},\n\t\tbasic.Text{Content: \"Bluetooth\"},\n\t}},\n}}",
+   "picture": "control-switch",
+   "width": 138,
+   "height": 90
+  },
+  {
+   "name": "control.RadioGroup",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.RadioOption"
+   ],
+   "category": "selection",
+   "ja": "複数の選択肢から 1 つを選ぶラジオボタンのグループ。Tab キーではグループ全体で 1 か所として止まり、選択肢の間は矢印キーで移動する。",
+   "en": "A set of radio buttons that picks one choice. It is one stop for Tab, and the arrows move between the choices.",
+   "code": "control.RadioGroup[string]{\n\tLabel: \"Appearance\", Value: \"auto\", OnChange: func(string) {},\n\tOptions: []control.RadioOption[string]{\n\t\t{Value: \"light\", Label: \"Light\"},\n\t\t{Value: \"dark\", Label: \"Dark\"},\n\t\t{Value: \"auto\", Label: \"Automatic\"},\n\t\t{Value: \"contrast\", Label: \"High contrast\", Disabled: true},\n\t},\n}",
+   "picture": "control-radiogroup",
+   "width": 133,
+   "height": 132
+  },
+  {
+   "name": "control.Radio",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "selection",
+   "ja": "単独のラジオボタン。`RadioGroup` では実現できない配置のときに使い、グループの名前は `Semantics` で付ける。",
+   "en": "A single radio button, for layouts a `RadioGroup` cannot give. Name the set with a `Semantics`.",
+   "code": "interact.Semantics{Role: semantics.RoleRadioGroup, Label: \"Size\", Child: basic.Row{\n\tSize: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\t\tcontrol.Radio{Label: \"Small\", OnSelect: func() {}},\n\t\tcontrol.Radio{Label: \"Medium\", Selected: true, OnSelect: func() {}},\n\t\tcontrol.Radio{Label: \"Large\", OnSelect: func() {}},\n\t},\n}}",
+   "picture": "control-radio",
+   "width": 249,
+   "height": 48
+  },
+  {
+   "name": "control.SegmentedControl",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "selection",
+   "ja": "2〜4 個の選択肢から 1 つを選ぶセグメントコントロール。選択中の項目を示す板が、スプリングのアニメーションで滑る。",
+   "en": "Picks one of two to four choices, with a plate that slides on a spring.",
+   "code": "basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tcontrol.SegmentedControl{Label: \"Repeat\", Options: []string{\"Off\", \"All\", \"One\"}, Selected: 1, OnChange: func(int) {}},\n\tcontrol.SegmentedControl{Label: \"View\", Options: []string{\"Day\", \"Week\", \"Month\", \"Year\"}, Selected: 2, OnChange: func(int) {}},\n}}",
+   "picture": "control-segmentedcontrol",
+   "width": 282,
+   "height": 107
+  },
+  {
+   "name": "field.DropdownMenu",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "also": [
+    "field.DropdownOption"
+   ],
+   "category": "selection",
+   "ja": "選択肢の一覧を下に開いて 1 つを選ぶ欄。文字を入力すると、その文字で始まる選択肢へ移動する。",
+   "en": "A field that opens a list below itself to pick one choice. Typing a letter jumps to the choices that start with it.",
+   "code": "basic.SizedBox{Width: 200, Child: field.DropdownMenu[string]{\n\tLabel: \"Plan\", Value: \"team\", OnChange: func(string) {},\n\tOptions: []field.DropdownOption[string]{\n\t\t{Value: \"free\", Label: \"Free\"},\n\t\t{Value: \"team\", Label: \"Team\"},\n\t\t{Value: \"business\", Label: \"Business\"},\n\t\t{Value: \"school\", Label: \"School\", Disabled: true},\n\t},\n}}",
+   "picture": "field-dropdownmenu",
+   "width": 294,
+   "height": 279
+  },
+  {
+   "name": "control.Chip",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "selection",
+   "ja": "小さな角丸のラベル。`OnChange` を指定すると絞り込みの切り替えに、`OnPress` を指定するとボタンになり、どちらも無ければ単なるタグとして表示される。",
+   "en": "A compact pill: a toggling filter with `OnChange`, a button with `OnPress`, or a plain tag with neither.",
+   "code": "basic.SizedBox{Width: 360, Child: basic.Wrap{Spacing: theme.Space8, RunSpacing: theme.Space8, Children: []core.Widget{\n\tcontrol.Chip{Label: \"All\", Selected: true, OnChange: func(bool) {}},\n\tcontrol.Chip{Label: \"Unread\", OnChange: func(bool) {}},\n\tcontrol.Chip{Label: \"Starred\", Icon: icons.Star(), OnChange: func(bool) {}},\n\tcontrol.Chip{Label: \"Suggested reply\", OnPress: func() {}},\n\tcontrol.Chip{Label: \"design\", OnRemove: func() {}},\n\tcontrol.Chip{Label: \"Plain tag\"},\n}}}",
+   "picture": "control-chip",
+   "width": 354,
+   "height": 88
+  },
+  {
+   "name": "field.Calendar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "selection",
+   "ja": "月のカレンダーから日付を選ぶウィジェット。週の始まりの曜日と曜日名はロケールに従う。`Marks` で日付の下に点を表示できる。見出しを押すとその年の月の一覧に、さらに年の見出しを押すと 10 年分の年の一覧に切り替わるので、生年月日のような遠い日付も数回の操作で選べる。`Value` が空のときは `InitialMonth` の月から表示する。",
+   "en": "Picks a day from a month. The first day of the week and the names follow the locale. `Marks` puts dots under days. The title opens the months of the year, and the year the years of a decade, so a day far away, such as a birth date, takes a few presses. While `Value` is zero it opens on `InitialMonth`.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{Color: th.Color.Card, Radius: th.Radius.Group, Padding: geom.All(theme.Space12), Child: field.Calendar{\n\t\tValue: day(18), Today: day(9), OnChange: func(time.Time) {},\n\t\tMarks: func(d time.Time) []geom.Color {\n\t\t\tif d.Day() == 12 || d.Day() == 24 {\n\t\t\t\treturn []geom.Color{th.Color.AccentInk}\n\t\t\t}\n\t\t\treturn nil\n\t\t},\n\t}}\n})",
+   "picture": "field-calendar",
+   "width": 280,
+   "height": 304
+  },
+  {
+   "name": "field.DatePicker",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "selection",
+   "ja": "日付を表示する欄。開くと、下に `Calendar` を表示する。カレンダーの見出しから月と年の一覧に切り替えられる（図は年の一覧）。生年月日の欄には、30 年ほど前の `InitialMonth` と今日の `Max` を指定するとよい。`FormItem` の中では、エラーのときに枠が赤くなる。",
+   "en": "A field that shows a date and opens a `Calendar` below itself, whose title switches to the months and the years (the picture shows the years). For a birth date, give an `InitialMonth` some thirty years back and a `Max` of today. In a `FormItem` its border turns red with an error.",
+   "code": "day := func(d int) time.Time { return time.Date(2026, time.November, d, 0, 0, 0, 0, time.UTC) }\nreturn field.DatePicker{\n\tLabel: \"Due date\", Value: day(18), Today: day(9),\n\tShowToday: true, ShowClear: true, OnChange: func(time.Time) {},\n}",
+   "picture": "field-datepicker",
+   "width": 392,
+   "height": 428
+  },
+  {
+   "name": "field.ColorPicker",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "selection",
+   "ja": "彩度と明度の平面、色相と透明度の帯、hex の入力欄で色を選ぶカラーピッカー。値を HSV で保持するため、黒や灰色を経由しても色相が失われない。`OnChange` を指定した `collection.PropertyColor` を押すと、これが開く。",
+   "en": "Chooses a color with a plane of saturation and brightness, strips of hue and opacity, and a hex field. It keeps HSV, so the hue survives black and gray. A `collection.PropertyColor` with `OnChange` opens one.",
+   "code": "field.ColorPicker{\n\tValue: geom.Hex(0x3a7bf0), Label: \"Accent color\", OnChange: func(geom.Color) {},\n\tSwatches: []geom.Color{\n\t\tgeom.Hex(0x3a7bf0), geom.Hex(0x5e5ce6), geom.Hex(0xbf5af2), geom.Hex(0xff375f),\n\t\tgeom.Hex(0xff9f0a), geom.Hex(0x30d158), geom.Hex(0x8e8e93),\n\t},\n}",
+   "picture": "field-colorpicker",
+   "width": 275,
+   "height": 322
+  },
+  {
+   "name": "basic.Text",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "文字列を `Style` の規則に従って行分割し、表示するウィジェット。和文の禁則処理、縦書き、両端揃えに対応する。`Style.MaxLines` で行数を制限すると、収まらない分を省略記号「…」で切り詰める。スクリーンリーダーは全文を読む。",
+   "en": "Shows a string broken into lines by the rules of its `Style`, with Japanese line breaking, vertical text and justification. `Style.MaxLines` cuts it short with an ellipsis; a screen reader still reads it whole.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.SizedBox{Width: 340, Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space6, Children: []core.Widget{\n\t\tbasic.Text{Content: \"Large title\", Style: th.Text.LargeTitle},\n\t\tbasic.Text{Content: \"Title\", Style: th.Text.Title},\n\t\tbasic.Text{Content: \"Body text breaks into lines by the rules of its style, and the line height stays on an even grid.\"},\n\t\tbasic.Text{Content: \"Caption in the secondary ink\", Style: colored(th.Text.Caption, th.Color.Ink2)},\n\t\t// MaxLines cuts the text short with an ellipsis.\n\t\tbasic.Text{Content: \"A one-line preview of a long message that does not fit in the row\", Style: th.Text.Body.WithMaxLines(1)},\n\t}}}\n})",
+   "picture": "basic-text",
+   "width": 369,
+   "height": 182
+  },
+  {
+   "name": "basic.RichText",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "見た目の異なる区間を 1 つの段落に混在させて表示するウィジェット。ルビと傍点も付けられ、`Background` で検索の一致などに背景色を敷ける。`Style.MaxLines` は `Text` と同じく働く。",
+   "en": "Mixes spans of different looks in one paragraph, with ruby and emphasis dots, and a `Background` behind a span, such as a match of a search. `Style.MaxLines` works as for `Text`.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\tc := \u0026th.Color\n\treturn basic.SizedBox{Width: 320, Child: basic.RichText{Style: colored(th.Text.Body, c.Ink).WithMaxLines(2), Spans: []text.Span{\n\t\t{Text: \"Rich text mixes \"},\n\t\t{Text: \"accented\", Style: colored(th.Text.Body, c.AccentInk)},\n\t\t{Text: \", \"},\n\t\t{Text: \"bold\", Style: colored(th.Text.Body, c.Ink).WithWeight(700)},\n\t\t{Text: \", \"},\n\t\t{Text: \"large\", Style: text.Style{Size: 20, Color: c.Ink}},\n\t\t{Text: \", \"},\n\t\t{Text: \"quiet\", Style: colored(th.Text.Caption, c.Ink2)},\n\t\t{Text: \" and \"},\n\t\t{Text: \"highlighted\", Background: c.Warning.WithAlpha(0.35)},\n\t\t{Text: \" runs in one paragraph that wraps, and stops after two lines with an ellipsis.\"},\n\t}}}\n})",
+   "picture": "basic-richtext",
+   "width": 346,
+   "height": 76
+  },
+  {
+   "name": "field.SelectionArea",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "category": "display",
+   "ja": "配下の `Text` と `RichText` を、マウスとキーボードで選択してコピーできるようにする。選択は段落をまたぐことができ、ルビの部分は親文字だけがコピーされる。",
+   "en": "Makes the `Text` and `RichText` below it selectable with the mouse and the keyboard, and copyable, across paragraphs; ruby copies as its base text.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.SizedBox{Width: 380, Child: field.SelectionArea{Child: basic.Column{\n\t\tSize: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\tbasic.Text{Content: \"Upload failed\", Style: th.Text.Title},\n\t\t\tbasic.Text{Content: \"dial tcp 192.0.2.10:443: i/o timeout\"},\n\t\t\tbasic.Text{Content: \"Drag, double click or Ctrl+A, then Ctrl+C.\", Style: colored(th.Text.Caption, th.Color.Ink2)},\n\t\t},\n\t}}}\n})",
+   "picture": "field-selectionarea",
+   "width": 252,
+   "height": 108
+  },
+  {
+   "name": "basic.Icon",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "24 単位の格子の上に定義したベクター図形を描くアイコン。`Label` が無い場合は装飾として扱われる。よく使う 24 種の図形は `icons` パッケージにある（フォルダ、ファイル、検索、閉じる、山形、歯車、ごみ箱など）。",
+   "en": "Draws a vector shape on a 24 unit grid. Without a `Label` it is decorative. Package `icons` holds 24 common shapes: folder, file, search, close, chevrons, gear, trash and more.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\t// The stock icons of package icons. Build them once and keep them, as\n\t// in InitState: each call makes a new path.\n\tset := []*paint.Path{\n\t\ticons.Folder(), icons.File(), icons.Document(), icons.Image(), icons.Search(), icons.Plus(),\n\t\ticons.Minus(), icons.Close(), icons.Check(), icons.ChevronLeft(), icons.ChevronRight(), icons.ChevronUp(),\n\t\ticons.ChevronDown(), icons.Settings(), icons.Trash(), icons.Edit(), icons.Copy(), icons.Home(),\n\t\ticons.Star(), icons.Info(), icons.Warning(), icons.Error(), icons.Menu(), icons.More(),\n\t}\n\tstock := make([]core.Widget, len(set))\n\tfor i, p := range set {\n\t\tstock[i] = basic.Icon{Path: p, Color: th.Color.Ink2}\n\t}\n\treturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space20, Children: []core.Widget{\n\t\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space16, Cross: layout.CrossCenter, Children: []core.Widget{\n\t\t\tbasic.Icon{Path: set[0], Color: th.Color.AccentInk, Label: \"Folder\"},\n\t\t\tbasic.Icon{Path: set[18], Size: 32, Color: th.Color.Danger},\n\t\t\tbasic.Icon{Path: set[8], Size: 16, Color: th.Color.Success},\n\t\t\tbasic.Icon{Path: circleIcon(), Color: th.Color.Ink2}, // a path of your own\n\t\t}},\n\t\tbasic.SizedBox{Width: 400, Child: basic.Wrap{Spacing: theme.Space16, RunSpacing: theme.Space16, Children: stock}},\n\t}}\n})",
+   "picture": "basic-icon",
+   "width": 412,
+   "height": 182
+  },
+  {
+   "name": "basic.Image",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "画像を表示するウィジェット。`Fit` で枠への収め方、`Radius` で角丸、`Quality` で拡大縮小の補間方法を選ぶ。",
+   "en": "Shows a picture. `Fit` picks how it fills its box, `Radius` rounds it and `Quality` sets the filtering.",
+   "code": "picture := photo() // paint.NewImage of an image.Image, made once and kept\nreturn basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\tbasic.Image{Source: picture, Width: 160, Label: \"Hills under a clear sky\"},\n\tbasic.Image{Source: picture, Width: 100, Height: 100, Fit: layout.FitCover, Radius: 50},\n\tbasic.Image{Source: picture, Width: 48, Height: 48, Quality: paint.FilterNearest},\n}}",
+   "picture": "basic-image",
+   "width": 372,
+   "height": 132
+  },
+  {
+   "name": "basic.SVG",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "SVG 画像を正方形に収めて描画するウィジェット。`Color` は、アイコンセットが描画に使う currentColor の値になる。",
+   "en": "Draws an SVG drawing fitted into a square. `Color` is the currentColor icon sets draw with.",
+   "code": "\tcloud, err := paint.ParseSVG([]byte(`\u003csvg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\n\u003cpath d=\"M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.5 4.5 4.5 0 0 0 7 18z\"/\u003e\u003c/svg\u003e`))\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\treturn themed(func(th *theme.Theme) core.Widget {\n\t\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\t\t\tbasic.SVG{Data: cloud, Label: \"Cloud\"},\n\t\t\tbasic.SVG{Data: cloud, Size: 36, Color: th.Color.AccentInk},\n\t\t\tbasic.SVG{Data: cloud, Size: 56, Color: th.Color.Ink2},\n\t\t}}\n\t})",
+   "picture": "basic-svg",
+   "width": 173,
+   "height": 72
+  },
+  {
+   "name": "basic.AnimatedImage",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "GIF、APNG、WebP のアニメーション画像を再生するウィジェット。動きを減らす設定が有効なときは、最初のフレームで止まる。",
+   "en": "Plays an animated GIF, APNG or WebP. When the OS asks for less motion it shows the first frame.",
+   "code": "movie, err := paint.DecodeAnimation(bytes.NewReader(blinkGIF()))\nif err != nil {\n\tpanic(err)\n}\nreturn basic.AnimatedImage{Source: movie, Width: 96, Height: 96, Radius: 12, Quality: paint.FilterNearest, Label: \"Blinking light\"}",
+   "picture": "basic-animatedimage",
+   "width": 128,
+   "height": 128
+  },
+  {
+   "name": "control.Badge",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "display",
+   "ja": "未読数、短い語、点で注意を促すバッジ。子を指定すると、その右上に重ねて表示される。",
+   "en": "A small mark for a count, a word or a dot. With a child it sits on the child's top right corner.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\tinbox := basic.Icon{Path: squareIcon(), Color: th.Color.Ink2}\n\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space24, Cross: layout.CrossCenter, Children: []core.Widget{\n\t\tcontrol.Badge{Count: 3, Child: inbox},\n\t\tcontrol.Badge{Count: 120, Child: inbox},\n\t\tcontrol.Badge{Dot: true, Child: inbox},\n\t\tcontrol.Badge{Label: \"New\"},\n\t\tcontrol.Badge{Count: 12, Quiet: true},\n\t}}\n})",
+   "picture": "control-badge",
+   "width": 257,
+   "height": 60
+  },
+  {
+   "name": "control.Card",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "display",
+   "ja": "1 つのまとまった内容を載せるカード。`OnPress` を指定すると、カード全体がボタンになる。",
+   "en": "A surface that holds one piece of content. With `OnPress` the whole card is a button.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Cross: layout.CrossStart, Children: []core.Widget{\n\tbasic.SizedBox{Width: 200, Child: control.Card{Label: \"Summary\", Child: basic.Column{\n\t\tSize: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space6, Children: []core.Widget{\n\t\t\tbasic.Text{Content: \"Summary\"},\n\t\t\tbasic.Text{Content: \"A plain card holds one piece of content.\"},\n\t\t},\n\t}}},\n\tbasic.SizedBox{Width: 200, Child: control.Card{Label: \"Open note\", OnPress: func() {}, Child: basic.Column{\n\t\tSize: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space6, Children: []core.Widget{\n\t\t\tbasic.Text{Content: \"Pressable\"},\n\t\t\tbasic.Text{Content: \"With OnPress the whole card is a button.\"},\n\t\t},\n\t}}},\n}}",
+   "picture": "control-card",
+   "width": 450,
+   "height": 132
+  },
+  {
+   "name": "control.Disclosure",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "display",
+   "ja": "見出しを押すと下の内容が開閉するウィジェット。閉じている間は中身がレイアウトされず、Tab キーでの移動や支援技術からも飛ばされる。`OnChange` を指定すると開閉の状態を親が管理するようになり、いくつか並べてアコーディオンにできる。",
+   "en": "A header that opens and closes the content below it. Closed content is not laid out, and Tab and assistive technology pass it by. With `OnChange` the parent keeps the state, which makes several in a row an accordion.",
+   "code": "control.Disclosure{Title: \"Advanced\", Child: basic.Text{Content: \"Closed, the content is not laid out.\", Style: note}},\ncontrol.Disclosure{Title: \"Sync\", Open: true, Child: basic.Text{\n\tContent: \"Open starts it open. Without OnChange it keeps its own state.\", Style: note,\n}},\ncontrol.Disclosure{Title: \"Notifications\", Header: basic.Row{Size: layout.MainMin, Spacing: theme.Space6, Children: []core.Widget{\n\tbasic.Text{Content: \"Notifications\", Style: th.Text.Headline}, control.Badge{Count: 3},\n}}, Child: basic.Text{Content: \"A header can hold a badge.\", Style: note}},",
+   "picture": "control-disclosure",
+   "width": 369,
+   "height": 157
+  },
+  {
+   "name": "interact.InteractiveViewer",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "also": [
+    "interact.ViewerController",
+    "interact.ViewerBoundary",
+    "interact.ViewerKeys"
+   ],
+   "category": "display",
+   "ja": "子をパンとズームで表示するウィジェット。ドラッグで移動し、Ctrl+ホイールかピンチで、ポインタの位置を中心に拡大縮小する。`WheelZooms` を指定すると、画像ビューアのようにホイールだけでも拡大縮小する。矢印キーは動かせる余地があるときだけ使い、それ以外はアプリのショートカットに渡す。`Keys` で矢印キーを使わないことも、フォーカスを受け取らないこともできる。子のレイアウトは 1 度だけ行われ、中のボタンもそのまま押せる。`ViewerController` を使うと、外から表示を動かせる。",
+   "en": "Shows its child through a pan and a zoom: drag to move, Ctrl with the wheel or a pinch to zoom about the pointer. `WheelZooms` zooms with the plain wheel, as image viewers do. The arrow keys pan only while there is room to, and otherwise go on to the shortcuts of the app; `Keys` leaves them out, or keeps the viewer out of the focus. The child is laid out once, and the buttons in it keep working. `ViewerController` moves the view from outside.",
+   "code": "var view interact.ViewerController\nview.Fit(false) // once the viewer knows its size\nreturn basic.SizedBox{Width: 440, Height: 280, Child: basic.Container{\n\tRadius: th.Radius.Control, Border: paint.Stroke{Width: 1, Color: th.Color.Hair},\n\tChild: interact.InteractiveViewer{\n\t\tController: \u0026view, MinScale: 0.2, MaxScale: 6, BoundaryMargin: 16,\n\t\tDoubleTapZoom: true, Label: \"Drawing\", Child: drawing,\n\t},\n}}",
+   "picture": "interact-interactiveviewer",
+   "width": 464,
+   "height": 304
+  },
+  {
+   "name": "basic.Divider",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "display",
+   "ja": "内容の区切りに引く細い線。`Indent` で端に余白を空け、`Axis` で縦線にもできる。",
+   "en": "A hairline between groups of content. `Indent` keeps it short of the edge, and `Axis` stands it up.",
+   "code": "basic.SizedBox{Width: 300, Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space12, Children: []core.Widget{\n\tbasic.Text{Content: \"Above the line\"},\n\tbasic.Divider{},\n\tbasic.Text{Content: \"Indented line below\"},\n\tbasic.Divider{Indent: theme.Space16},\n\tbasic.Row{Size: layout.MainMin, Spacing: theme.Space12, Children: []core.Widget{\n\t\tbasic.Text{Content: \"Left\"},\n\t\tbasic.SizedBox{Height: 20, Child: basic.Divider{Axis: layout.Vertical}},\n\t\tbasic.Text{Content: \"Right\"},\n\t}},\n}}}",
+   "picture": "basic-divider",
+   "width": 332,
+   "height": 137
+  },
+  {
+   "name": "control.Sparkline",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.SparklineKind"
+   ],
+   "category": "display",
+   "ja": "表のセルに収まる小さな折れ線グラフと棒グラフ。軸も凡例も描かない。NaN の値は欠損として途切れ、棒はゼロを基準に上下へ伸びる。描画時にメモリを割り当てない。",
+   "en": "A line or bar chart the size of a table cell, without axes or legend. NaN leaves a gap, and bars rise and fall from zero. Painting does not allocate.",
+   "code": "basic.Row{Size: layout.MainMin, Cross: layout.CrossCenter, Spacing: theme.Space24, Children: []core.Widget{\n\tbasic.SizedBox{Width: 140, Height: 28, Child: control.Sparkline{\n\t\tData: trend, Fill: true, MarkLast: true, Label: \"Temperature, now 21.4 degrees\",\n\t}},\n\tbasic.SizedBox{Width: 120, Height: 28, Child: control.Sparkline{Kind: control.SparklineBars, Data: change}},\n}}",
+   "picture": "control-sparkline",
+   "width": 314,
+   "height": 60
+  },
+  {
+   "name": "control.Tabs",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.TabPage"
+   ],
+   "category": "navigation",
+   "ja": "ページを切り替えるタブ。下線付きのタブの並びの下に、選択したページを表示する。",
+   "en": "Switches between pages, with the chosen page below a row of underlined tabs.",
+   "code": "basic.SizedBox{Width: 340, Height: 150, Child: control.Tabs{\n\tLabel: \"Settings\", Selected: 1, OnChange: func(int) {},\n\tPages: []control.TabPage{\n\t\t{Label: \"General\"},\n\t\t{Label: \"Appearance\", Child: basic.Padding{Insets: geom.All(theme.Space16), Child: basic.Text{\n\t\t\tContent: \"The page of the chosen tab shows below the bar.\",\n\t\t}}},\n\t\t{Label: \"Advanced\"},\n\t},\n}}",
+   "picture": "control-tabs",
+   "width": 372,
+   "height": 105
+  },
+  {
+   "name": "collection.Sidebar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "also": [
+    "collection.SidebarItem"
+   ],
+   "category": "navigation",
+   "ja": "ウィンドウの左端に置く、移動先の一覧。背景と右端の区切り線を自分で描くので、`CrossStretch` の `Row` の先頭に置く。幅は `Width` で決まり、ゼロなら 208。行が収まらないときは行だけがスクロールし、タイトル、その下の `Header`（検索欄など）、下端に固定する `Footer`（ボタンなど）は動かない。選択中の行は `AccentTint` の背景になる。`SidebarItem` の `Count` は、未読の件数などを行の右端に控えめな丸い枠で表示し、スクリーンリーダーには行の値として 1 度だけ伝える。`Detail` は、チャットの最後のメッセージのような 2 行目を小さく `Ink2` で表示し（選択中の行では、件数とともに、色合いの上で読める `theme.Colors.OnTint` の色）、1 行に収まらない分は省略記号で切る。`Detail` のある行は 46 の高さになり、スクリーンリーダーには詳細の全文を行の説明として 1 度だけ伝える。`Leading` は、メールのラベルの色の点のようなウィジェットを `Icon` の代わりに行頭に置く。選択中の行では `OnTint` のテーマの下で作るので、テーマの色を使う部分は色合いの上で読め、点のように自分で決めた色はそのまま残る。",
+   "en": "The column of places at the left of a window. It draws its own ground and the hairline at its right edge; put it first in a `Row` with `CrossStretch`. `Width` sets its width, 208 when zero. When the rows do not fit, they alone scroll: the title, the `Header` under it, such as a search field, and the `Footer` pinned at the bottom, such as buttons, stay. The selected row takes the `AccentTint` ground. The `Count` of a `SidebarItem`, such as of unread messages, shows in a quiet pill at the end of the row, and a screen reader hears it once, as the value of the row. A `Detail` is a smaller second line in `Ink2` (on the selected row in the colors of `theme.Colors.OnTint`, which read on the tint, as is its count), such as the last message of a chat, cut to one line with an ellipsis; a row with one is 46 high, and a screen reader hears the whole detail once, as the description of the row. `Leading` puts a widget in place of the `Icon`, such as the colored dot of a mail label; on the selected row it is built under the `OnTint` theme, so that what takes the colors of the theme reads on the tint, while a color of its own, as that of the dot, stays.",
+   "code": "open := func() {}\nreturn basic.SizedBox{Height: 340, Child: collection.Sidebar{\n\tTitle:  \"Library\",\n\tHeader: field.Search{Placeholder: \"Search\", OnChange: func(string) {}},\n\tChildren: []core.Widget{\n\t\tcollection.SidebarItem{Label: \"Home\", Icon: icons.Home(), OnPress: open},\n\t\tcollection.SidebarItem{Label: \"Shared\", Icon: icons.Folder(), Detail: \"With Aoi and Ren, edited today\", OnPress: open},\n\t\tcollection.SidebarItem{Label: \"Documents\", Icon: icons.Document(), Count: 3, Selected: true, OnPress: open},\n\t\tcollection.SidebarItem{Label: \"Starred\", Icon: icons.Star(), Count: 128, OnPress: open},\n\t\tcollection.SidebarItem{Label: \"Pictures\", Icon: icons.Image(), OnPress: open},\n\t},\n\tFooter: control.Button{Label: \"New Folder\", Icon: icons.Plus(), Style: control.ButtonQuiet, OnPress: open},\n}}",
+   "picture": "collection-sidebar",
+   "width": 240,
+   "height": 364
+  },
+  {
+   "name": "nav.Breadcrumb",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.BreadcrumbItem"
+   ],
+   "category": "navigation",
+   "ja": "現在地までの道筋を示すパンくずリスト。収まらない場合は、中ほどの項目をメニューに畳む。",
+   "en": "The trail to the current place. Where it does not fit, the middle folds into a menu.",
+   "code": "trail := []nav.BreadcrumbItem{\n\t{Label: \"Home\", Icon: icons.Folder()}, {Label: \"Documents\"}, {Label: \"Projects\"}, {Label: \"gowaku\"}, {Label: \"widgets\"},\n}\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\tbasic.SizedBox{Width: 480, Child: nav.Breadcrumb{Items: trail, OnSelect: func(int) {}}},\n\t// Where the trail does not fit, the middle folds into a menu.\n\tbasic.SizedBox{Width: 260, Child: nav.Breadcrumb{Items: trail, OnSelect: func(int) {}}},\n}}",
+   "picture": "nav-breadcrumb",
+   "width": 402,
+   "height": 87
+  },
+  {
+   "name": "nav.Steps",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "category": "navigation",
+   "ja": "ウィザードや購入手続きのように、いくつかの手順を順に進む流れで、今どこにいるかを示す。手順ごとに番号の丸と名前を並べ、間を線でつなぐ。`Current` より前の手順は済んだものとしてチェックを、現在の手順はアクセントの色で塗った丸と太字の名前を表示する。`OnStepPress` を指定すると、済んだ手順が押せるようになり、Tab キーで移動して Enter か Space で戻れる。スクリーンリーダーには手順の一覧として、名前、位置（「3 件中 2 番目」など）、「現在の手順」か「完了」を伝える。数値を増減するものは `control.NumberStepper` である。",
+   "en": "Shows where a flow of several steps is, such as a wizard or a checkout: a numbered circle and a name for each step, joined by lines. The steps before `Current` are done and show a check; the current one has a circle in the accent and a bold name. With `OnStepPress`, the done steps can be pressed to go back, and Tab and Enter or Space reach them. A screen reader hears a list of the steps, each with its name, its place, such as 2 of 3, and \"Current step\" or \"Completed\". For the minus and plus buttons of a number, see `control.NumberStepper`.",
+   "code": "labels := []string{\"Account\", \"Shipping\", \"Payment\", \"Review\"}\nreturn basic.Column{Size: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space20, Children: []core.Widget{\n\tnav.Steps{Labels: labels, Current: 2, OnStepPress: func(int) {}},\n\t// Every step done.\n\tnav.Steps{Labels: labels[:3], Current: 3},\n}}",
+   "picture": "nav-steps",
+   "width": 536,
+   "height": 106
+  },
+  {
+   "name": "nav.Navigator",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.NavigatorController",
+    "nav.PageRoute",
+    "nav.RoutePattern",
+    "nav.RouteParams"
+   ],
+   "category": "navigation",
+   "ja": "ページを積み重ねて画面を遷移させるウィジェット。名前のパターンに対応するルートでページを作り、Alt+Left で前のページに戻る。",
+   "en": "A stack of pages. Routes build pages from name patterns, and Alt+Left goes back.",
+   "code": "basic.SizedBox{Width: 360, Height: 190, Child: nav.Navigator{\n\tHome: noteList{}, // its rows call NavigatorOf(ctx).PushNamed(\"/notes/1\")\n\tRoutes: []nav.RoutePattern{{Pattern: \"/notes/:id\", Build: func(p nav.RouteParams) core.Widget {\n\t\ti, _ := p.Int(\"id\")\n\t\treturn notePage{index: i}\n\t}}},\n}}",
+   "picture": "nav-navigator",
+   "width": 392,
+   "height": 222
+  },
+  {
+   "name": "nav.BackButton",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "category": "navigation",
+   "ja": "最も近い `Navigator` の前のページに戻るボタン。最初のページでは何も表示しない。",
+   "en": "Goes back to the previous page of the nearest `Navigator`. On the first page it shows nothing.",
+   "code": "// The top bar of a page that a Navigator pushed:\nreturn basic.Row{Children: []core.Widget{nav.BackButton{Label: \"Notes\"}}}",
+   "picture": "nav-backbutton",
+   "width": 392,
+   "height": 222
+  },
+  {
+   "name": "control.ProgressBar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "feedback",
+   "ja": "処理の進み具合を、左から伸びるバーで示すウィジェット。値が変わると、新しい位置まで滑らかに移動する。`Indeterminate` にすると、長さの分からない処理を、バーを繰り返し横切る帯で示し、スクリーンリーダーには値の無い処理中の表示として伝える。帯は見えている間だけ動き、動きを減らす設定が有効なときは中央で止まる。",
+   "en": "Shows how much is done as a bar that fills from the left. A new value slides into place. With `Indeterminate` it shows work of unknown length as a band that crosses the bar again and again, and a screen reader hears a busy indicator with no value. The band moves only while it is seen, and stands in the middle when the window asks for less motion.",
+   "code": "basic.SizedBox{Width: 260, Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStretch, Spacing: theme.Space16, Children: []core.Widget{\n\tcontrol.ProgressBar{Value: 0.62, Label: \"Library sync\"},\n\tcontrol.ProgressBar{Value: 0.25, Label: \"Upload\"},\n\tcontrol.ProgressBar{Indeterminate: true, Label: \"Connecting\"},\n}}}",
+   "picture": "control-progressbar",
+   "width": 292,
+   "height": 82
+  },
+  {
+   "name": "control.ProgressRing",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "feedback",
+   "ja": "処理の進み具合を、12 時の位置から時計回りに満ちていくリングで示すウィジェット。中央に子を置ける。`Indeterminate` にすると、長さの分からない処理のためのスピナーになり、弧がリングの上を回る。スクリーンリーダーには値の無い処理中の表示として伝え、ラベルが無ければウィンドウの言語で「読み込み中」と読む。弧は見えている間だけ回り、動きを減らす設定が有効なときは 12 時の位置で止まる。",
+   "en": "Shows how much is done as a ring that fills clockwise from twelve, with a child in its middle. With `Indeterminate` it is a spinner for work of unknown length: an arc turns around the ring. A screen reader hears a busy indicator with no value, named Loading in the language of the window when it has no label. The arc turns only while it is seen, and stands at twelve when the window asks for less motion.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space24, Cross: layout.CrossCenter, Children: []core.Widget{\n\t\tcontrol.ProgressRing{Value: 0.32, Label: \"Album art\"},\n\t\tcontrol.ProgressRing{Value: 0.75, Size: 48, Color: th.Color.Success, Label: \"Lyrics\", Child: basic.Text{\n\t\t\tContent: \"75\", Style: colored(th.Text.Caption, th.Color.Ink2),\n\t\t}},\n\t\tcontrol.ProgressRing{Indeterminate: true, Label: \"Syncing\"},\n\t}}\n})",
+   "picture": "control-progressring",
+   "width": 192,
+   "height": 80
+  },
+  {
+   "name": "control.Skeleton",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.SkeletonShape",
+    "control.SkeletonText",
+    "control.SkeletonGroup"
+   ],
+   "category": "feedback",
+   "ja": "読み込み中の内容の代わりに表示するプレースホルダー。光の帯はウィンドウ全体で 1 本だけ流れ、スケルトンが見えている間だけ動く。動きを減らす設定が有効なときは止まる。`SkeletonGroup` は、読み込み中であることを支援技術に伝える。",
+   "en": "Stands in for content that is still loading. One band of light crosses the window, only while a skeleton is seen, and stops when the OS asks for less motion. `SkeletonGroup` tells assistive technology that it is loading.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{Width: 320, Color: th.Color.Card, Radius: th.Radius.Group, Padding: geom.All(theme.Space16), Child: control.SkeletonGroup{\n\t\tLabel: \"Loading messages\",\n\t\tChild: basic.Row{Cross: layout.CrossStart, Spacing: theme.Space12, Children: []core.Widget{\n\t\t\tcontrol.Skeleton{Shape: control.SkeletonCircle, Width: 40},\n\t\t\tbasic.Expanded{Child: basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\t\tcontrol.Skeleton{Width: 96, Height: 14},\n\t\t\t\tcontrol.SkeletonText{Lines: 3},\n\t\t\t}}},\n\t\t}},\n\t}}\n})",
+   "picture": "control-skeleton",
+   "width": 352,
+   "height": 138
+  },
+  {
+   "name": "overlay.Tooltip",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "category": "feedback",
+   "ja": "子にポインタを重ねるか、キーボードでフォーカスを移すと表示される短い説明。支援技術には子の説明として伝わる。",
+   "en": "A short label that shows when the pointer rests on its child or the keyboard moves to it. Assistive technology gets it as the description.",
+   "code": "tool := func(label, tip string) core.Widget {\n\treturn overlay.Tooltip{Message: tip, Child: control.Button{Label: label, Style: control.ButtonQuiet, OnPress: func() {}}}\n}\nreturn basic.Row{Size: layout.MainMin, Spacing: theme.Space4, Children: []core.Widget{\n\ttool(\"Bold\", \"Bold (Ctrl+B)\"),\n\ttool(\"Italic\", \"Italic (Ctrl+I)\"),\n\ttool(\"Link\", \"Insert a link (Ctrl+K)\"),\n}}",
+   "picture": "overlay-tooltip",
+   "width": 172,
+   "height": 101
+  },
+  {
+   "name": "overlay.Toast",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "category": "feedback",
+   "ja": "ウィンドウの下部に数秒間表示される短い通知。「元に戻す」のような操作を 1 つ付けられる。`ShowToast` で表示する。",
+   "en": "A short message at the bottom of the window for a few seconds, with an optional action such as Undo. Show it with `ShowToast`.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\treturn control.Button{Label: \"Move to trash\", OnPress: func() {\n\t\toverlay.ShowToast(ctx, overlay.Toast{Message: \"Moved 3 notes to the trash\", Action: \"Undo\", OnAction: func() {}})\n\t}}\n}}",
+   "picture": "overlay-toast",
+   "width": 417,
+   "height": 192
+  },
+  {
+   "name": "control.InfoBar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.InfoSeverity"
+   ],
+   "category": "feedback",
+   "ja": "ページ内に表示され続ける通知の帯。情報・成功・警告・エラーに応じたアイコンと色で表示し、閉じるボタンと操作を 1 つ付けられる。表示するかどうかは、親が `Open` で決める。",
+   "en": "A notice that stays in the page: info, success, warning or error, with a close button and one action. The parent shows it with `Open`.",
+   "code": "control.InfoBar{\n\tOpen: true, Severity: control.SeverityWarning,\n\tTitle: \"You are offline\", Message: \"Changes are saved on this device and sync when you reconnect.\",\n\tOnClose: closed,\n},\ncontrol.InfoBar{\n\tOpen: true, Severity: control.SeverityError,\n\tTitle: \"Could not save\", Message: \"The disk is full.\",\n\tAction: \"Retry\", OnAction: func() {}, OnClose: closed,\n},",
+   "picture": "control-infobar",
+   "width": 512,
+   "height": 164
+  },
+  {
+   "name": "overlay.Dialog",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "category": "feedback",
+   "ja": "作業を中断して応答を求めるカード。`ShowDialog` で表示し、フォーカスはダイアログの中に閉じ込められる。`Glass` を指定すると背景をぼかす。",
+   "en": "A card that stops the work for an answer. Show it with `ShowDialog`; the focus stays inside. `Glass` blurs what is behind.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\treturn control.Button{Label: \"Delete\", Style: control.ButtonDanger, OnPress: func() {\n\t\toverlay.ShowDialog(ctx, func(dismiss func()) core.Widget {\n\t\t\treturn overlay.Dialog{\n\t\t\t\tTitle:   \"Delete this note?\",\n\t\t\t\tMessage: \"It cannot be undone.\",\n\t\t\t\tActions: []core.Widget{\n\t\t\t\t\tcontrol.Button{Label: \"Cancel\", OnPress: dismiss},\n\t\t\t\t\tcontrol.Button{Label: \"Delete\", Style: control.ButtonDanger, OnPress: dismiss},\n\t\t\t\t},\n\t\t\t}\n\t\t})\n\t}}\n}}",
+   "picture": "overlay-dialog",
+   "width": 520,
+   "height": 260
+  },
+  {
+   "name": "overlay.Sheet",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "also": [
+    "overlay.SheetEdge"
+   ],
+   "category": "feedback",
+   "ja": "ウィンドウの下端か横からせり出すパネル。`ShowSheet` で表示する。",
+   "en": "A panel that slides in from the bottom or the side of the window. Show it with `ShowSheet`.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\treturn control.Button{Label: \"Share\", OnPress: func() {\n\t\toverlay.ShowSheet(ctx, overlay.Sheet{Label: \"Share note\"}, func(dismiss func()) core.Widget {\n\t\t\treturn basic.Column{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\t\tbasic.Text{Content: \"Anyone with the link can read this note.\"},\n\t\t\t\tbasic.Row{Main: layout.MainEnd, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\t\t\tcontrol.Button{Label: \"Cancel\", OnPress: dismiss},\n\t\t\t\t\tcontrol.Button{Label: \"Copy link\", Style: control.ButtonPrimary, OnPress: dismiss},\n\t\t\t\t}},\n\t\t\t}}\n\t\t})\n\t}}\n}}",
+   "picture": "overlay-sheet",
+   "width": 520,
+   "height": 260
+  },
+  {
+   "name": "collection.List",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "category": "data",
+   "ja": "任意の件数を扱える縦方向のリスト。表示範囲付近の行だけを構築する。行ごとに高さが異なってもよい。",
+   "en": "A vertical list of any length that builds only the rows near the view. Rows may differ in height.",
+   "code": "basic.SizedBox{Width: 320, Height: 180, Child: collection.List{\n\tItemCount: 10000, ItemExtent: 36,\n\tItemBuilder: func(i int) core.Widget {\n\t\treturn basic.Padding{Insets: geom.Symmetric(theme.Space12, theme.Space8), Child: basic.Text{\n\t\t\tContent: \"Row \" + strconv.Itoa(i+1) + \" of 10,000\",\n\t\t}}\n\t},\n}}",
+   "picture": "collection-list",
+   "width": 126,
+   "height": 189
+  },
+  {
+   "name": "collection.GridView",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "category": "data",
+   "ja": "任意の個数のタイルを並べるグリッド。表示範囲付近の行だけを構築する。列数は幅から決まり、選択とフォーカスは `TableController` が管理し、`ItemKey` を与えると項目の並びが変わっても同じ項目に残る。矢印キーでタイル間を移動し、Enter で開く。",
+   "en": "A grid of tiles of any number that builds only the rows near the view. The width decides the columns, and a `TableController` holds the selection and the focus, which stay on the same items when they move given an `ItemKey`. The arrows move between tiles and Enter opens one.",
+   "code": "var photos collection.TableController\nphotos.SetSelection(collection.RowRange{Start: 1, End: 3})\nreturn basic.SizedBox{Width: 460, Height: 280, Child: collection.GridView{\n\tItemCount: 10000, MinColumnWidth: 96, AspectRatio: 4.0 / 3, ExtraHeight: 20,\n\tSpacing: theme.Space8, RunSpacing: theme.Space8, Padding: geom.All(theme.Space8),\n\tLabel: \"Photos\", Controller: \u0026photos,\n\tLabelOf: func(i int) string { return \"Photo \" + strconv.Itoa(i+1) },\n\tItemBuilder: func(i int) core.Widget {\n\t\ttone := theme.TonalPalette{Hue: float64(i*47%360) + 0.5, Chroma: 36}.Tone(66)\n\t\treturn basic.Column{Cross: layout.CrossStretch, Spacing: theme.Space4, Children: []core.Widget{\n\t\t\tbasic.Expanded{Child: basic.Container{Color: tone, Radius: th.Radius.Control}},\n\t\t\tbasic.Text{Content: \"Photo \" + strconv.Itoa(i+1), Style: small},\n\t\t}}\n\t},\n}}",
+   "picture": "collection-gridview",
+   "width": 460,
+   "height": 296
+  },
+  {
+   "name": "collection.ReorderableList",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "category": "data",
+   "ja": "ドラッグか Ctrl+Shift+矢印キーで項目を並べ替えられる `List`。データ自体は保持せず、`OnReorder` で移動を依頼する。スクリーンリーダーには移動後の位置を伝える。",
+   "en": "A `List` whose items move by drag or with Ctrl+Shift and an arrow. It does not own the items: `OnReorder` asks for the move. A screen reader hears the new place.",
+   "code": "basic.SizedBox{Width: 300, Height: 220, Child: collection.ReorderableList{\n\tItemCount: len(todos), ItemExtent: 44, Label: \"To do\",\n\tLabelOf: func(i int) string { return todos[i] },\n\t// Move the item in your data, then build again.\n\tOnReorder: func(_, _ int) {},\n\tItemBuilder: func(i int) core.Widget {\n\t\treturn basic.Padding{Insets: geom.Symmetric(theme.Space12, 0), Child: basic.Row{Cross: layout.CrossCenter, Children: []core.Widget{\n\t\t\tbasic.Expanded{Child: basic.Text{Content: todos[i]}},\n\t\t\tbasic.Text{Content: \"≡\"},\n\t\t}}}\n\t},\n}}",
+   "picture": "collection-reorderablelist",
+   "width": 307,
+   "height": 221
+  },
+  {
+   "name": "collection.Table",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "also": [
+    "collection.TableColumn",
+    "collection.TableController",
+    "collection.TableSort",
+    "collection.TableFilter",
+    "collection.TableEdit",
+    "collection.TableEditor",
+    "collection.CellKind",
+    "collection.CellTone",
+    "collection.RowRange",
+    "collection.SortOrder",
+    "collection.TableSelectMode"
+   ],
+   "category": "data",
+   "ja": "並べ替え、絞り込み、範囲選択、セルの編集、列の固定に対応した表。セルには文字のほか、バッジ、点、バー、チェックボックスを表示できる。`RowKey` を与えると、並べ替えや行の削除の後も選択が同じ行に残る。並べ替えた列の見出しは、スクリーンリーダーに昇順か降順かを伝える。ファイルの行のように別の場所にある行は、スライスにせず `RowCount` と `Row` で渡せる。",
+   "en": "A table with sorting, filters, range selection, cell editing and frozen columns. Cells show text, badges, dots, bars or check boxes. With `RowKey` the selection stays on the same rows when they are sorted or deleted. The header of the sorted column tells a screen reader its order. Rows that live elsewhere, as the lines of a file, come through `RowCount` and `Row` without a slice of them.",
+   "code": "rows := []task{\n\t{\"Design review\", \"Aiko\", \"Done\", 1},\n\t{\"Release notes\", \"Ben\", \"In progress\", 0.6},\n\t{\"Fix the build\", \"Chiara\", \"Blocked\", 0.2},\n\t{\"Translate docs\", \"Daichi\", \"In progress\", 0.4},\n\t{\"Plan the sprint\", \"Aiko\", \"Done\", 1},\n}\ntone := func(t task) collection.CellTone {\n\tswitch t.status {\n\tcase \"Done\":\n\t\treturn collection.CellToneSuccess\n\tcase \"Blocked\":\n\t\treturn collection.CellToneDanger\n\t}\n\treturn collection.CellToneAccent\n}\nreturn basic.SizedBox{Width: 520, Height: 220, Child: collection.Table[task]{\n\tLabel: \"Tasks\", Rows: rows,\n\tSort: collection.TableSort{Column: 0, Order: collection.SortAscending}, OnSort: func(collection.TableSort) {},\n\tColumns: []collection.TableColumn[task]{\n\t\t{Title: \"Task\", Width: 160, Text: func(t task) string { return t.name }, Sortable: true},\n\t\t{Title: \"Owner\", Width: 100, Text: func(t task) string { return t.owner }, Sortable: true},\n\t\t{Title: \"Status\", Width: 120, Text: func(t task) string { return t.status }, Kind: collection.CellBadge, Tone: tone},\n\t\t{Title: \"Done\", Width: 120, Kind: collection.CellProgress, Value: func(t task) float32 { return t.done }},\n\t},\n}}",
+   "picture": "collection-table",
+   "width": 544,
+   "height": 252
+  },
+  {
+   "name": "collection.Tree",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "also": [
+    "collection.TreeController",
+    "collection.TreeMove",
+    "collection.TreeDrop"
+   ],
+   "category": "data",
+   "ja": "ノードを開閉できるツリー。複数選択、遅延読み込み、名前の変更、ドラッグによる移動に対応する。",
+   "en": "A tree of nodes that open and close, with multiple selection, lazy loading, renaming and moves by drag.",
+   "code": "isFolder := func(k string) bool { return len(folders[k]) \u003e 0 || k == \"Documents\" }\nreturn basic.SizedBox{Width: 280, Height: 260, Child: collection.Tree[string]{\n\tLabel: \"Files\", Roots: folders[\"\"], Controller: \u0026ctrl,\n\tChildrenOf:  func(k string) []string { return folders[k] },\n\tHasChildren: isFolder,\n\tIconOf: func(k string) core.Widget {\n\t\tif isFolder(k) {\n\t\t\treturn basic.Icon{Path: icons.Folder(), Size: 16, Color: geom.Hex(0x2f5fd0)}\n\t\t}\n\t\treturn basic.Icon{Path: icons.Document(), Size: 16, Color: geom.Hex(0x8a8a8e)}\n\t},\n}}",
+   "picture": "collection-tree",
+   "width": 304,
+   "height": 240
+  },
+  {
+   "name": "collection.PropertyGrid",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "also": [
+    "collection.Property",
+    "collection.PropertyCategory",
+    "collection.PropertyEditor",
+    "collection.PropertyText",
+    "collection.PropertyBool",
+    "collection.PropertyChoice",
+    "collection.PropertyInt",
+    "collection.PropertyNumber",
+    "collection.PropertyColor",
+    "collection.PropertyCustom"
+   ],
+   "category": "data",
+   "ja": "名前と値の 2 列で属性を編集するインスペクタ。カテゴリごとに折りたためる。",
+   "en": "An inspector that edits properties in two columns of names and values, in categories that fold.",
+   "code": "type fit int\nreturn basic.SizedBox{Width: 340, Child: collection.PropertyGrid{Label: \"Inspector\", Categories: []collection.PropertyCategory{\n\t{Name: \"General\", Properties: []collection.Property{\n\t\t{Name: \"Name\", Description: \"The name of the layer.\", Editor: collection.PropertyText{Value: \"Header\", OnChange: func(string) {}}},\n\t\t{Name: \"Visible\", Editor: collection.PropertyBool{Value: true, OnChange: func(bool) {}}},\n\t\t{Name: \"Fit\", Editor: collection.PropertyChoice[fit]{Value: 1, OnChange: func(fit) {}, Options: []field.DropdownOption[fit]{\n\t\t\t{Value: 0, Label: \"Fill\"}, {Value: 1, Label: \"Contain\"},\n\t\t}}},\n\t}},\n\t{Name: \"Layout\", Properties: []collection.Property{\n\t\t{Name: \"Width\", Editor: collection.PropertyInt{Value: 320, Max: 4096, OnChange: func(int) {}}},\n\t\t{Name: \"Opacity\", Editor: collection.PropertyNumber{Value: 0.85, Max: 1, OnChange: func(float64) {}}},\n\t\t{Name: \"Tint\", Editor: collection.PropertyColor{Value: geom.Hex(0x2f5fd0), OnPress: func() {}}},\n\t}},\n\t{Name: \"Advanced\", Collapsed: true, Properties: []collection.Property{\n\t\t{Name: \"Cache\", Editor: collection.PropertyBool{OnChange: func(bool) {}}},\n\t}},\n}}}",
+   "picture": "collection-propertygrid",
+   "width": 372,
+   "height": 372
+  },
+  {
+   "name": "collection.Group",
+   "import": "github.com/bankai-tensei/gowaku/widgets/collection",
+   "also": [
+    "collection.GroupRow"
+   ],
+   "category": "data",
+   "ja": "角丸のカードに行を並べるウィジェット。設定画面やフォームは、これをいくつか並べて作る。行の区切り線は、左端まで届かずに止まる。",
+   "en": "A card of rows, the stuff of settings pages and forms. The lines between rows stop short of the left edge.",
+   "code": "basic.SizedBox{Width: 420, Child: collection.Group{Title: \"Playback\", Children: []core.Widget{\n\tcollection.GroupRow{Label: \"Shuffle\", Child: control.Switch{Value: true, OnChange: func(bool) {}}},\n\tcollection.GroupRow{Label: \"Repeat\", Child: control.SegmentedControl{\n\t\tOptions: []string{\"Off\", \"All\", \"One\"}, Selected: 1, OnChange: func(int) {},\n\t}},\n\tcollection.GroupRow{Label: \"Crossfade\", Detail: \"Seconds between songs\", Child: control.NumberStepper{\n\t\tValue: 4, Max: 12, OnChange: func(int) {},\n\t}},\n}}}",
+   "picture": "collection-group",
+   "width": 452,
+   "height": 192
+  },
+  {
+   "name": "overlay.MenuBar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "also": [
+    "overlay.MenuItem",
+    "interact.Action",
+    "interact.Actions",
+    "interact.Shortcut"
+   ],
+   "category": "desktop",
+   "ja": "ウィンドウ上部のメニューバー。各 `Action` に、表示名、ショートカット、チェックの有無、実行できるかどうかをまとめて指定する。",
+   "en": "The menu bar at the top of a window. Each `Action` holds the label, the shortcut, the check mark and whether it can run.",
+   "code": "run := func() {}\nreturn basic.SizedBox{Width: 420, Child: overlay.MenuBar{Items: []overlay.MenuItem{\n\t{Action: interact.Action{Label: \"\u0026File\"}, Items: []overlay.MenuItem{\n\t\t{Action: interact.Action{Label: \"\u0026Save\", Shortcut: interact.Shortcut{Key: input.KeyS, Modifiers: input.ModControl}, OnInvoke: run}},\n\t}},\n\t{Action: interact.Action{Label: \"\u0026Edit\"}, Items: editItems()},\n\t{Action: interact.Action{Label: \"\u0026View\"}, Items: []overlay.MenuItem{\n\t\t{Action: interact.Action{Label: \"Zoom \u0026in\", OnInvoke: run}},\n\t}},\n}}}",
+   "picture": "overlay-menubar",
+   "width": 329,
+   "height": 291
+  },
+  {
+   "name": "overlay.ContextMenu",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "category": "desktop",
+   "ja": "右クリックかメニューキーで、子の上にメニューを開くウィジェット。",
+   "en": "Opens a menu over its child on a right click or the menu key.",
+   "code": "overlay.ContextMenu{Items: editItems(), Child: themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{\n\t\tWidth: 240, Height: 160, Radius: th.Radius.Group, Color: th.Color.Card,\n\t\tBorder: paint.Stroke{Width: 1, Color: th.Color.Hair}, Padding: geom.All(theme.Space12),\n\t\tChild: basic.Text{Content: \"Right-click here\", Style: colored(th.Text.Body, th.Color.Ink2)},\n\t}\n})}",
+   "picture": "overlay-contextmenu",
+   "width": 395,
+   "height": 332
+  },
+  {
+   "name": "nav.Toolbar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.ToolbarItem"
+   ],
+   "category": "desktop",
+   "ja": "ボタンを横に並べるツールバー。収まらない項目は末尾のメニューに移る。項目の間は矢印キーで移動する。",
+   "en": "A row of buttons. Items that do not fit move into a menu at the end; the arrow keys move between items.",
+   "code": "run := func() {}\nreturn basic.SizedBox{Width: 460, Child: nav.Toolbar{Label: \"Format\", Items: []nav.ToolbarItem{\n\t{Action: interact.Action{Label: \"Bold\", OnInvoke: run, Checkable: true, Checked: true}, Icon: squareIcon()},\n\t{Action: interact.Action{Label: \"Italic\", OnInvoke: run, Checkable: true}, Icon: circleIcon()},\n\t{Action: interact.Action{Label: \"Shape\"}, Icon: triangleIcon()},\n\t{Separator: true},\n\t{Action: interact.Action{Label: \"Share\", OnInvoke: run}, Icon: icons.Star(), ShowLabel: true},\n\t{Spacer: true},\n\t{Action: interact.Action{Label: \"Export\", OnInvoke: run}},\n}}}",
+   "picture": "nav-toolbar",
+   "width": 468,
+   "height": 62
+  },
+  {
+   "name": "nav.StatusBar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.StatusItem"
+   ],
+   "category": "desktop",
+   "ja": "ウィンドウ下端のステータスバー。左寄せと右寄せの項目を、区切り線で分けて並べる。幅が狭いときは、優先度の低い項目から隠す。",
+   "en": "The band along the bottom of a window, with leading and trailing items. When narrow, items of low priority hide first.",
+   "code": "basic.SizedBox{Width: 520, Child: nav.StatusBar{\n\tLeading: []nav.StatusItem{\n\t\t{Text: \"Ln 12, Col 4\", Priority: 2},\n\t\t{Text: \"No selection\"},\n\t},\n\tTrailing: []nav.StatusItem{\n\t\t{Text: \"UTF-8\", Tooltip: \"Encoding\", OnPress: func() {}, Priority: 1},\n\t\t{Text: \"LF\"},\n\t\t{Text: \"Go\", Priority: 1},\n\t},\n}}",
+   "picture": "nav-statusbar",
+   "width": 544,
+   "height": 57
+  },
+  {
+   "name": "field.CommandPalette",
+   "import": "github.com/bankai-tensei/gowaku/widgets/field",
+   "also": [
+    "field.PaletteItem"
+   ],
+   "category": "desktop",
+   "ja": "登録した Action をあいまい検索して実行するコマンドパレット。Ctrl+Shift+P で開く。",
+   "en": "Finds a registered Action by fuzzy search and runs it. Ctrl+Shift+P opens it.",
+   "code": "run := func() {}\nactions := []interact.Action{\n\t{Label: \"\u0026New File\", OnInvoke: run},\n\t{Label: \"\u0026Open File...\", OnInvoke: run},\n\t{Label: \"\u0026Save\", Shortcut: interact.Shortcut{Key: input.KeyS, Modifiers: input.ModControl}, OnInvoke: run},\n\t{Label: \"Save \u0026As...\", OnInvoke: run},\n\t{Label: \"\u0026Export...\"},\n\t{Label: \"Toggle \u0026Sidebar\", Checkable: true, Checked: true, OnInvoke: run},\n}\nreturn basic.SizedBox{Width: 600, Height: 440, Child: field.CommandPalette{\n\tActions: actions,\n\tChild: interact.Actions{Actions: actions, Child: basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\t\treturn basic.Align{Alignment: layout.AlignTopLeft, Child: control.Button{\n\t\t\tLabel: \"Open palette\", OnPress: func() { field.OpenCommandPalette(ctx) },\n\t\t}}\n\t}}},\n}}",
+   "picture": "field-commandpalette",
+   "width": 600,
+   "height": 440
+  },
+  {
+   "name": "nav.TabBar",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.TabItem",
+    "nav.TabGroup",
+    "nav.TabTearOff"
+   ],
+   "category": "desktop",
+   "ja": "文書を切り替えるタブ。タブは閉じる、並べ替える、別のウィンドウへ切り離すことができる。保存していない文書のタブには点が付き、ポインターを載せると閉じるボタンに変わる。",
+   "en": "Document tabs that close, reorder, and tear off into another window. A tab with unsaved changes shows a dot, which turns into the close button under the pointer.",
+   "code": "icon := icons.Document()\nreturn basic.SizedBox{Width: 520, Child: nav.TabBar{\n\tLabel: \"Files\", Selected: 1,\n\tTabs: []nav.TabItem{\n\t\t{Key: \"readme\", Label: \"README.md\", Icon: icon, Modified: true},\n\t\t{Key: \"main\", Label: \"main.go\", Icon: icon},\n\t\t{Key: \"long\", Label: \"A long name that does not fit.txt\", Icon: icon},\n\t},\n\tOnSelect: func(int) {}, OnClose: func(int) {}, OnNew: func() {}, OnMove: func(int, int) {},\n}}",
+   "picture": "nav-tabbar",
+   "width": 544,
+   "height": 63
+  },
+  {
+   "name": "control.SplitPane",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "also": [
+    "control.SplitCollapse"
+   ],
+   "category": "desktop",
+   "ja": "2 つのペインを、ドラッグできる境界で分割するウィジェット。片方のペインは折りたためる。",
+   "en": "Two panes divided by a draggable divider. One of them can fold away.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{\n\t\tWidth: 480, Height: 200, Color: th.Color.Card, Radius: th.Radius.Group,\n\t\tBorder: paint.Stroke{Width: 1, Color: th.Color.Hair},\n\t\tChild: control.SplitPane{\n\t\t\tPosition: 160, Pixels: true, MinFirst: 120, MinSecond: 200, Collapsible: control.SplitCollapseFirst,\n\t\t\tFirst: basic.Container{Color: th.Color.Sidebar, Radius: th.Radius.Group, Padding: geom.All(theme.Space12),\n\t\t\t\tChild: basic.Text{Content: \"Sidebar\"}},\n\t\t\tSecond: basic.Padding{Insets: geom.All(theme.Space12), Child: basic.Text{Content: \"Drag the divider, or press Enter on it to fold the sidebar.\"}},\n\t\t},\n\t}\n})",
+   "picture": "control-splitpane",
+   "width": 512,
+   "height": 232
+  },
+  {
+   "name": "nav.DockLayout",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "also": [
+    "nav.DockPanel",
+    "nav.DockController",
+    "nav.DockArrangement",
+    "nav.DockNode",
+    "nav.DockZone"
+   ],
+   "category": "desktop",
+   "ja": "IDE のようにタブのグループを配置するウィジェット。境界をドラッグすると大きさが変わり、タブをドラッグするとグループ間や端へ移動できる。移動してもパネルの状態は保たれる。配置は `DockArrangement` として保存し、復元できる。",
+   "en": "Arranges groups of tabs as an IDE does. Dragging a divider resizes, and dragging a tab moves it between groups or to an edge, keeping its state. The arrangement saves and restores as a `DockArrangement`.",
+   "code": "panels := []nav.DockPanel{\n\t{ID: \"files\", Title: \"Files\", Build: note(\"go.mod\\nmain.go\\ndock.go\")},\n\t{ID: \"main\", Title: \"main.go\", Closable: true, Build: note(\"package main\")},\n\t{ID: \"dock\", Title: \"dock.go\", Closable: true, Build: note(\"package main\")},\n\t{ID: \"output\", Title: \"Output\", Closable: true, Build: note(\"$ go build ./...\")},\n}\nstart := nav.DockArrangement{Root: nav.DockNode{\n\tWeights: []float32{1, 3},\n\tChildren: []nav.DockNode{\n\t\t{Panels: []string{\"files\"}},\n\t\t{Axis: layout.Vertical, Weights: []float32{2, 1}, Children: []nav.DockNode{\n\t\t\t{Panels: []string{\"main\", \"dock\"}, Active: \"main\"},\n\t\t\t{Panels: []string{\"output\"}},\n\t\t}},\n\t},\n}}\nreturn basic.SizedBox{Width: 560, Height: 300, Child: nav.DockLayout{Panels: panels, Default: start, Label: \"Panels\"}}",
+   "picture": "nav-docklayout",
+   "width": 584,
+   "height": 324
+  },
+  {
+   "name": "basic.Row",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子を横に並べるレイアウト。`Main` で主軸方向、`Cross` で交差軸方向の揃え方を決め、`Spacing` で子の間隔を空ける。",
+   "en": "Lays out its children in a row. `Main` and `Cross` align them, and `Spacing` puts gaps between.",
+   "code": "basic.SizedBox{Width: 360, Child: basic.Row{Spacing: theme.Space8, Main: layout.MainSpaceBetween, Children: []core.Widget{\n\ttile(\"A\", 64, 40), tile(\"B\", 96, 40), tile(\"C\", 64, 40),\n}}}",
+   "picture": "basic-row",
+   "width": 392,
+   "height": 72
+  },
+  {
+   "name": "basic.Column",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子を縦に並べるレイアウト。`Size: layout.MainMin` を指定すると、中身の高さまで縮む。",
+   "en": "Lays out its children in a column. `Size: layout.MainMin` shrinks it to its content.",
+   "code": "basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space8, Children: []core.Widget{\n\ttile(\"First\", 160, 32), tile(\"Second\", 120, 32), tile(\"Third\", 200, 32),\n}}",
+   "picture": "basic-column",
+   "width": 232,
+   "height": 144
+  },
+  {
+   "name": "basic.Flex",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "`Axis` で方向を選べる、`Row` と `Column` の基になるレイアウト。並べる方向を実行時に変えたいときに使う。",
+   "en": "The `Row` and `Column` with its axis as a field, for a direction chosen at run time.",
+   "code": "axis := layout.Vertical // chosen at run time, as by the width of the window\nreturn basic.Flex{Axis: axis, Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\ttile(\"Flex\", 120, 32), tile(\"picks its axis\", 160, 32), tile(\"at run time\", 140, 32),\n}}",
+   "picture": "basic-flex",
+   "width": 192,
+   "height": 144
+  },
+  {
+   "name": "basic.Expanded",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "`Row` や `Column` の残りの領域を、`Flex` の比率で分け合って埋める。",
+   "en": "Fills the rest of a `Row` or `Column`, shared by the weights of `Flex`.",
+   "code": "basic.SizedBox{Width: 520, Child: basic.Row{Spacing: theme.Space8, Children: []core.Widget{\n\ttile(\"Fixed\", 80, 40),\n\tbasic.Expanded{Child: tile(\"Expanded takes the rest\", 0, 40)},\n\tbasic.Expanded{Flex: 2, Child: tile(\"Flex 2\", 0, 40)},\n}}}",
+   "picture": "basic-expanded",
+   "width": 544,
+   "height": 72
+  },
+  {
+   "name": "basic.Flexible",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "残りの領域を分け合うが、子は割り当てより小さくてもよい。`Fit: layout.FitTight` を指定すると `Expanded` と同じ動作になる。",
+   "en": "Shares the free space, but the child may stay smaller than its share. `Fit: layout.FitTight` makes it an `Expanded`.",
+   "code": "basic.SizedBox{Width: 420, Child: basic.Row{Spacing: theme.Space8, Children: []core.Widget{\n\tbasic.Flexible{Child: tile(\"Flexible stays small\", 140, 40)},\n\tbasic.Flexible{Fit: layout.FitTight, Child: tile(\"Tight fills its share\", 60, 40)},\n}}}",
+   "picture": "basic-flexible",
+   "width": 386,
+   "height": 72
+  },
+  {
+   "name": "basic.Stack",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "also": [
+    "basic.Positioned"
+   ],
+   "category": "layout",
+   "ja": "子を重ねて描くレイアウト。端からの位置は `Positioned` で指定する。",
+   "en": "Paints its children on top of each other. `Positioned` places a child from the edges.",
+   "code": "basic.SizedBox{Width: 240, Height: 140, Child: basic.Stack{Children: []core.Widget{\n\ttile(\"Below\", 200, 120),\n\tbasic.Positioned{Left: 120, Top: 70, Child: tile(\"On top\", 110, 60)},\n\tbasic.Positioned{AnchorRight: true, Right: 0, Top: 0, Child: control.Badge{Count: 2}},\n}}}",
+   "picture": "basic-stack",
+   "width": 272,
+   "height": 162
+  },
+  {
+   "name": "basic.PositionedFill",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子を `Stack` 全体に広げる。`Stack` の大きさは、ほかの子によって決まる。",
+   "en": "Stretches a child over the whole `Stack`, whose size the other children decide.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Stack{Children: []core.Widget{\n\t\tbasic.Image{Source: photo(), Width: 240},\n\t\tbasic.PositionedFill{Insets: geom.All(theme.Space8), Child: basic.Container{\n\t\t\tRadius: th.Radius.Control, Border: paint.Stroke{Width: 2, Color: geom.RGBA(1, 1, 1, 0.9)},\n\t\t}},\n\t}}\n})",
+   "picture": "basic-positionedfill",
+   "width": 272,
+   "height": 182
+  },
+  {
+   "name": "basic.Wrap",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "収まらない子を次の行に折り返す `Row`。タグやチップを並べるのに向く。",
+   "en": "A `Row` that starts a new run when the next child does not fit, for tags and chips.",
+   "code": "words := []string{\"Go\", \"GPU\", \"desktop\", \"cgo-free\", \"Flutter-style\", \"widgets\", \"Japanese text\", \"accessibility\"}\nchips := make([]core.Widget, len(words))\nfor i, w := range words {\n\tchips[i] = control.Chip{Label: w}\n}\nreturn basic.SizedBox{Width: 300, Child: basic.Wrap{Spacing: theme.Space8, RunSpacing: theme.Space8, Children: chips}}",
+   "picture": "basic-wrap",
+   "width": 313,
+   "height": 120
+  },
+  {
+   "name": "basic.Grid",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "同じ幅の列にタイルを並べるレイアウト。列数は固定するか、最小幅から決める。",
+   "en": "Lays out tiles in columns of the same width: a fixed number, or as many as a minimum width allows.",
+   "code": "tiles := make([]core.Widget, 6)\nfor i := range tiles {\n\ttiles[i] = tile(\"Tile \"+strconv.Itoa(i+1), 0, 0)\n}\nreturn basic.SizedBox{Width: 320, Child: basic.Grid{Columns: 3, Spacing: theme.Space8, RunSpacing: theme.Space8, TileHeight: 48, Children: tiles}}",
+   "picture": "basic-grid",
+   "width": 352,
+   "height": 136
+  },
+  {
+   "name": "basic.Padding",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子の周りに余白を空ける。",
+   "en": "Puts room around its child.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{Color: th.Color.Fill, Radius: th.Radius.Control, Child: basic.Padding{\n\t\tInsets: geom.Insets{Left: 24, Top: 12, Right: 24, Bottom: 12},\n\t\tChild:  tile(\"Child\", 120, 40),\n\t}}\n})",
+   "picture": "basic-padding",
+   "width": 200,
+   "height": 96
+  },
+  {
+   "name": "basic.Align",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "与えられた領域の中に子を配置する。位置は各軸 0〜1 で指定する（Flutter のような -1〜1 ではない）。",
+   "en": "Places its child within the space it is given, from 0 to 1 on each axis (not -1 to 1 as in Flutter).",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\tbox := func(a layout.Alignment, label string) core.Widget {\n\t\treturn basic.Container{Width: 120, Height: 80, Radius: th.Radius.Control, Color: th.Color.Fill,\n\t\t\tChild: basic.Align{Alignment: a, Child: tile(label, 48, 24)}}\n\t}\n\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\tbox(layout.AlignTopLeft, \"top left\"), box(layout.AlignCenter, \"center\"), box(layout.AlignBottomRight, \"end\"),\n\t}}\n})",
+   "picture": "basic-align",
+   "width": 408,
+   "height": 112
+  },
+  {
+   "name": "basic.Center",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子を中央に配置する。",
+   "en": "Places its child in the middle.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{Width: 240, Height: 100, Radius: th.Radius.Control, Color: th.Color.Fill,\n\t\tChild: basic.Center{Child: tile(\"Centered\", 100, 32)}}\n})",
+   "picture": "basic-center",
+   "width": 272,
+   "height": 132
+  },
+  {
+   "name": "basic.SizedBox",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "幅、高さ、またはその両方を固定する。子が無ければ空白になる。",
+   "en": "Forces a width, a height or both. Without a child it is an empty gap.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space8, Cross: layout.CrossStart, Children: []core.Widget{\n\tbasic.SizedBox{Width: 140, Height: 48, Child: tile(\"140 by 48\", 0, 0)},\n\tbasic.SizedBox{Width: 24}, // an empty gap\n\tbasic.SizedBox{Width: 80, Height: 80, Child: tile(\"80 by 80\", 0, 0)},\n}}",
+   "picture": "basic-sizedbox",
+   "width": 292,
+   "height": 112
+  },
+  {
+   "name": "basic.ConstrainedBox",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子の大きさに、最小値と最大値の制約を加える。",
+   "en": "Adds minimum and maximum sizes to its child.",
+   "code": "basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space8, Children: []core.Widget{\n\tbasic.ConstrainedBox{MinWidth: 160, Child: control.Button{Label: \"OK\", OnPress: func() {}}},\n\tbasic.ConstrainedBox{MaxWidth: 200, Child: basic.Text{Content: \"MaxWidth makes a long line of text wrap inside 200 pixels.\"}},\n}}",
+   "picture": "basic-constrainedbox",
+   "width": 212,
+   "height": 108
+  },
+  {
+   "name": "basic.Container",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "大きさ、余白、色、グラデーション、枠線、角丸、影をまとめて指定できる箱。",
+   "en": "A box that combines size, padding, color, gradient, border, corners and shadows.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\tbasic.Container{Width: 120, Height: 72, Radius: 12, Color: geom.Hex(0x2f5fd0),\n\t\tShadows: []paint.BoxShadow{{Color: geom.RGBA(0, 0, 0, 0.25), Blur: 12, Offset: geom.Offset{Y: 4}}}},\n\tbasic.Container{Width: 120, Height: 72, Radius: 12, Border: paint.Stroke{Width: 1.5, Color: geom.Hex(0x2f5fd0)},\n\t\tPadding: geom.All(12), Child: basic.Text{Content: \"Border\"}},\n\tbasic.Container{Width: 120, Height: 72, Radius: 36, Gradient: \u0026paint.Gradient{\n\t\tEnd: geom.Offset{X: 120, Y: 72}, StartColor: geom.Hex(0x7b8cff), EndColor: geom.Hex(0x2f5fd0),\n\t}},\n}}",
+   "picture": "basic-container",
+   "width": 432,
+   "height": 130
+  },
+  {
+   "name": "basic.DecoratedBox",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子の背後に `layout.Decoration` を描く。",
+   "en": "Paints a `layout.Decoration` behind its child.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.DecoratedBox{\n\t\tDecoration: layout.Decoration{Color: th.Color.Card, Radius: th.Radius.Group, Border: \u0026paint.Stroke{Width: 1, Color: th.Color.Hair}},\n\t\tChild:      basic.Padding{Insets: geom.All(theme.Space16), Child: basic.Text{Content: \"DecoratedBox paints behind its child\"}},\n\t}\n})",
+   "picture": "basic-decoratedbox",
+   "width": 276,
+   "height": 84
+  },
+  {
+   "name": "basic.Scroll",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "自分より大きい子を、ホイールとスクロールバーで動かして表示する。親が大きさを制約する必要がある。`Reverse` を指定すると右端（縦方向では下端）から始まり、長い縦書きの文章が最初の列から見える。`ScrollController` でコードから位置を読み書きできる。",
+   "en": "Shows a child larger than itself, moved by the wheel and a scroll bar. Its parent must bound its size. `Reverse` starts it at the right end, or the bottom, so that a long vertical text opens at its first column. A `ScrollController` reads and sets the offset from code.",
+   "code": "lines := make([]core.Widget, 12)\nfor i := range lines {\n\tlines[i] = basic.Text{Content: \"Line \" + strconv.Itoa(i+1) + \" of a column taller than its box\"}\n}\nreturn basic.SizedBox{Width: 300, Height: 140, Child: basic.Scroll{Child: basic.Column{\n\tSize: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space4, Children: lines,\n}}}",
+   "picture": "basic-scroll",
+   "width": 242,
+   "height": 163
+  },
+  {
+   "name": "basic.CustomLayout",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "`layout.Delegate` のアルゴリズムで子を配置する。",
+   "en": "Arranges its children with the algorithm of a `layout.Delegate`.",
+   "code": "basic.CustomLayout{Delegate: diagonal{step: 56}, Children: []core.Widget{\n\ttile(\"One\", 96, 32), tile(\"Two\", 96, 32), tile(\"Three\", 96, 32), tile(\"Four\", 96, 32),\n}}",
+   "picture": "basic-customlayout",
+   "width": 296,
+   "height": 165
+  },
+  {
+   "name": "basic.LayoutBuilder",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "親から渡された制約で中身を構築する。幅が狭いときは縦に、広いときは横に並べるといった、使える大きさに応じた切り替えに使う。中身を構築し直すのは、制約が変わったときと、親が構築し直したときだけである。",
+   "en": "Builds its content with the constraints its parent gives it, to change with the room it has, such as one pane above the other when narrow and side by side when wide. The content is built again only when the constraints change or the parent rebuilds.",
+   "code": "panes := basic.LayoutBuilder{Content: func(_ core.BuildContext, c layout.Constraints) core.Widget {\n\tif c.MaxW \u003c 300 { // narrow: one above the other\n\t\treturn basic.Column{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\ttile(\"List\", c.MaxW, 40), tile(\"Detail\", c.MaxW, 40),\n\t\t}}\n\t}\n\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\ttile(\"List\", 120, 88), tile(\"Detail\", c.MaxW-120-theme.Space8, 88),\n\t}}\n}}\nreturn basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Cross: layout.CrossStart, Children: []core.Widget{\n\tbasic.SizedBox{Width: 160, Child: panes},\n\tbasic.SizedBox{Width: 320, Child: panes},\n}}",
+   "picture": "basic-layoutbuilder",
+   "width": 528,
+   "height": 120
+  },
+  {
+   "name": "basic.AspectRatio",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "layout",
+   "ja": "子を `Ratio`（幅 ÷ 高さ）の比の大きさにする。使える幅いっぱいに広がり、高さが足りなければ高さに合わせる。tight な制約の下では比が効かないため、`Center` の中に置く。",
+   "en": "Sizes its child to a width over height of `Ratio`. It takes all the width it may, or all the height where that is too tall. Tight constraints leave no room for the ratio, so put it in a `Center`.",
+   "code": "// box is a 200 by 120 frame with the largest rectangle of ratio in it.\nbox := func(ratio float32, label string) core.Widget {\n\treturn basic.Container{\n\t\tWidth: 200, Height: 120, Padding: geom.All(theme.Space8),\n\t\tRadius: th.Radius.Control, Border: paint.Stroke{Width: 1, Color: th.Color.Hair},\n\t\tChild: basic.Center{Child: basic.AspectRatio{Ratio: ratio, Child: tile(label, 0, 0)}},\n\t}\n}\nreturn basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\tbox(16.0/9, \"16:9\"), // as wide as the frame\n\tbox(1, \"1:1\"),       // as tall as the frame\n}}",
+   "picture": "basic-aspectratio",
+   "width": 448,
+   "height": 152
+  },
+  {
+   "name": "basic.Opacity",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子を一様な透明度で描く。0 のときは、ポインタ、フォーカス、支援技術の対象からも外れる。",
+   "en": "Paints its child with a uniform transparency. At 0 the pointer, the focus and assistive technology skip it.",
+   "code": "accent := geom.Hex(0x2f5fd0)\nreturn basic.Row{Size: layout.MainMin, Spacing: theme.Space12, Children: []core.Widget{\n\tswatch(\"1.0\", accent),\n\tbasic.Opacity{Opacity: 0.6, Child: swatch(\"0.6\", accent)},\n\tbasic.Opacity{Opacity: 0.3, Child: swatch(\"0.3\", accent)},\n}}",
+   "picture": "basic-opacity",
+   "width": 356,
+   "height": 96
+  },
+  {
+   "name": "basic.Blend",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子を 1 枚の画像として、下に描かれたものと合成する。CSS の mix-blend-mode と同じ働きをする。",
+   "en": "Combines its child as one picture with what is below, as mix-blend-mode does in CSS.",
+   "code": "backdrop := basic.Container{Width: 280, Height: 80, Radius: 12, Gradient: \u0026paint.Gradient{\n\tEnd: geom.Offset{X: 280}, StartColor: geom.Hex(0xfde047), EndColor: geom.Hex(0x10b981),\n}}\nreturn basic.Stack{Children: []core.Widget{\n\tbackdrop,\n\tbasic.Positioned{Left: 10, Child: rings()},\n\tbasic.Positioned{Left: 150, Child: basic.Blend{Mode: paint.BlendMultiply, Child: rings()}},\n}}",
+   "picture": "basic-blend",
+   "width": 312,
+   "height": 112
+  },
+  {
+   "name": "basic.BackdropFilter",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "自分の下に描かれたものをぼかしてから、子を描く。すりガラスのような面に使う。",
+   "en": "Blurs what is painted below its box, then paints its child: frosted glass.",
+   "code": "basic.Stack{Children: []core.Widget{\n\tbusy(320, 120),\n\tbasic.Positioned{Left: 40, Top: 20, Child: basic.BackdropFilter{Sigma: 12, Radius: 16, Child: basic.Container{\n\t\tWidth: 240, Height: 80, Radius: 16, Color: geom.RGBA(1, 1, 1, 0.4), Padding: geom.All(16),\n\t\tChild: basic.Text{Content: \"Frosted glass\", Style: text.Style{Size: 16, Weight: 600, Color: geom.Hex(0x111111)}},\n\t}}},\n}}",
+   "picture": "basic-backdropfilter",
+   "width": 332,
+   "height": 152
+  },
+  {
+   "name": "basic.ImageFiltered",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子をぼかして描く。CSS の filter: blur() と同じ働きをする。",
+   "en": "Draws its child blurred, as filter: blur() does in CSS.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space24, Children: []core.Widget{\n\tbasic.Image{Source: photo(), Width: 140},\n\tbasic.ImageFiltered{Sigma: 3, Child: basic.Image{Source: photo(), Width: 140}},\n}}",
+   "picture": "basic-imagefiltered",
+   "width": 343,
+   "height": 133
+  },
+  {
+   "name": "basic.ShaderMask",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子を独自のシェーダーに通して描く。きらめき、波紋、色調の変更などに使う。",
+   "en": "Draws its child through a custom shader: shimmers, ripples, tints.",
+   "code": "// shaders.Shimmer is a shader of examples/shader, made by cmd/gowaku-shader.\nshimmer := paint.ShaderParams{0.5, 0.2, 0.35, 0, 1, 1, 1, 0.85}\nreturn basic.ShaderMask{Shader: shaders.Shimmer, Params: shimmer, Time: 1250 * time.Millisecond, Animate: true,\n\tChild: basic.Text{Content: \"gowaku\", Style: text.Style{Size: 56, Weight: 700, Color: geom.Hex(0x2f5fd0)}},\n}",
+   "picture": "basic-shadermask",
+   "width": 234,
+   "height": 87
+  },
+  {
+   "name": "basic.Transform",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子をアフィン変換で回転、傾斜、伸縮させる。ポインタと支援技術も、変換後の形に従う。",
+   "en": "Turns, slants or stretches its child with an affine transform. The pointer and assistive technology follow the picture.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space28, Children: []core.Widget{\n\tbasic.Rotate(0.2, swatch(\"Rotate\", geom.Hex(0x2f5fd0))),\n\tbasic.Skew(0.3, 0, swatch(\"Skew\", geom.Hex(0x10a37f))),\n\tbasic.Transform{Transform: geom.Scaling(1.2, 0.8), Origin: layout.AlignCenter, Child: swatch(\"Scale\", geom.Hex(0xd04a2f))},\n}}",
+   "picture": "basic-transform",
+   "width": 401,
+   "height": 111
+  },
+  {
+   "name": "basic.Translate",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子を、自分の大きさに対する割合だけずらして描く。遷移に使う軽量な移動。",
+   "en": "Paints its child moved by a fraction of its size: the cheap move of a transition.",
+   "code": "basic.Column{Size: layout.MainMin, Cross: layout.CrossStart, Spacing: theme.Space8, Children: []core.Widget{\n\ttile(\"In place\", 140, 32),\n\tbasic.Translate{X: 0.3, Child: tile(\"X: 0.3 of its width\", 140, 32)},\n}}",
+   "picture": "basic-translate",
+   "width": 214,
+   "height": 104
+  },
+  {
+   "name": "basic.ClipRRect",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "also": [
+    "basic.ClipRect"
+   ],
+   "category": "effects",
+   "ja": "子の描画を自分の箱の中に切り取る。`ClipRRect` は角を丸め、半径が 0 ならテーマのカードの角になる。ポインタも切り取った形の中でしか子に届かない。",
+   "en": "Cuts what its child paints to its box; `ClipRRect` rounds the corners, to the theme's card corners when Radius is 0. The pointer reaches the child only inside the cut shape.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: 40, Children: []core.Widget{\n\tpicture,\n\tbasic.ClipRect{Child: picture},\n\tbasic.ClipRRect{Child: picture},\n}}",
+   "picture": "basic-cliprrect",
+   "width": 532,
+   "height": 130
+  },
+  {
+   "name": "basic.Scale",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "`Origin` を中心に、子を拡大縮小して描く。遷移に使う軽量な拡大。",
+   "en": "Paints its child scaled around `Origin`: the cheap zoom of a transition.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space24, Children: []core.Widget{\n\ttile(\"1.0\", 80, 48),\n\tbasic.Scale{Scale: 0.8, Origin: layout.AlignCenter, Child: tile(\"0.8\", 80, 48)},\n\tbasic.Scale{Scale: 1.2, Origin: layout.AlignCenter, Child: tile(\"1.2\", 80, 48)},\n}}",
+   "picture": "basic-scale",
+   "width": 328,
+   "height": 90
+  },
+  {
+   "name": "control.CustomPaint",
+   "import": "github.com/bankai-tensei/gowaku/widgets/control",
+   "category": "effects",
+   "ja": "`layout.Painter` で自由に描画する。グラフやメーターなどに使う。",
+   "en": "Paints with a `layout.Painter`, for charts, meters and other shapes no widget offers.",
+   "code": "control.CustomPaint{Width: 240, Height: 100, Painter: layout.PainterFunc(func(cv *paint.Canvas, sz geom.Size) {\n\tbars := []float32{0.4, 0.7, 0.5, 0.9, 0.6, 0.8}\n\tw := sz.W / float32(len(bars))\n\tfor i, v := range bars {\n\t\tr := geom.Rect{X: float32(i)*w + 4, Y: sz.H * (1 - v), W: w - 8, H: sz.H * v}\n\t\tcv.DrawRRect(geom.RRectAll(r, 4), paint.Paint{Color: geom.Hex(0x2f5fd0).WithAlpha(0.4 + v*0.6)})\n\t}\n\tvar line paint.Path\n\tline.MoveTo(0, sz.H*0.7)\n\tline.QuadTo(sz.W/2, 0, sz.W, sz.H*0.4)\n\tcv.DrawPath(\u0026line, paint.Paint{Stroke: \u0026paint.Stroke{Width: 2, Color: geom.Hex(0xd04a2f)}})\n})}",
+   "picture": "control-custompaint",
+   "width": 274,
+   "height": 122
+  },
+  {
+   "name": "basic.RepaintBoundary",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "effects",
+   "ja": "子の描画を周囲から切り離し、片方が変化しても、もう片方を描き直さないようにする。",
+   "en": "Keeps the picture of its child apart, so a change on one side does not repaint the other.",
+   "code": "// A meter that changes on every frame keeps its repaints to itself.\nreturn basic.RepaintBoundary{Child: basic.SizedBox{Width: 200, Child: control.ProgressBar{Value: 0.45, Label: \"Level\"}}}",
+   "picture": "basic-repaintboundary",
+   "width": 232,
+   "height": 38
+  },
+  {
+   "name": "interact.FocusRing",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "effects",
+   "ja": "標準のコントロールと同じ、淡い 3px のフォーカスリングを描く。独自のコントロールに使う。",
+   "en": "Draws the pale 3px focus ring of the standard controls, for controls of your own.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn interact.FocusRing{Visible: true, Radius: th.Radius.Control, Child: basic.Container{\n\t\tWidth: 140, Height: 36, Radius: th.Radius.Control, Color: th.Color.AccentTint,\n\t\tChild: basic.Center{Child: basic.Text{Content: \"Focus ring\", Style: colored(th.Text.Control, th.Color.AccentInk)}},\n\t}}\n})",
+   "picture": "interact-focusring",
+   "width": 178,
+   "height": 74
+  },
+  {
+   "name": "basic.AnimatedContainer",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "animation",
+   "ja": "値が変わると、色、大きさ、余白、角丸、枠線、影を補間しながら変化する `Container`。",
+   "en": "A `Container` that moves to new colors, sizes, padding, corners, borders and shadows over time.",
+   "code": "expanded := true // a field of the State; SetState changes it\nw, c := float32(120), geom.Hex(0x8a8a8e)\nif expanded {\n\tw, c = 220, geom.Hex(0x2f5fd0)\n}\nreturn basic.AnimatedContainer{Duration: 250 * time.Millisecond, Width: w, Height: 48, Radius: 24, Color: c}",
+   "picture": "basic-animatedcontainer",
+   "width": 252,
+   "height": 80
+  },
+  {
+   "name": "basic.AnimatedOpacity",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "animation",
+   "ja": "新しい透明度へフェードする `Opacity`。",
+   "en": "An `Opacity` that fades to a new value.",
+   "code": "visible := false // a field of the State\nvar o float32 = 1\nif !visible {\n\to = 0.4\n}\nreturn basic.AnimatedOpacity{Opacity: o, Child: swatch(\"Fading\", geom.Hex(0x2f5fd0))}",
+   "picture": "basic-animatedopacity",
+   "width": 132,
+   "height": 96
+  },
+  {
+   "name": "basic.AnimatedAlign",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "animation",
+   "ja": "新しい位置へ移動する `Align`。",
+   "en": "An `Align` that moves to a new alignment.",
+   "code": "themed(func(th *theme.Theme) core.Widget {\n\treturn basic.Container{Width: 280, Height: 56, Radius: 28, Color: th.Color.Fill, Padding: geom.All(4),\n\t\tChild: basic.AnimatedAlign{Alignment: a, Child: basic.Container{Width: 48, Height: 48, Radius: 24, Color: th.Color.Accent}}}\n})",
+   "picture": "basic-animatedalign",
+   "width": 312,
+   "height": 88
+  },
+  {
+   "name": "basic.AnimatedPositioned",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "animation",
+   "ja": "`Stack` の中で新しい位置へ移動する `Positioned`。",
+   "en": "A `Positioned` that moves to a new place in its `Stack`.",
+   "code": "moved := true // a field of the State\nvar left float32 = 8\nif moved {\n\tleft = 160\n}\nreturn basic.SizedBox{Width: 260, Height: 80, Child: basic.Stack{Children: []core.Widget{\n\ttile(\"\", 260, 80),\n\tbasic.AnimatedPositioned{Left: left, Top: 16, Child: swatch(\"Moves\", geom.Hex(0x2f5fd0))},\n}}}",
+   "picture": "basic-animatedpositioned",
+   "width": 292,
+   "height": 112
+  },
+  {
+   "name": "basic.AnimatedSwitcher",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "also": [
+    "basic.SwitcherTransition"
+   ],
+   "category": "animation",
+   "ja": "子が替わると、クロスフェードやスライドで切り替える。同じ型の子は `core.Keyed` で区別する。",
+   "en": "Crossfades or slides from an old child to a new one. Tell children of one type apart with `core.Keyed`.",
+   "code": "page := 1 // a field of the State\nreturn basic.AnimatedSwitcher{\n\tDuration:   250 * time.Millisecond,\n\tTransition: basic.SlideTransition(0.04, 0),\n\tChild:      core.Keyed(page, tile(\"Page \"+strconv.Itoa(page+1), 200, 64)),\n}",
+   "picture": "basic-animatedswitcher",
+   "width": 232,
+   "height": 96
+  },
+  {
+   "name": "nav.Hero",
+   "import": "github.com/bankai-tensei/gowaku/widgets/nav",
+   "category": "animation",
+   "ja": "`Navigator` がページを切り替えるとき、同じ `Tag` を付けた子が、元の位置から新しい位置へ飛ぶように移動する。画像は遷移後のページを写したもの。",
+   "en": "When a `Navigator` changes pages, the child with the same `Tag` flies from one place to the other. The picture shows the page after landing.",
+   "code": "// In the row of the list:\nrow := basic.Row{Spacing: theme.Space12, Children: []core.Widget{nav.Hero{Tag: 1, Child: icon}, basic.Text{Content: \"Trip to Kyoto\"}}}\n// On the page the row opens, with the same Tag:\nheader := basic.Row{Spacing: theme.Space12, Children: []core.Widget{nav.Hero{Tag: 1, Child: big}, basic.Text{Content: \"Trip to Kyoto\"}}}",
+   "picture": "nav-hero",
+   "width": 392,
+   "height": 222
+  },
+  {
+   "name": "interact.GestureDetector",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子へのタップ、ダブルタップ、右クリック、長押し、ドラッグ（開始・移動・終了）、ピンチを通知する。少し動いただけの押下はタップのままで、ドラッグにはならない。`OnTapDownAt`、`OnTapAt`、`OnSecondaryTapAt` は、位置とともに押していた修飾キーも渡すので、Shift や Ctrl を押しながらのクリックも扱える。",
+   "en": "Reports taps, double taps, secondary taps, long presses, drags (start, update, end) and pinches on its child. A press that moves only a little stays a tap. `OnTapDownAt`, `OnTapAt` and `OnSecondaryTapAt` tell the modifier keys held along with the place, for a click with Shift or Ctrl.",
+   "code": "interact.GestureDetector{\n\tOnTap:            func() { /* select */ },\n\tOnDoubleTap:      func() { /* open */ },\n\tOnSecondaryTapAt: func(layout.Tap) { /* a menu where the press was */ },\n\tOnLongPress:      func(_ geom.Offset, _ input.PointerDevice) { /* more choices */ },\n\tOnDragUpdate:     func(_, _ geom.Offset) { /* move by the delta */ },\n\tChild:            tile(\"Tap me\", 120, 40),\n}"
+  },
+  {
+   "name": "interact.MouseRegion",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "ポインタの出入りを通知し、子の上でのカーソルの形を決める。",
+   "en": "Reports the pointer entering and leaving, and sets the cursor over its child.",
+   "code": "interact.MouseRegion{\n\tCursor:  input.CursorHand,\n\tOnEnter: func() { /* show the controls */ },\n\tOnExit:  func() { /* hide them */ },\n\tChild:   tile(\"Hover\", 120, 40),\n}"
+  },
+  {
+   "name": "interact.Listener",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子の上で起きたポインタのイベントをすべて渡す。ペンの筆圧も届くため、手描きの入力に使える。",
+   "en": "Hands every pointer event over its child to a function, with the pressure of a pen, for drawing.",
+   "code": "interact.Listener{\n\tOnPointer: func(e *core.PointerEvent) {\n\t\tswitch e.Kind {\n\t\tcase core.PointerDown:\n\t\t\t// start a stroke at e.Pos, as wide as e.Pressure for a pen\n\t\tcase core.PointerMove:\n\t\t\t// add e.Pos to the stroke while one is going\n\t\t}\n\t},\n\tChild: basic.SizedBox{Width: 300, Height: 200},\n}"
+  },
+  {
+   "name": "interact.Focus",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子がキーボード入力を受け取れるようにする。Tab キーは描画順にフォーカスを移す。",
+   "en": "Lets its child take the keyboard. Tab moves in the order of painting.",
+   "code": "interact.Focus{\n\tEnabled: true,\n\tOnKey: func(e *core.KeyEvent) bool {\n\t\treturn e.Key == input.KeySpace // handled; false passes it on\n\t},\n\tOnShowFocus: func(_ bool) { /* show a FocusRing while true */ },\n\tChild:       tile(\"Focusable\", 120, 40),\n}"
+  },
+  {
+   "name": "basic.IgnorePointer",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "behavior",
+   "ja": "ポインタを子に当てず、その下にあるものへ通す。",
+   "en": "Lets the pointer pass through its child to what is below.",
+   "code": "basic.Stack{Children: []core.Widget{\n\tcontrol.Button{Label: \"Still clickable\", OnPress: func() {}},\n\tbasic.IgnorePointer{Child: basic.Container{Width: 160, Height: 30, Color: geom.RGBA(1, 1, 1, 0.2)}},\n}}"
+  },
+  {
+   "name": "interact.Draggable",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子からデータをドラッグで持ち出す。同じウィンドウの中、別のウィンドウ、ほかのアプリへ渡せる。",
+   "en": "Drags data out of its child: to a `DragTarget`, another window or another program.",
+   "code": "interact.Draggable{\n\tData:      input.DragData{Text: \"notes.txt\"},\n\tAllowed:   input.DropCopy | input.DropMove,\n\tOnDragEnd: func(_ input.DropEffect) { /* remove the row on DropMove */ },\n\tChild:     tile(\"notes.txt\", 120, 32),\n}"
+  },
+  {
+   "name": "interact.DragTarget",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子にドロップされたテキストやファイルを受け取る。エクスプローラーやブラウザーなど、ほかのアプリからのドロップも受け付ける。",
+   "en": "Takes text or files dropped on its child, from this window or from programs such as Explorer or a browser.",
+   "code": "interact.DragTarget{\n\tKinds:   input.DataFiles,\n\tOnHover: func(_ bool) { /* light up while true */ },\n\tOnDrop:  func(_ input.DragData, _ geom.Offset) { /* open the files */ },\n\tChild:   tile(\"Drop files here\", 240, 120),\n}"
+  },
+  {
+   "name": "interact.Semantics",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子の意味を支援技術に伝え、スクリーンリーダーからの操作を受け付ける。標準のコントロールは、これを自前で備えている。",
+   "en": "Describes its child to assistive technology and does what a screen reader asks. The standard controls have their own.",
+   "code": "interact.Semantics{\n\tRole: semantics.RoleButton, Label: \"Play\", Hint: \"Plays the album from the start\",\n\tOnTap: func() { /* play */ },\n\tChild: basic.Icon{Path: triangleIcon()},\n}"
+  },
+  {
+   "name": "interact.ExcludeSemantics",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "子を支援技術から隠す。Web の aria-hidden に当たる。アバターの頭文字のような、飾りにすぎないテキストに使う。画面への描画とポインタの扱いは変わらない。",
+   "en": "Hides its child from assistive technology, as aria-hidden does, for text that only decorates, such as the initial in an avatar. It is still drawn and still takes the pointer.",
+   "code": "basic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t// The initial only decorates; the name beside it is read.\n\tinteract.ExcludeSemantics{Child: basic.Text{Content: \"S\"}},\n\tbasic.Text{Content: \"Sato Hana\"},\n}}"
+  },
+  {
+   "name": "interact.FocusTraversalOrder",
+   "import": "github.com/bankai-tensei/gowaku/widgets/interact",
+   "category": "behavior",
+   "ja": "HTML の tabindex のように、Tab キーで移動する順番を決める。",
+   "en": "Sets where the controls below it come in the order of Tab, as tabindex does in HTML.",
+   "code": "basic.Column{Children: []core.Widget{\n\tfield.Input{Label: \"Details\", OnChange: func(string) {}},\n\t// Tab reaches the search field first, wherever it is painted.\n\tinteract.FocusTraversalOrder{Order: 1, Child: field.Search{OnChange: func(string) {}}},\n}}"
+  },
+  {
+   "name": "basic.Builder",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "infrastructure",
+   "ja": "その位置の `BuildContext` で中身を構築する。上位にあるテーマなどを読み取るのに使う。",
+   "en": "Builds its content with the `BuildContext` of its place, to read what is above, such as the theme.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\tth := basic.ThemeOf(ctx)\n\treturn basic.Text{Content: \"Builder reads the theme above it\", Style: colored(th.Text.Title, th.Color.AccentInk)}\n}}",
+   "picture": "basic-builder",
+   "width": 279,
+   "height": 45
+  },
+  {
+   "name": "basic.Theme",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "category": "infrastructure",
+   "ja": "配下のウィジェットの見た目を決める。ウィンドウの一部だけアクセントの色を変えたいときに使う。",
+   "en": "Gives the widgets below it their look, for a part of the window with another accent.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\tgreen := theme.FromAccent(geom.Hex(0x1f8a5b)).For(basic.MediaQueryOf(ctx).Brightness)\n\treturn basic.Row{Size: layout.MainMin, Spacing: theme.Space16, Children: []core.Widget{\n\t\tcontrol.Button{Label: \"Window accent\", Style: control.ButtonPrimary, OnPress: func() {}},\n\t\tbasic.Theme{Data: green, Child: basic.Row{Size: layout.MainMin, Spacing: theme.Space8, Children: []core.Widget{\n\t\t\tcontrol.Button{Label: \"Green accent\", Style: control.ButtonPrimary, OnPress: func() {}},\n\t\t\tcontrol.Switch{Value: true, Label: \"Green\", OnChange: func(bool) {}},\n\t\t}}},\n\t}}\n}}",
+   "picture": "basic-theme",
+   "width": 332,
+   "height": 64
+  },
+  {
+   "name": "basic.MediaQuery",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "also": [
+    "basic.MediaQueryData"
+   ],
+   "category": "infrastructure",
+   "ja": "ウィンドウの明るさ、表示倍率、動きを減らす設定、ロケール、内容の領域の大きさを配下に伝える。大きさは `basic.WindowSizeOf` で読むと、ウィンドウの大きさが変わったときにそのウィジェットだけが再構築される。この例ではロケールを英国にして、週を月曜から始めている。",
+   "en": "Tells the widgets below about the window: brightness, scale, reduced motion, locale and the size of its content area. A widget that reads the size with `basic.WindowSizeOf` is rebuilt when the window is resized, and only it. Here the British locale starts the week on Monday.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\tdata := basic.MediaQueryOf(ctx)\n\tdata.Locale = language.BritishEnglish // weeks start on Monday\n\treturn basic.MediaQuery{Data: data, Child: field.Calendar{\n\t\tValue: time.Date(2026, time.November, 9, 0, 0, 0, 0, time.UTC), OnChange: func(time.Time) {},\n\t}}\n}}",
+   "picture": "basic-mediaquery",
+   "width": 247,
+   "height": 263
+  },
+  {
+   "name": "basic.Localizations",
+   "import": "github.com/bankai-tensei/gowaku/widgets/basic",
+   "also": [
+    "basic.Strings"
+   ],
+   "category": "infrastructure",
+   "ja": "標準のウィジェットが使う文言の表を渡す。日本語と英語は同梱されており、ほかの言語は `Strings` を追加する。",
+   "en": "Hands the standard widgets the words of their locale. Japanese and English are bundled; add `Strings` for others.",
+   "code": "german := \u0026basic.Strings{Language: language.German, Today: \"Heute\", Clear: \"Löschen\"}\nreturn basic.Localizations{Strings: []*basic.Strings{german}, Child: field.DatePicker{\n\tShowToday: true, ShowClear: true, OnChange: func(time.Time) {},\n}}"
+  },
+  {
+   "name": "overlay.Overlay",
+   "import": "github.com/bankai-tensei/gowaku/widgets/overlay",
+   "also": [
+    "overlay.Entry",
+    "overlay.Host"
+   ],
+   "category": "infrastructure",
+   "ja": "子の上に項目を重ねて表示する場所。ダイアログやメニューもここに表示される。",
+   "en": "A place to show entries on top of its child. Dialogs and menus show there too.",
+   "code": "basic.Builder{Content: func(ctx core.BuildContext) core.Widget {\n\treturn control.Button{Label: \"Show a hint\", OnPress: func() {\n\t\tvar entry *overlay.Entry\n\t\tentry = overlay.Of(ctx).Insert(func() core.Widget {\n\t\t\treturn basic.Positioned{Left: 16, Top: 16, Child: control.Button{Label: \"Close the hint\", OnPress: func() { entry.Remove() }}}\n\t\t})\n\t}}\n}}"
+  }
+ ]
+}

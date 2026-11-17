@@ -1,0 +1,15 @@
+name: Feature request
+description: A widget, an option or a platform feature that is missing.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to build, and what stops you today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How you imagine the API (optional)
+      render: go

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="example_shortcut_v1">
+  <copyright>
+    Written for the example of gowaku-bindgen. It is not a real protocol:
+    it stands for one that only a particular compositor offers.
+    Same license as gowaku.
+  </copyright>
+
+  <interface name="example_shortcut_manager_v1" version="2">
+    <description summary="registers global shortcuts"/>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the manager"/>
+    </request>
+
+    <request name="register">
+      <description summary="ask for a shortcut while the surface exists"/>
+      <arg name="id" type="new_id" interface="example_shortcut_v1"/>
+      <arg name="surface" type="object" interface="wl_surface"/>
+      <arg name="name" type="string"/>
+      <arg name="preferred_trigger" type="string" allow-null="true"/>
+    </request>
+
+    <enum name="error">
+      <entry name="already_registered" value="0" summary="the name is taken"/>
+    </enum>
+  </interface>
+
+  <interface name="example_shortcut_v1" version="2">
+    <description summary="a global shortcut"/>
+
+    <request name="destroy" type="destructor">
+      <description summary="give the shortcut up"/>
+    </request>
+
+    <event name="pressed">
+      <description summary="the shortcut was pressed"/>
+      <arg name="serial" type="uint"/>
+      <arg name="time" type="uint"/>
+    </event>
+
+    <event name="released">
+      <description summary="the shortcut was released"/>
+      <arg name="time" type="uint"/>
+    </event>
+
+    <event name="trigger" since="2">
+      <description summary="what the user presses, as text"/>
+      <arg name="description" type="string"/>
+    </event>
+  </interface>
+</protocol>

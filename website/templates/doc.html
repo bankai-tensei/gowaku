@@ -1,0 +1,30 @@
+{{define "sidebar"}}<aside class="side" id="side">
+  {{range .Nav}}<div class="side-group">
+    <h4>{{.Title}}</h4>
+    {{range .Links}}<a href="{{.URL}}"{{if .On}} class="on" aria-current="page"{{end}}>{{.Title}}</a>{{end}}
+  </div>{{end}}
+</aside>{{end}}
+
+{{define "toc"}}{{if .TOC}}<aside class="toc">
+  <h4>{{t .Lang "toc"}}</h4>
+  {{range .TOC}}<a class="l{{.Level}}" href="#{{.ID}}">{{.Text}}</a>{{end}}
+</aside>{{end}}{{end}}
+
+{{define "doc"}}{{template "head" .}}
+<div class="shell">
+  <button class="side-toggle" type="button" aria-controls="side" aria-expanded="false">{{t .Lang "nav.menu"}}</button>
+  {{template "sidebar" .}}
+  <main class="doc">
+    <article class="prose">
+      <h1>{{.Title}}</h1>
+      {{.Body}}
+    </article>
+    {{if or .Prev .Next}}<nav class="pager">
+      {{with .Prev}}<a class="prev" href="{{.URL}}"><small>{{t $.Lang "prev"}}</small>{{.Title}}</a>{{else}}<span></span>{{end}}
+      {{with .Next}}<a class="next" href="{{.URL}}"><small>{{t $.Lang "next"}}</small>{{.Title}}</a>{{end}}
+    </nav>{{end}}
+    <p class="edit"><a href="{{.Edit}}">{{t .Lang "edit"}}</a></p>
+  </main>
+  {{template "toc" .}}
+</div>
+{{template "foot" .}}{{end}}

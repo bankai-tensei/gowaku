@@ -1,0 +1,14 @@
+# Build output
+*.exe
+*.test
+*.out
+examples/bench/bin/
+
+# Profiles
+*.prof
+*.cpu
+*.heap
+
+# Local tool settings and notes, kept out of the repository
+.claude/
+CLAUDE.md

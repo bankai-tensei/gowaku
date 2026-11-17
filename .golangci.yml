@@ -1,0 +1,342 @@
+# golangci-lint v2 設定。規約は docs/CODING_STYLE.md。
+version: "2"
+
+run:
+  timeout: 5m
+  build-tags:
+    - gowakudebug
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - copyloopvar
+    - depguard
+    - errorlint
+    - gocritic
+    - misspell
+    - prealloc
+    - revive
+    - unconvert
+  settings:
+    depguard:
+      rules:
+        # §3.1: core / layout / paint / text / theme / motion は gpu と platform を知らない
+        no-backend-above-render:
+          files:
+            - "**/core/**"
+            - "**/layout/**"
+            - "**/paint/**"
+            - "**/icons/**"
+            - "**/text/**"
+            - "**/theme/**"
+            - "**/motion/**"
+            - "**/widgets/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/gpu
+              desc: "upper layers must not import gpu (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/platform
+              desc: "upper layers must not import platform (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/render
+              desc: "upper layers must not import render (CODING_STYLE §3.1)"
+        # §3.1: core は layout / widgets / motion / theme を知らない
+        core-knows-nothing-above:
+          files:
+            - "**/core/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/layout
+              desc: "core must not import layout; layout implements core (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets
+              desc: "core must not import widgets (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/motion
+              desc: "core must not import motion (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/theme
+              desc: "core must not import theme (CODING_STYLE §3.1)"
+        # §3.1: semantics は geom 以外を知らない（ADR 0042）
+        semantics-knows-only-geom:
+          files:
+            - "**/semantics/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/core
+              desc: "semantics sits below core (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/platform
+              desc: "semantics sits below platform (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/layout
+              desc: "semantics sits below layout (CODING_STYLE §3.1)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets
+              desc: "semantics sits below widgets (CODING_STYLE §3.1)"
+        # §3.1: icons は paint と geom だけを知る（ADR 0127）
+        icons-knows-only-paint:
+          files:
+            - "**/icons/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/core
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/layout
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/text
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/theme
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/motion
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/semantics
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/input
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets
+              desc: "icons sits just above paint (CODING_STYLE §3.1, ADR 0127)"
+        # ADR 0081: widgets の層。下の層だけを import する（同じ段の間も禁止）
+        widgets-kit-imports-below:
+          files:
+            - "**/widgets/internal/kit/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/basic$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/interact$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/internal/behavior$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/control$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/overlay$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/internal/kit must import only lower layers (ADR 0081)"
+        widgets-basic-imports-below:
+          files:
+            - "**/widgets/basic/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/interact$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/internal/behavior$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/control$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/overlay$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/basic must import only lower layers (ADR 0081)"
+        widgets-interact-imports-below:
+          files:
+            - "**/widgets/interact/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/internal/behavior$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/control$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/overlay$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/interact must import only lower layers (ADR 0081)"
+        widgets-behavior-imports-below:
+          files:
+            - "**/widgets/internal/behavior/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/control$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/overlay$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/internal/behavior must import only lower layers (ADR 0081)"
+        widgets-control-imports-below:
+          files:
+            - "**/widgets/control/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/overlay$
+              desc: "widgets/control must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/control must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/control must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/control must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/control must import only lower layers (ADR 0081)"
+        widgets-overlay-imports-below:
+          files:
+            - "**/widgets/overlay/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/overlay must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/overlay must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/overlay must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/overlay must import only lower layers (ADR 0081)"
+        widgets-field-imports-below:
+          files:
+            - "**/widgets/field/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/nav$
+              desc: "widgets/field must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/field must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/field must import only lower layers (ADR 0081)"
+        widgets-nav-imports-below:
+          files:
+            - "**/widgets/nav/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/field$
+              desc: "widgets/nav must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/nav must import only lower layers (ADR 0081)"
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/nav must import only lower layers (ADR 0081)"
+        widgets-collection-imports-below:
+          files:
+            - "**/widgets/collection/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/editor$
+              desc: "widgets/collection must import only lower layers (ADR 0081)"
+        widgets-editor-imports-below:
+          files:
+            - "**/widgets/editor/**"
+          deny:
+            - pkg: github.com/bankai-tensei/gowaku/widgets/collection$
+              desc: "widgets/editor must import only lower layers (ADR 0081)"
+        # §8: unsafe / syscall / purego は platform と gpu の実装だけ
+        unsafe-only-at-boundary:
+          files:
+            - "$all"
+            - "!**/platform/win32/**"
+            - "!**/platform/x11/**"
+            - "!**/platform/wayland/**"
+            - "!**/platform/cocoa/**"
+            - "!**/gpu/d3d11/**"
+            - "!**/gpu/vulkan/**"
+            - "!**/gpu/metal/**"
+          deny:
+            - pkg: unsafe
+              desc: "unsafe is allowed only in platform/* and gpu/* implementations (CODING_STYLE §8)"
+            - pkg: syscall
+              desc: "syscall is allowed only in platform/* and gpu/* implementations (CODING_STYLE §8)"
+            - pkg: golang.org/x/sys
+              desc: "x/sys is allowed only in platform/* and gpu/* implementations (CODING_STYLE §8)"
+            - pkg: github.com/ebitengine/purego
+              desc: "purego is allowed only in platform/* and gpu/* implementations (CODING_STYLE §8)"
+        # §6, §9: log / context / reflect の制限
+        forbidden-stdlib:
+          files:
+            - "$all"
+            - "!**/internal/cmd/**"
+            - "!**/examples/**"
+          deny:
+            - pkg: log$
+              desc: "use log/slog at Debug level during init only (CODING_STYLE §6)"
+            - pkg: context
+              desc: "UI has no request scope; use Ticker / Dispose (CODING_STYLE §5.3)"
+        no-reflect-outside-core:
+          files:
+            - "$all"
+            - "!**/core/**"
+            - "!**/internal/testutil/**"
+            # The Inspector of -tags gowakudebug shows the fields of widgets (ADR 0073).
+            - "!**/internal/inspect/**"
+          deny:
+            - pkg: reflect
+              desc: "reflect is allowed only for type identity in core (CODING_STYLE §5.2)"
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam # Widget は値型で渡す設計（§5.1）
+        - unnamedResult
+        - commentedOutCode
+    revive:
+      rules:
+        - name: exported
+          arguments: ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters"]
+        - name: package-comments
+        - name: var-naming
+        - name: receiver-naming
+        - name: unused-parameter
+        - name: error-strings
+        - name: error-naming
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: superfluous-else
+        - name: unexported-return
+        - name: time-naming
+        - name: context-as-argument
+        - name: empty-block
+    staticcheck:
+      checks: ["all"]
+    errcheck:
+      check-blank: true # `_ = f()` にはコメントで理由を書く（§6）
+      # 第 3 戻り値は呼び出し前から残っている GetLastError で、成否は第 1 戻り値が示す。
+      # 第 1 戻り値は errcheck の対象にならないので、確認は呼び出し側のコードで行う。
+      exclude-functions:
+        - syscall.SyscallN
+        - (*golang.org/x/sys/windows.LazyProc).Call
+    misspell:
+      locale: US
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gocritic
+          - prealloc
+      - path: "examples/"
+        linters:
+          - revive
+      # §8: OS の定数・構造体・vtable 定数はヘッダの名前をそのまま使う（検索できることを優先）
+      - path: "platform/win32/|platform/x11/|platform/wayland/|platform/cocoa/|platform/internal/keysym/|gpu/d3d11/|gpu/vulkan/|gpu/metal/"
+        linters:
+          - revive
+        text: "var-naming|name will be used as"
+      - path: "platform/win32/|platform/x11/|platform/wayland/|platform/cocoa/|platform/internal/keysym/|gpu/d3d11/|gpu/vulkan/|gpu/metal/"
+        linters:
+          - staticcheck
+        text: "ST1003"
+      # §8: ABI 構造体は C と同じ形を保つので、使わないフィールドも残す。名前はヘッダのまま
+      - path: 'gpu/vulkan/abi[.]go|gpu/vulkan/loader_|platform/x11/abi_linux[.]go|gpu/metal/abi_darwin[.]go'
+        linters:
+          - unused
+      - path: 'gpu/vulkan/abi[.]go'
+        linters:
+          - revive
+        text: "exported"
+      # 生成ファイルは対象外
+      - path: "\\.pb\\.go|_gen\\.go|/shaders\\.go|platform/wayland/protocol_linux\\.go|platform/wayland/vpointer_gpu_linux_test\\.go"
+        linters:
+          - revive
+          - gocritic
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - github.com/bankai-tensei/gowaku

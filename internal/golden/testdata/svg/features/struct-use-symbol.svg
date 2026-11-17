@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" viewBox="0 0 200 200">
+  <style>
+    .tile { fill: #0a84ff; }
+    g.warm > .tile { fill: #ff9f0a; }
+    #special { fill: #30d158 !important; }
+    rect.outline { fill: none; stroke: #1d1d1f; stroke-width: 3; }
+    @media print { .tile { fill: black; } }
+  </style>
+  <defs>
+    <symbol id="badge" viewBox="0 0 10 10">
+      <circle cx="5" cy="5" r="4.5" class="tile"/>
+      <path d="M3 5.2l1.4 1.4L7.2 3.6" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <rect id="cell" width="40" height="40" rx="6" class="tile"/>
+  </defs>
+  <use href="#cell" x="10" y="10"/>
+  <use xlink:href="#cell" x="60" y="10" style="fill:red"/>
+  <g class="warm"><use href="#cell" x="110" y="10"/><rect class="tile" x="160" y="10" width="30" height="40"/></g>
+  <rect id="special" class="tile" x="10" y="60" width="40" height="40" style="fill:red"/>
+  <use href="#badge" x="60" y="60" width="40" height="40"/>
+  <use href="#badge" x="110" y="60" width="80" height="40"/>
+  <rect class="outline" x="12" y="112" width="176" height="76" rx="10"/>
+  <use href="#row" y="0"/>
+  <g id="row" transform="translate(20 125)">
+    <use href="#badge" width="50" height="50"/>
+    <use href="#badge" x="55" width="50" height="50" class="warm"/>
+    <use href="#badge" x="110" width="50" height="50"/>
+  </g>
+</svg>

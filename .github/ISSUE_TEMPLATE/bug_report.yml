@@ -1,0 +1,37 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: The smallest program that shows it
+      render: go
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and version (and Wayland or X11 on Linux)
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+  - type: input
+    id: go
+    attributes:
+      label: Go version and gowaku version
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else (input method, screenshots, logs)

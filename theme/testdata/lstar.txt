@@ -1,0 +1,56 @@
+# Extracted mechanically from github.com/material-foundation/material-color-utilities
+# at commit 194144d75ed7d34f06264a625e086db81a7ab9aa (Apache-2.0, Copyright Google LLC).
+# Source: dart/test/color_utils_test.dart (yFromLstar, lstarFromY, tolerance 1e-5)
+# function input want
+y_from_lstar 0.0 0.0
+y_from_lstar 0.1 0.0110705
+y_from_lstar 0.2 0.0221411
+y_from_lstar 0.3 0.0332116
+y_from_lstar 0.4 0.0442822
+y_from_lstar 0.5 0.0553528
+y_from_lstar 1.0 0.1107056
+y_from_lstar 2.0 0.2214112
+y_from_lstar 3.0 0.3321169
+y_from_lstar 4.0 0.4428225
+y_from_lstar 5.0 0.5535282
+y_from_lstar 8.0 0.8856451
+y_from_lstar 10.0 1.1260199
+y_from_lstar 15.0 1.9085832
+y_from_lstar 20.0 2.9890524
+y_from_lstar 25.0 4.4154767
+y_from_lstar 30.0 6.2359055
+y_from_lstar 40.0 11.2509737
+y_from_lstar 50.0 18.4186518
+y_from_lstar 60.0 28.1233342
+y_from_lstar 70.0 40.7494157
+y_from_lstar 80.0 56.6812907
+y_from_lstar 90.0 76.3033539
+y_from_lstar 95.0 87.6183294
+y_from_lstar 99.0 97.4360239
+y_from_lstar 100.0 100.0
+lstar_from_y 0.0 0.0
+lstar_from_y 0.1 0.9032962
+lstar_from_y 0.2 1.8065925
+lstar_from_y 0.3 2.7098888
+lstar_from_y 0.4 3.6131851
+lstar_from_y 0.5 4.5164814
+lstar_from_y 0.8856451 8.0
+lstar_from_y 1.0 8.9914424
+lstar_from_y 2.0 15.4872443
+lstar_from_y 3.0 20.0438970
+lstar_from_y 4.0 23.6714419
+lstar_from_y 5.0 26.7347653
+lstar_from_y 10.0 37.8424304
+lstar_from_y 15.0 45.6341970
+lstar_from_y 20.0 51.8372115
+lstar_from_y 25.0 57.0754208
+lstar_from_y 30.0 61.6542222
+lstar_from_y 40.0 69.4695307
+lstar_from_y 50.0 76.0692610
+lstar_from_y 60.0 81.8381891
+lstar_from_y 70.0 86.9968642
+lstar_from_y 80.0 91.6848609
+lstar_from_y 90.0 95.9967686
+lstar_from_y 95.0 98.0335184
+lstar_from_y 99.0 99.6120372
+lstar_from_y 100.0 100.0

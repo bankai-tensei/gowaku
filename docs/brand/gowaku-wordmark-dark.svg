@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 10 466 162" width="932" height="324">
+  <title>gowaku</title>
+  <g fill="none" stroke="#f5f5f7" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="60" cy="90" r="24"/>
+    <path d="M84 66 V128 A24 24 0 0 1 60 152 H40"/>
+    <rect x="112" y="66" width="48" height="48" rx="16"/>
+    <path d="M188 66 L204 114 L220 80 L236 114 L252 66"/>
+    <circle cx="304" cy="90" r="24"/>
+    <path d="M328 66 V114"/>
+    <path d="M356 30 V114 M386 66 L359 93 M369 85 L389 114"/>
+    <path d="M417 66 V90 A22 22 0 0 0 461 90 M461 66 V114"/>
+  </g>
+  <rect x="130" y="84" width="12" height="12" rx="3.5" fill="#2f6bff"/>
+</svg>

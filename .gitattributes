@@ -1,0 +1,7 @@
+# Goldens and sources compare byte by byte, also on Windows.
+* text=auto eol=lf
+
+# Compiled shaders.
+*.dxbc binary
+*.spv binary
+*.png binary

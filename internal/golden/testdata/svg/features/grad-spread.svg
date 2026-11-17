@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="pad" x1="0.4" x2="0.6">
+      <stop offset="0" stop-color="#ff453a"/>
+      <stop offset="0.5" stop-color="#ffd60a"/>
+      <stop offset="1" stop-color="#0a84ff"/>
+    </linearGradient>
+    <linearGradient id="reflect" href="#pad" spreadMethod="reflect"/>
+    <linearGradient id="repeat" href="#pad" spreadMethod="repeat" x1="0.3" y2="0.3"/>
+    <radialGradient id="rings" r="0.15" spreadMethod="repeat">
+      <stop offset="0" stop-color="#5e5ce6"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </radialGradient>
+    <radialGradient id="waves" r="0.2" spreadMethod="reflect" gradientTransform="translate(0.5 0.5) scale(1 0.5) translate(-0.5 -0.5)">
+      <stop offset="0" stop-color="#30d158"/>
+      <stop offset="1" stop-color="#1d1d1f"/>
+    </radialGradient>
+  </defs>
+  <rect x="10" y="10" width="180" height="36" fill="url(#pad)"/>
+  <rect x="10" y="52" width="180" height="36" fill="url(#reflect)"/>
+  <rect x="10" y="94" width="180" height="36" fill="url(#repeat)"/>
+  <circle cx="52" cy="164" r="30" fill="url(#rings)"/>
+  <rect x="96" y="136" width="94" height="56" rx="6" fill="url(#waves)"/>
+</svg>
