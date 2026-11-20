@@ -19,6 +19,7 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 - Editor: every edit with a search open copied all the matches after the edited lines into a new slice, megabytes a keystroke with 100,000 matches; they now move in place.
 - Editor: `Controller.ReplaceAll` replaced the matches one at a time, each moving the lines or the pieces of a file after it and, in an editor that wraps, counting the rows of every line again, so that 100,000 matches took from seconds to minutes. It now makes the new lines in one pass over the matched lines and changes the text in one step; Undo still takes it back at once.
 - `layout.MeasuredExtents.Resize` rebuilt its trees over every row whenever the count changed, so a `List` with `MeasureItems` that gained one row walked all of them. Adding k rows at the end now costs O(k log n), and dropping rows O(log n).
+- `collection.Table` with `RowKey` and `GridView` with `ItemKey` called the key for every row when one row was added or removed at the end, to find the selection again. When the selected rows, the focus and the anchor are still at their indexes, the selection now stays without looking further, and an unchanged build calls the key once per selected row instead of twice.
 
 ## [0.1.0] - 2026-11-18
 
