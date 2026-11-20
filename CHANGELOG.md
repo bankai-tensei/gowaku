@@ -7,6 +7,7 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 ### Fixed
 
 - SVG: an arc whose numbers sweep no angle, or overflow, panicked with an index out of range; it is now drawn as a line. A large `stroke-dashoffset` over a short `stroke-dasharray` could loop forever; the offset is now reduced in float64, and a pattern whose length is not finite draws the stroke solid.
+- Layers of `RepaintBoundary` that left the tree stayed in the renderer's layer pool for good, and with them the boundary and its whole subtree, so that scrolling a `List` or `GridView` leaked every row that had shown. Entries not drawn for 120 frames are now dropped. `Canvas.Reset` and the render children of an element no longer keep references past their length.
 
 ## [0.1.0] - 2026-11-18
 

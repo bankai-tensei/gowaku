@@ -125,7 +125,7 @@ func (g *Resources) layerTexture(t *paint.ShaderTexture, op *paint.Op, scale flo
 		return nil, gpu.ShaderTexture{}, false
 	}
 	pool := &g.shaderLayers
-	e := pool.entry(t.Layer)
+	e := pool.entry(t.Layer, g.frame)
 	g.shaderDepth++
 	// It is drawn as one picture, which keeps it from waiting for calm.
 	g.refresh(pool, t.Layer, e, scale, true)

@@ -194,7 +194,8 @@ func (el *element) syncRenderChildren() {
 	switch {
 	case el.multi:
 		list := el.roChildren
-		changed := len(list) != len(el.children)
+		old := len(list)
+		changed := old != len(el.children)
 		list = list[:0]
 		for i, c := range el.children {
 			ro := renderObjectOf(c)
@@ -202,6 +203,11 @@ func (el *element) syncRenderChildren() {
 				changed = true
 			}
 			list = append(list, ro)
+		}
+		// The children that left must not stay reachable from the end of
+		// the array.
+		if len(list) < old {
+			clear(list[len(list):old])
 		}
 		el.roChildren = list
 		if changed {
