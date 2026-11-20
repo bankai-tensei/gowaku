@@ -149,6 +149,42 @@ func TestMeasuredExtents_CountsMeasuredRows(t *testing.T) {
 	}
 }
 
+// TestMeasuredExtents_ResizeAtTheEndKeepsTheRows checks that rows added or
+// dropped at the end do not walk the rows before them: a node of the trees
+// that only rows kept make up is left as it was, so a mark put in one stays.
+func TestMeasuredExtents_ResizeAtTheEndKeepsTheRows(t *testing.T) {
+	const n = 1 << 12
+	var m MeasuredExtents
+	m.Resize(n + 100) // room, so that growing again does not copy
+	m.Resize(n)
+	m.SetEstimate(10, false)
+	for i := 0; i < n; i += 3 {
+		m.Set(i, 20)
+	}
+	// Node 1 holds row 0 alone; nothing at the end touches it.
+	mark := m.sums[1]
+	m.sums[1] = -12345
+	m.Resize(n + 1)
+	m.Resize(n + 50)
+	m.Resize(n - 7)
+	if m.sums[1] != -12345 {
+		t.Fatal("Resize walked the rows it kept")
+	}
+	m.sums[1] = mark
+
+	s := &slowMeasured{h: make([]float32, n-7), est: 10}
+	for i := range s.h {
+		s.h[i] = -1
+		if i%3 == 0 {
+			s.h[i] = 20
+		}
+	}
+	checkMeasured(t, 0, &m, s)
+	if got, want := m.MeasuredCount(), (n-7+2)/3; got != want {
+		t.Fatalf("MeasuredCount = %d, want %d", got, want)
+	}
+}
+
 func TestMeasuredExtents_NegativeHeightPanics(t *testing.T) {
 	defer func() {
 		if recover() == nil {
