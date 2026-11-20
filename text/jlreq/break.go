@@ -72,10 +72,16 @@ type Options struct {
 	TabStop float32
 }
 
-// Unit is what a line cannot split: one grapheme cluster.
+// Unit is what a line cannot split: one grapheme cluster, or a group of them
+// that has to stay together, as the base of group ruby does.
 type Unit struct {
-	// Rune is the first rune of the cluster.
+	// Rune is the first rune of the cluster. It decides how the unit meets
+	// the one before it.
 	Rune rune
+	// Last is the last rune of a group whose ends differ in class, as the
+	// base of 「AI時代」 does. It decides how the unit meets the one after
+	// it. Zero means Rune.
+	Last rune
 	// Advance is the width of the cluster as shaped.
 	Advance float32
 	// Em is the font size of the cluster.
@@ -99,6 +105,14 @@ type Unit struct {
 	// characters beside it, and must not reach past the head or the end of
 	// the line (JLReq 3.3.6): there the base takes the room itself.
 	StartExtra, EndExtra float32
+}
+
+// last returns the rune that decides how u meets the unit after it.
+func (u *Unit) last() rune {
+	if u.Last != 0 {
+		return u.Last
+	}
+	return u.Rune
 }
 
 // Line is one line of the result.
@@ -127,9 +141,12 @@ type Breaker struct {
 	// a tab the distance to the next stop.
 	Advance []float32
 
-	class  []Class
-	before []float32 // space before each unit, negative when trimmed
-	after  []float32 // space after each unit, negative when trimmed
+	// class is the class of the start of each unit, and endClass that of its
+	// end.
+	class    []Class
+	endClass []Class
+	before   []float32 // space before each unit, negative when trimmed
+	after    []float32 // space after each unit, negative when trimmed
 }
 
 // Break splits units into lines no wider than maxWidth, and stores the lines
@@ -191,14 +208,20 @@ func (b *Breaker) MinWidth(units []Unit, opts Options) float32 {
 func (b *Breaker) prepare(units []Unit, opts Options) {
 	n := len(units)
 	b.class = resize(b.class, n)
+	b.endClass = resize(b.endClass, n)
 	b.before = resize(b.before, n)
 	b.after = resize(b.after, n)
 	b.X = resize(b.X, n)
 	b.Advance = resize(b.Advance, n)
 	for i := range units {
-		b.class[i] = Classify(units[i].Rune)
-		if units[i].Ideographic {
-			b.class[i] = ClassIdeograph
+		u := &units[i]
+		b.class[i] = Classify(u.Rune)
+		b.endClass[i] = b.class[i]
+		if u.Last != 0 {
+			b.endClass[i] = Classify(u.Last)
+		}
+		if u.Ideographic {
+			b.class[i], b.endClass[i] = ClassIdeograph, ClassIdeograph
 		}
 		b.before[i], b.after[i] = 0, 0
 		b.Advance[i] = units[i].Advance
@@ -225,7 +248,7 @@ func resize[T any](s []T, n int) []T {
 // bracket gives up its right half, and the second of two opening brackets gives
 // up its left half.
 func (b *Breaker) squeeze(units []Unit, i int) {
-	a, c := b.class[i], b.class[i+1]
+	a, c := b.endClass[i], b.class[i+1]
 	if !units[i].FullWidth || !units[i+1].FullWidth {
 		return
 	}
@@ -240,7 +263,7 @@ func (b *Breaker) squeeze(units []Unit, i int) {
 // westernSpace adds a quarter em where Japanese and Western text meet (JLReq
 // 3.2.5). Punctuation brings its own space, and a real space is enough.
 func (b *Breaker) westernSpace(units []Unit, i int) {
-	a, c := b.class[i], b.class[i+1]
+	a, c := b.endClass[i], b.class[i+1]
 	switch {
 	case isJapanese(a) && c == ClassWestern:
 		b.after[i] += units[i].Em / 4
@@ -386,7 +409,7 @@ func (b *Breaker) naturalWidth(units []Unit, start, end int, indent float32, opt
 func (b *Breaker) shrinkable(units []Unit, k int) float32 {
 	u := &units[k]
 	switch {
-	case endsWithBlank(b.class[k]) && u.FullWidth:
+	case endsWithBlank(b.endClass[k]) && u.FullWidth:
 		return max(u.Em/2+b.after[k], 0)
 	case b.class[k] == ClassSpace:
 		return u.Advance / 2
@@ -410,14 +433,14 @@ func (b *Breaker) finish(units []Unit, start, end int, hang float32) Line {
 
 // canBreak reports whether a line may end after unit i.
 func (b *Breaker) canBreak(units []Unit, i int, opts Options) bool {
-	a, c := b.class[i], b.class[i+1]
+	a, c := b.endClass[i], b.class[i+1]
 	if c == ClassSpace {
 		return false // spaces stay at the end of the line before them
 	}
 	if a == ClassOpening || prohibitedAtStart(c, opts.Strictness) {
 		return false
 	}
-	ra, rc := units[i].Rune, units[i+1].Rune
+	ra, rc := units[i].last(), units[i+1].Rune
 	if a == ClassInseparable && c == ClassInseparable && ra == rc {
 		return false
 	}

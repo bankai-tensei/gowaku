@@ -96,6 +96,10 @@ type cluster struct {
 	// sideways turns the glyphs 90° clockwise, for Western text in vertical
 	// lines.
 	sideways bool
+	// mixed marks a ruby group whose base is drawn in pieces of different
+	// looks (rubyRun.pieces); face, size and sideways are then those of its
+	// first piece.
+	mixed bool
 	// level is the bidi embedding level: odd runs right to left.
 	level uint8
 }
@@ -137,6 +141,20 @@ type rubyRun struct {
 	x float32
 	// gap is the space between ruby characters.
 	gap float32
+	// pieces are the stretches of the glyphs of the base that differ in
+	// face, size or orientation, as Latin and kanji in 「AI時代」 or a kanji
+	// from a fallback font do. It is nil when the whole base looks alike,
+	// and its cluster is marked mixed when not.
+	pieces []basePiece
+}
+
+// basePiece is a stretch of the glyphs of a ruby base drawn alike, from glyph
+// on, counted from the first glyph of the base, to the next piece.
+type basePiece struct {
+	glyph    int
+	face     paint.FaceID
+	size     float32
+	sideways bool
 }
 
 // Paragraph is shaped text, ready to be broken into lines at any width. It
@@ -503,6 +521,19 @@ func (p *Paragraph) addUnit(bt *blockText, first, last int, advance, em float32,
 func (p *Paragraph) addRuby(first, sec int) {
 	last := len(p.clusters) - 1
 	merged := p.clusters[first]
+	// The clusters keep how they are drawn, piece by piece.
+	var pieces []basePiece
+	for i := first + 1; i <= last; i++ {
+		c, prev := &p.clusters[i], &p.clusters[i-1]
+		if c.face == prev.face && c.size == prev.size && c.sideways == prev.sideways {
+			continue
+		}
+		if pieces == nil {
+			pieces = append(pieces, basePiece{0, merged.face, merged.size, merged.sideways})
+		}
+		pieces = append(pieces, basePiece{c.glyphStart - merged.glyphStart, c.face, c.size, c.sideways})
+	}
+	merged.mixed = pieces != nil
 	offset := float32(0)
 	// The marks of the clusters move into the group.
 	mk := len(p.marks)
@@ -521,10 +552,18 @@ func (p *Paragraph) addRuby(first, sec int) {
 		offset += p.units[i].Advance
 	}
 	merged.end, merged.glyphEnd = p.clusters[last].end, p.clusters[last].glyphEnd
+	// The group meets the text before it by its first character and the text
+	// after it by its last, for the line breaking rules and the space
+	// between Japanese and Western text.
 	unit := p.units[first]
+	end := &p.units[last]
+	unit.Last = end.Last
+	if unit.Last == 0 {
+		unit.Last = end.Rune
+	}
 	unit.Advance = offset
 	unit.FullWidth = false
-	unit.BreakAfter = p.units[last].BreakAfter
+	unit.BreakAfter = end.BreakAfter
 	p.clusters = append(p.clusters[:first], merged)
 	p.units = append(p.units[:first], unit)
 
@@ -533,7 +572,7 @@ func (p *Paragraph) addRuby(first, sec int) {
 	st.Hanging = false
 	shaped := p.shaper.Shape(p.sections[sec].ruby, st)
 	p.shaper.selectFaces(&p.style)
-	p.rubies = append(p.rubies, rubyRun{cluster: first, shaped: shaped})
+	p.rubies = append(p.rubies, rubyRun{cluster: first, shaped: shaped, pieces: pieces})
 }
 
 // fitRubies settles the width of the ruby groups from the one at index from on

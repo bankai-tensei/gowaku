@@ -81,8 +81,8 @@ func (b *Breaker) justify(units []Unit, ln *Line, maxWidth float32) {
 // inside a Western word or a number, inside a dash or an ellipsis, after an
 // opening bracket, or before a mark that closes.
 func (b *Breaker) gapKind(units []Unit, k int) gap {
-	a, c := b.class[k], b.class[k+1]
-	ra, rc := units[k].Rune, units[k+1].Rune
+	a, c := b.endClass[k], b.class[k+1]
+	ra, rc := units[k].last(), units[k+1].Rune
 	switch {
 	case a == ClassSpace:
 		return gapWord
