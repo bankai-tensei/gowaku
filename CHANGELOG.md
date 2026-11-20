@@ -11,6 +11,7 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 - `gowakutest.Tester.ClipboardContent` and `SetClipboardContent` take a `core.ClipboardContent`, which is `gowaku.ClipboardContent`. The Tester shows file dialogs that the test answers, through `FileDialogs`, `FileDialog` and `FileDialog.Choose`, `Cancel` and `Fail`, and takes the theme of `gowaku.SetTheme`.
 - `field.Input` takes `OnFocus func(focused bool)` as a field of its own, and `field.Extras` and `Input.Extras` are gone. Replace `Extras: field.Extras{OnFocus: f}` with `OnFocus: f`.
 - `overlay.Dialog.OnDismissRequest` and `overlay.Sheet.OnDismissRequest` are now `func() bool`, as `OnCloseRequest` of a window is: Escape or a click beside the dialog or sheet closes it when the function returns true and leaves it open when it returns false. A function that kept the dialog open and called `dismiss` itself to close it should now `return false`; one that only looked on can `return true` and need not call `dismiss`.
+- `overlay.ShowDialog` and `overlay.ShowSheet` return `dismiss func()`, as `overlay.ShowToast` does: the same function that `build` gets, which does nothing once the dialog or sheet is closing or gone. Code that called them as a statement compiles as before; code that saved the `dismiss` of `build` in a variable only to close the dialog from outside can take the return value instead.
 
 ## [0.1.2] - 2026-11-20
 
