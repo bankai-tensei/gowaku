@@ -17,7 +17,7 @@ func (r *RenderEditable) Semantics(sb *core.SemanticsBuilder) {
 		SelectionEnd:   kit.Utf16Len(r.Content[:r.Caret]),
 	}
 	value := r.Content
-	state := r.field.Extras.state
+	state := r.field.extras.state
 	if r.field.Obscure {
 		// The reader gets the bullets, never the password. An obscured field
 		// has one line, so the line offsets below need no mapping.
@@ -81,8 +81,8 @@ func (r *RenderEditable) semanticsLabel() string {
 // semanticsHint is the error of a FormItem around the field, or else the
 // placeholder, when the label already names the field.
 func (r *RenderEditable) semanticsHint() string {
-	if r.field.Extras.err != "" {
-		return r.field.Extras.err
+	if r.field.extras.err != "" {
+		return r.field.extras.err
 	}
 	if r.field.Label != "" {
 		return r.field.Placeholder

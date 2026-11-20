@@ -403,15 +403,13 @@ func (s *colorPickerState) hexField(th *theme.Theme, l *basic.Strings, current g
 		Value:    value,
 		OnChange: s.hexChange,
 		OnSubmit: func(string) { s.hexDone() },
-		Extras: Extras{
-			leading: fieldTag("HEX", th),
-			OnFocus: func(focused bool) {
-				if focused {
-					s.hexDraft, s.hexEditing = value, true
-					return
-				}
-				s.hexDone()
-			},
+		extras:   fieldExtras{leading: fieldTag("HEX", th)},
+		OnFocus: func(focused bool) {
+			if focused {
+				s.hexDraft, s.hexEditing = value, true
+				return
+			}
+			s.hexDone()
 		},
 	}}
 }
@@ -539,15 +537,13 @@ func (s *colorNumberState) Build(ctx core.BuildContext) core.Widget {
 			kit.Rebuild(&s.StateBase)
 		},
 		OnSubmit: func(string) { s.commit() },
-		Extras: Extras{
-			leading: fieldTag(w.short, th),
-			OnFocus: func(focused bool) {
-				if focused {
-					s.draft, s.editing = value, true
-					return
-				}
-				s.commit()
-			},
+		extras:   fieldExtras{leading: fieldTag(w.short, th)},
+		OnFocus: func(focused bool) {
+			if focused {
+				s.draft, s.editing = value, true
+				return
+			}
+			s.commit()
 		},
 	}}
 }

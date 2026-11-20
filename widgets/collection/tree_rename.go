@@ -40,11 +40,11 @@ func (s *treeRenamerState) Build(core.BuildContext) core.Widget {
 		Value:    s.Widget().initial,
 		OnChange: func(v string) { s.text = v },
 		OnSubmit: func(v string) { s.finish(true, v, false) },
-		Extras: field.Extras{OnFocus: func(focused bool) {
+		OnFocus: func(focused bool) {
 			if !focused {
 				s.finish(true, s.text, true)
 			}
-		}},
+		},
 	}}}
 }
 

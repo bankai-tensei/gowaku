@@ -118,6 +118,10 @@ type Input struct {
 	// to the interact.Actions above it, so that a Ctrl+Enter shortcut runs
 	// while the field has the keyboard.
 	OnSubmit func(string)
+	// OnFocus runs when the field gains the keyboard, with true, and when it
+	// loses it, with false, as for committing what was typed when the user
+	// moves on.
+	OnFocus func(focused bool)
 	// Ruby, if set, finds ruby written into the text with a notation, such as
 	// aozora.Marks for ｜漢字《かんじ》. The field then draws the ruby over its
 	// base, or to its right in vertical text, and hides the notation, except
@@ -168,17 +172,15 @@ type Input struct {
 	// docs/ADR/0088-input-obscure.md.
 	Obscure bool
 
-	// Extras is what the variants of the field, such as Search, add.
-	Extras Extras
+	// extras is what the variants of the field, such as Search, add.
+	extras fieldExtras
 }
 
-// Extras is what a variant of Text puts inside its box, and what it learns
-// from the field. Outside this package only OnFocus can be set.
-type Extras struct {
+// fieldExtras is what a variant of Input puts inside its box, and what it
+// learns from the field.
+type fieldExtras struct {
 	// leading and trailing sit before and after the text, inside the border.
 	leading, trailing core.Widget
-	// OnFocus reports gaining and losing the keyboard.
-	OnFocus func(focused bool)
 	// err is the error of the FormItem around the field, for its semantics.
 	err string
 	// state holds the Invalid and Required states the FormItem gives.
@@ -272,19 +274,19 @@ func (s *textFieldState) Build(ctx core.BuildContext) core.Widget {
 		if !f.Disabled {
 			border, ring = c.Danger, c.Danger
 		}
-		f.Extras.err = scope.err
+		f.extras.err = scope.err
 	}
-	f.Extras.state = scope.state()
+	f.extras.state = scope.state()
 	if f.OnSubmit == nil && (!f.Multiline || f.SubmitOnEnter) && scope.form != nil {
 		f.OnSubmit = func(string) { scope.submit() }
 	}
 	onFocus := s.setFocused
-	if extras := f.Extras; scope.field != nil || extras.OnFocus != nil {
+	if report := f.OnFocus; scope.field != nil || report != nil {
 		onFocus = func(focused bool) {
 			s.setFocused(focused)
 			scope.focusChanged(focused)
-			if extras.OnFocus != nil {
-				extras.OnFocus(focused)
+			if report != nil {
+				report(focused)
 			}
 		}
 	}
@@ -295,10 +297,10 @@ func (s *textFieldState) Build(ctx core.BuildContext) core.Widget {
 	case f.Bare:
 		insets = geom.Insets{}
 	}
-	if f.Extras.leading != nil {
+	if f.extras.leading != nil {
 		insets.Left = fieldDecorGap
 	}
-	if f.Extras.trailing != nil {
+	if f.extras.trailing != nil {
 		insets.Right = fieldDecorGap
 	}
 	var content core.Widget = editable{
@@ -313,14 +315,14 @@ func (s *textFieldState) Build(ctx core.BuildContext) core.Widget {
 			target:      c.Accent.WithAlpha(kit.TargetOpacity),
 		},
 	}
-	if f.Extras.leading != nil || f.Extras.trailing != nil {
+	if f.extras.leading != nil || f.extras.trailing != nil {
 		parts := make([]core.Widget, 0, 3)
-		if f.Extras.leading != nil {
-			parts = append(parts, f.Extras.leading)
+		if f.extras.leading != nil {
+			parts = append(parts, f.extras.leading)
 		}
 		parts = append(parts, basic.Expanded{Child: content})
-		if f.Extras.trailing != nil {
-			parts = append(parts, f.Extras.trailing)
+		if f.extras.trailing != nil {
+			parts = append(parts, f.extras.trailing)
 		}
 		content = basic.Row{Cross: layout.CrossCenter, Children: parts}
 	}
@@ -1063,7 +1065,7 @@ func (r *RenderEditable) HandleKey(e *core.KeyEvent) bool {
 	if r.laidOut == nil || r.stale {
 		r.shape()
 	}
-	if f := r.field.Extras.onKey; f != nil && f(e) {
+	if f := r.field.extras.onKey; f != nil && f(e) {
 		return true
 	}
 	if kit.ShortcutEnter(e, r.Composition != nil) {
