@@ -4,13 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-11-20
-
 ### Fixed
 
-- SVG: an arc whose numbers sweep no angle, or overflow, panicked with an index out of range; it is now drawn as a line. A large `stroke-dashoffset` over a short `stroke-dasharray` could loop forever; the offset is now reduced in float64, and a pattern whose length is not finite draws the stroke solid.
-- Layers of `RepaintBoundary` that left the tree stayed in the renderer's layer pool for good, and with them the boundary and its whole subtree, so that scrolling a `List` or `GridView` leaked every row that had shown. Entries not drawn for 120 frames are now dropped. `Canvas.Reset` and the render children of an element no longer keep references past their length.
-- Windows: the COM calls of the file dialog and of DirectComposition did not keep pointer arguments alive and in place during the call, and the filter specs of the file dialog were not kept until it returned. `SysAllocString` and a UI Automation call converted pointers to `uintptr` outside the call. Wayland: the locale string given to xkb compose was not kept alive during the call.
 - Ruby: a group ruby drew its whole base with the font and orientation of its first character, so that in `AI時代` the kanji took a Latin font, or a kanji from a fallback font became tofu, and in vertical text the kanji turned with the Latin letters. The base now keeps the look of each character. Line breaking and the space between Japanese and Western text after the group follow its last character, not its first; `jlreq.Unit` has a new `Last` field for that. Ruby longer than its base now overhangs small kana and the prolonged sound mark as it does other kana (JLReq 3.3.8). In `text/aozora`, a kanji with a variation selector, as in `葛󠄀《かつら》`, is part of the implicit base.
 - Vertical text: dashes, leaders and curly quotes (`… ‥ ― — – ‐ “ ” ‘ ’`) took their orientation from the script around them, so between kana a dash with no vertical form in the font, such as `—` in Yu Gothic, stood upright and crossed the column, and alone or next to Latin `…` turned sideways instead of taking its vertical form. They now stand upright where the font has a `vert` form for them and turn sideways where it does not.
 - JLReq Oikomi counted the space after the last character of a line, such as the quarter em before Western text, as room to squeeze, although that space goes with the line end. A character that must not start a line was then pushed in, and the line ran past its width.
@@ -20,6 +15,14 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 - Editor: `Controller.ReplaceAll` replaced the matches one at a time, each moving the lines or the pieces of a file after it and, in an editor that wraps, counting the rows of every line again, so that 100,000 matches took from seconds to minutes. It now makes the new lines in one pass over the matched lines and changes the text in one step; Undo still takes it back at once.
 - `layout.MeasuredExtents.Resize` rebuilt its trees over every row whenever the count changed, so a `List` with `MeasureItems` that gained one row walked all of them. Adding k rows at the end now costs O(k log n), and dropping rows O(log n).
 - `collection.Table` with `RowKey` and `GridView` with `ItemKey` called the key for every row when one row was added or removed at the end, to find the selection again. When the selected rows, the focus and the anchor are still at their indexes, the selection now stays without looking further, and an unchanged build calls the key once per selected row instead of twice.
+
+## [0.1.1] - 2026-11-20
+
+### Fixed
+
+- SVG: an arc whose numbers sweep no angle, or overflow, panicked with an index out of range; it is now drawn as a line. A large `stroke-dashoffset` over a short `stroke-dasharray` could loop forever; the offset is now reduced in float64, and a pattern whose length is not finite draws the stroke solid.
+- Layers of `RepaintBoundary` that left the tree stayed in the renderer's layer pool for good, and with them the boundary and its whole subtree, so that scrolling a `List` or `GridView` leaked every row that had shown. Entries not drawn for 120 frames are now dropped. `Canvas.Reset` and the render children of an element no longer keep references past their length.
+- Windows: the COM calls of the file dialog and of DirectComposition did not keep pointer arguments alive and in place during the call, and the filter specs of the file dialog were not kept until it returned. `SysAllocString` and a UI Automation call converted pointers to `uintptr` outside the call. Wayland: the locale string given to xkb compose was not kept alive during the call.
 
 ## [0.1.0] - 2026-11-18
 
