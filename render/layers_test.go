@@ -178,6 +178,37 @@ func TestLayer_ScrollingReusesIdlePages(t *testing.T) {
 	}
 }
 
+// Rows that scroll away leave the pool: an entry holds its layer, and with it
+// the boundary that owns it, so that one kept for good leaks every row that
+// ever showed. Small rows share a page that stays in use, which is the case
+// that the eviction of whole pages missed.
+func TestLayer_UndrawnEntriesLeave(t *testing.T) {
+	f := newLayerFixture(t)
+	var kept paint.Layer
+	filled(&kept, 10, 10)
+	rows := make([]paint.Layer, 200)
+	for i := range rows {
+		filled(&rows[i], 100, 20)
+	}
+	for frame := range layerEntryIdle + 3*layerSweepEvery {
+		f.frame(t, 1, func(cv *paint.Canvas) {
+			cv.DrawLayer(&kept, geom.Offset{})
+			if frame < len(rows) {
+				cv.DrawLayer(&rows[frame], geom.Offset{Y: 20})
+			}
+		})
+	}
+	if _, ok := f.glyphs.layers.entries[&kept]; !ok {
+		t.Error("the layer drawn every frame must stay")
+	}
+	if n := len(f.glyphs.layers.entries); n > 1+len(rows)/2 {
+		t.Errorf("%d entries remain, most of them for rows long gone", n)
+	}
+	if _, ok := f.glyphs.layers.entries[&rows[0]]; ok {
+		t.Error("the first row, gone for long, must leave")
+	}
+}
+
 func TestLayer_AllPagesInUseGoesInline(t *testing.T) {
 	f := newLayerFixture(t)
 	const size = layerPageSize - 8

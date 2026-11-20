@@ -67,6 +67,9 @@ type Canvas struct {
 
 // Reset discards everything recorded and returns to the initial state.
 func (c *Canvas) Reset() {
+	// Ops point to layers, images and paths of their owners, which must not
+	// stay reachable once these are gone.
+	clear(c.list.Ops)
 	c.list.Ops = c.list.Ops[:0]
 	clear(c.list.Shaders)
 	c.list.Shaders = c.list.Shaders[:0]

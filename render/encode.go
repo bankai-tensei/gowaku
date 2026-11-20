@@ -20,6 +20,8 @@ func Encode(dl *paint.DisplayList, res *Resources, scale float32, b *gpu.Batch) 
 		res.frame++
 		res.layerScale = scale
 		res.beginGroups()
+		res.layers.sweep(res.frame)
+		res.shaderLayers.sweep(res.frame)
 	}
 	res.encodeOps(dl, scale, b)
 }

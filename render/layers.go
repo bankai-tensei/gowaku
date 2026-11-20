@@ -25,6 +25,13 @@ const (
 	// layerCalmFrames is how many frames a layer must stay the same before it
 	// goes on a page after a change that followed another.
 	layerCalmFrames = 2
+	// layerEntryIdle is how many frames an entry may go undrawn before the
+	// pool forgets it. The entry holds its layer, and with it whatever owns
+	// the layer, such as a boundary that left the tree.
+	layerEntryIdle = 120
+	// layerSweepEvery is how often, in frames, the pool looks for such
+	// entries.
+	layerSweepEvery = 64
 )
 
 // layerEntry is where a layer lives on the GPU.
@@ -44,6 +51,8 @@ type layerEntry struct {
 	// inline means that the layer cannot go on a page, so that its commands
 	// join the frame each time. See docs/ADR/0019-layers.md.
 	inline bool
+	// lastUsed is the last frame that drew the layer.
+	lastUsed uint64
 }
 
 // shelf is a row of a page. Slots fill it from the left.
@@ -126,7 +135,7 @@ func (g *Resources) encodeLayer(op *paint.Op, scale float32, b *gpu.Batch) {
 		g.scratchUsed--
 		return
 	}
-	e := g.layers.entry(op.Layer)
+	e := g.layers.entry(op.Layer, g.frame)
 	left, top := snapOrigin(op.Origin, scale)
 	g.refresh(&g.layers, op.Layer, e, scale, false)
 	if e.inline || e.hot {
@@ -154,14 +163,29 @@ func (g *Resources) encodeLayer(op *paint.Op, scale float32, b *gpu.Batch) {
 	}
 }
 
-// entry returns the entry of l, made if l is new.
-func (pool *layerPool) entry(l *paint.Layer) *layerEntry {
+// entry returns the entry of l, made if l is new, and marks it used in frame.
+func (pool *layerPool) entry(l *paint.Layer, frame uint64) *layerEntry {
 	e := pool.entries[l]
 	if e == nil {
 		e = &layerEntry{}
 		pool.entries[l] = e
 	}
+	e.lastUsed = frame
 	return e
+}
+
+// sweep forgets the entries not drawn for layerEntryIdle frames, every
+// layerSweepEvery frames. Their slots stay taken until their page goes as a
+// whole, as those of any layer that changed size do.
+func (pool *layerPool) sweep(frame uint64) {
+	if frame%layerSweepEvery != 0 {
+		return
+	}
+	for l, e := range pool.entries {
+		if e.lastUsed+layerEntryIdle < frame {
+			delete(pool.entries, l)
+		}
+	}
 }
 
 // refresh brings e up to date. A layer that keeps changing gains nothing from its
