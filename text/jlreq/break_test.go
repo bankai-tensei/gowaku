@@ -158,6 +158,38 @@ func TestJLReq_Spacing(t *testing.T) {
 	}
 }
 
+// A unit whose ends differ in class, as the base of group ruby, meets the
+// unit before it by its first rune and the unit after it by its last.
+func TestJLReq_GroupMeetsItsNeighborsByItsEnds(t *testing.T) {
+	group := func(first, last rune) Unit {
+		return Unit{Rune: first, Last: last, Em: em, Advance: 2 * em, BreakAfter: true}
+	}
+	kana := Unit{Rune: 'あ', Em: em, Advance: em, FullWidth: true, BreakAfter: true}
+	for _, tc := range []struct {
+		name  string
+		units []Unit
+		want  float32 // position of the last unit, in em
+	}{
+		{"Latin then kanji, kana after", []Unit{group('A', '代'), kana}, 2},
+		{"kanji then Latin, kana after", []Unit{group('時', 'I'), kana}, 2.25},
+		{"kana before Latin then kanji", []Unit{kana, group('A', '代')}, 1.25},
+		{"kana before kanji then Latin", []Unit{kana, group('時', 'I')}, 1},
+	} {
+		var b Breaker
+		b.Break(tc.units, 100*em, Options{})
+		if got := b.X[len(tc.units)-1] / em; got != tc.want {
+			t.Errorf("%s: at %v, want %v", tc.name, got, tc.want)
+		}
+	}
+	// A group that ends with an opening bracket does not end a line.
+	us := []Unit{kana, group('漢', '「'), kana}
+	var b Breaker
+	b.Break(us, 3.5*em, Options{})
+	if len(b.Lines) != 2 || b.Lines[0].End != 1 {
+		t.Errorf("got lines %+v, want a break before the group", b.Lines)
+	}
+}
+
 func TestJLReq_WesternSpaceDisappearsAtLineEdges(t *testing.T) {
 	var b Breaker
 	us := units("あいab")

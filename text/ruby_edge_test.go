@@ -1,6 +1,11 @@
 package text
 
-import "testing"
+import (
+	"slices"
+	"testing"
+
+	"github.com/bankai-tensei/gowaku/text/jlreq"
+)
 
 // rubyExtents returns the inline extent of the ruby of l, one ruby after the
 // other, from the em box of its first glyph to that of its last.
@@ -86,5 +91,71 @@ func TestRuby_OverhangsOnlyTheKanaSide(t *testing.T) {
 	}
 	if w := l.Size().W; w != 3.5*em {
 		t.Errorf("width %v, want %v", w, 3.5*em)
+	}
+}
+
+// look is how a glyph is drawn: its face, and whether it is turned.
+type look struct {
+	face     uint32
+	sideways bool
+}
+
+// baseLooks returns the look of every glyph of the runs of l at size em, which
+// leaves the ruby out.
+func baseLooks(l *Layout, em float32) []look {
+	var out []look
+	for _, r := range l.Runs() {
+		if r.Size != em {
+			continue
+		}
+		for range r.Glyphs {
+			out = append(out, look{uint32(r.Face), r.Sideways})
+		}
+	}
+	return out
+}
+
+// The characters of a group ruby keep the face they were shaped with and,
+// in vertical text, their own orientation: Latin turns while kanji stand,
+// and a character from a fallback font is drawn with that font.
+func TestRuby_GroupKeepsTheLookOfEachCharacter(t *testing.T) {
+	s := systemShaper(t)
+	const em = 20
+	for _, o := range []Orientation{Horizontal, Vertical} {
+		// A Latin family first, so that the kanji come from a fallback.
+		st := Style{Size: em, Orientation: o, Family: "Segoe UI, DejaVu Sans, Helvetica"}
+		want := baseLooks(s.Shape("AI時代", st).Layout(inf), em)
+		got := baseLooks(s.ShapeSpans([]Span{{Text: "AI時代", Ruby: "えーあいじだい"}}, st).Layout(inf), em)
+		if !slices.Equal(got, want) {
+			t.Errorf("orientation %d: the base is drawn as %v, want %v", o, got, want)
+		}
+	}
+}
+
+// The space between Japanese and Western text after a group ruby follows the
+// last character of its base, and the space before it the first (JLReq
+// 3.2.5).
+func TestRuby_GroupMeetsItsNeighborsByItsEnds(t *testing.T) {
+	s := systemShaper(t)
+	const em = 20
+	space := func(spans []Span) float32 {
+		w := func(ws jlreq.WesternSpacing) float32 {
+			return s.ShapeSpans(spans, Style{Size: em, WesternSpacing: ws}).Layout(inf).Size().W
+		}
+		return w(jlreq.WesternQuarterEm) - w(jlreq.WesternNone)
+	}
+	for _, c := range []struct {
+		name  string
+		spans []Span
+		want  float32
+	}{
+		{"Latin then kanji, kana after", []Span{{Text: "AI時代", Ruby: "えーあいじだい"}, {Text: "は"}}, 0},
+		{"kanji then Latin, kana after", []Span{{Text: "時代AI", Ruby: "じだいえーあい"}, {Text: "は"}}, em / 4},
+		{"kana before Latin then kanji", []Span{{Text: "は"}, {Text: "AI時代", Ruby: "えーあいじだい"}}, em / 4},
+		{"kana before kanji then Latin", []Span{{Text: "は"}, {Text: "時代AI", Ruby: "じだいえーあい"}}, 0},
+	} {
+		if got := space(c.spans); got < c.want-0.01 || got > c.want+0.01 {
+			t.Errorf("%s: space %v, want %v", c.name, got, c.want)
+		}
 	}
 }

@@ -279,6 +279,10 @@ func (l *Layout) lineSpans(ln *line) {
 		cl := &p.clusters[c]
 		sec := &p.sections[cl.section]
 		at := ln.x + l.xs[c]
+		if cl.mixed {
+			spans = l.pieceSpans(spans, c, at, at+l.adv[c], origin, c > ln.clusterStart)
+			continue
+		}
 		start := len(l.glyphs)
 		for g := cl.glyphStart; g < cl.glyphEnd; g++ {
 			sg := &p.glyphs[g]
@@ -304,6 +308,44 @@ func (l *Layout) lineSpans(ln *line) {
 	}
 	ln.spanEnd = len(spans)
 	l.spans = spans
+}
+
+// pieceSpans appends the glyphs and spans of the ruby group c, whose base is
+// drawn in pieces of different looks, from at to end along the line. join
+// lets the first piece continue the span before it.
+func (l *Layout) pieceSpans(spans []span, c int, at, end float32, origin geom.Offset, join bool) []span {
+	p := l.paragraph
+	cl := &p.clusters[c]
+	color := p.sections[cl.section].color
+	r := sort.Search(len(p.rubies), func(i int) bool { return p.rubies[i].cluster >= c })
+	pieces := p.rubies[r].pieces
+	for k := range pieces {
+		pc := &pieces[k]
+		from, to := cl.glyphStart+pc.glyph, cl.glyphEnd
+		lo, hi := at+p.glyphs[from].inline, end
+		if k+1 < len(pieces) {
+			to = cl.glyphStart + pieces[k+1].glyph
+			hi = at + p.glyphs[to].inline
+		}
+		if k == 0 {
+			lo = at
+		}
+		start := len(l.glyphs)
+		for g := from; g < to; g++ {
+			sg := &p.glyphs[g]
+			x, y := l.place(at+sg.inline, sg.cross)
+			l.glyphs = append(l.glyphs, paint.Glyph{ID: sg.id, X: x, Y: y})
+		}
+		key := runKey{pc.face, pc.size, color, pc.sideways}
+		if n := len(spans); n > 0 && k == 0 && join && spans[n-1].key == key {
+			spans[n-1].end = len(l.glyphs)
+			spans[n-1].lo = min(spans[n-1].lo, lo)
+			spans[n-1].hi = max(spans[n-1].hi, hi)
+			continue
+		}
+		spans = append(spans, span{key, start, len(l.glyphs), origin, lo, hi})
+	}
+	return spans
 }
 
 // makeRuns turns l.spans into l.runs.
