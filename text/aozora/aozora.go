@@ -178,6 +178,16 @@ func base(s string, done, o int) (start, baseStart int, ok bool) {
 	baseStart = o
 	for baseStart > lineStart {
 		r, n := utf8.DecodeLastRuneInString(s[lineStart:baseStart])
+		if isVariationSelector(r) {
+			// A selector picks the glyph of the kanji before it, as in 葛󠄀,
+			// and goes with it.
+			k, m := utf8.DecodeLastRuneInString(s[lineStart : baseStart-n])
+			if !isKanji(k) {
+				break
+			}
+			baseStart -= n + m
+			continue
+		}
 		if !isKanji(r) {
 			break
 		}
@@ -194,6 +204,12 @@ func isKanji(r rune) bool {
 		return true
 	}
 	return unicode.Is(unicode.Han, r)
+}
+
+// isVariationSelector reports whether r is a standardized (SVS) or
+// ideographic (IVS) variation selector.
+func isVariationSelector(r rune) bool {
+	return r >= 0xFE00 && r <= 0xFE0F || r >= 0xE0100 && r <= 0xE01EF
 }
 
 // Plain returns s with the notation taken out and the base text kept, as a
