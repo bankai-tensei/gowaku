@@ -121,7 +121,7 @@ func (s *autocompleteState[T]) Build(ctx core.BuildContext) core.Widget {
 		ReadOnly:    w.ReadOnly,
 		OnChange:    s.changed,
 		OnSubmit:    s.submit,
-		Extras:      Extras{OnFocus: s.fieldFocus},
+		OnFocus:     s.fieldFocus,
 	}}
 	return sem
 }

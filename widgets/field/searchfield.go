@@ -76,7 +76,7 @@ func (s *searchFieldState) Build(ctx core.BuildContext) core.Widget {
 	if placeholder == "" {
 		placeholder = words.Search
 	}
-	extras := Extras{leading: interact.GestureDetector{
+	extras := fieldExtras{leading: interact.GestureDetector{
 		// The magnifier is part of the field: a click on it starts typing.
 		OnTap: s.focusField,
 		Child: basic.Padding{Insets: geom.Insets{Left: searchGlyphInset}, Child: basic.Icon{
@@ -110,7 +110,7 @@ func (s *searchFieldState) Build(ctx core.BuildContext) core.Widget {
 		ReadOnly:    w.ReadOnly,
 		OnChange:    s.changed,
 		OnSubmit:    w.OnSubmit,
-		Extras:      extras,
+		extras:      extras,
 	}}
 }
 

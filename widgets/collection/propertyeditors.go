@@ -274,11 +274,11 @@ func (s *numberFieldState) Build(core.BuildContext) core.Widget {
 			s.draft, s.dirty = t, true
 		},
 		OnSubmit: func(string) { s.commit(false) },
-		Extras: field.Extras{OnFocus: func(focused bool) {
+		OnFocus: func(focused bool) {
 			if !focused {
 				s.commit(true)
 			}
-		}},
+		},
 	})
 }
 

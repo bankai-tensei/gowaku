@@ -436,7 +436,8 @@ func (s *numberFieldState) Build(ctx core.BuildContext) core.Widget {
 		Controller:  &s.ctrl,
 		OnChange:    s.changed,
 		OnSubmit:    s.submit,
-		Extras: Extras{OnFocus: s.fieldFocus, trailing: numberPointer{
+		OnFocus:     s.fieldFocus,
+		extras: fieldExtras{trailing: numberPointer{
 			cursor: input.CursorColResize,
 			onPointer: func(e *core.PointerEvent) {
 				s.scrubPointer(e)
@@ -448,7 +449,7 @@ func (s *numberFieldState) Build(ctx core.BuildContext) core.Widget {
 	}
 	if w.ReadOnly {
 		// No handle: it would promise a drag that does nothing.
-		field.Extras.trailing = nil
+		field.extras.trailing = nil
 	}
 	sem.Child = numberPointer{onPointer: s.scroll, child: interact.Focus{
 		OnKey: s.key,

@@ -483,7 +483,8 @@ func (s *tokenFieldState) input(ctx core.BuildContext, th *theme.Theme, placehol
 		Controller:  &s.ctrl,
 		OnChange:    s.changed,
 		OnSubmit:    s.submit,
-		Extras:      Extras{OnFocus: s.fieldFocus, onKey: s.key},
+		OnFocus:     s.fieldFocus,
+		extras:      fieldExtras{onKey: s.key},
 	}}}
 }
 
