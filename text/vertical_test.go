@@ -3,6 +3,9 @@ package text
 import (
 	"testing"
 
+	"github.com/go-text/typesetting/di"
+	"github.com/go-text/typesetting/shaping"
+
 	"github.com/bankai-tensei/gowaku/geom"
 )
 
@@ -275,5 +278,16 @@ func TestAtlas_SidewaysGlyphTurns(t *testing.T) {
 	// The top of the l points right, away from the origin.
 	if side.Left < -1 || side.Left+side.Width < up.Height-1 {
 		t.Errorf("sideways left = %d, want the ink right of the origin", side.Left)
+	}
+}
+
+// Right-to-left text in a vertical paragraph comes as a horizontal run, which
+// keepWideUpright must leave horizontal: turning it would shape Hebrew as
+// upright vertical text and lose its right-to-left handling.
+func TestVertical_RightToLeftRunsStayHorizontal(t *testing.T) {
+	text := []rune("שלום — “x”")
+	runs := keepWideUpright([]shaping.Input{{Text: text, RunStart: 0, RunEnd: len(text), Direction: di.DirectionRTL}})
+	if len(runs) != 1 || runs[0].Direction != di.DirectionRTL {
+		t.Errorf("got %d runs, the first %v, want one right-to-left run", len(runs), runs[0].Direction)
 	}
 }

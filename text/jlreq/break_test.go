@@ -259,6 +259,20 @@ func TestJLReq_OikomiDoesNotCountTheSpaceAfterTheLine(t *testing.T) {
 	}
 }
 
+// What the last unit of an Oikomi line gives up comes off the line, so that
+// the line fits.
+func TestJLReq_OikomiLineFits(t *testing.T) {
+	for _, s := range []string{"あああ」「い", "あああ。い"} {
+		var b Breaker
+		b.Break(units(s), 3.6*em, Options{Kinsoku: Oikomi})
+		for _, l := range b.Lines {
+			if l.Width > 3.6*em+0.01 {
+				t.Errorf("%q: line %d-%d is %v wide, over %v", s, l.Start, l.End, l.Width, 3.6*em)
+			}
+		}
+	}
+}
+
 func TestJLReq_MinWidth(t *testing.T) {
 	for _, tc := range []struct {
 		s    string

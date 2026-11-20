@@ -387,6 +387,9 @@ func (b *Breaker) tryOikomi(units []Unit, start, i int, indent, maxWidth float32
 			b.Advance[k] += units[k].StartExtra
 		}
 	}
+	// The line ends at the far edge of its last unit, so that what that unit
+	// gives up comes off its advance; the loop above only moved x past it.
+	b.Advance[end-1] -= b.shrinkable(units, end-1, true) * ratio
 	return end, true
 }
 

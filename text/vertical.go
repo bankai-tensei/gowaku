@@ -35,19 +35,28 @@ func directionFor(vertical, upright bool) di.Direction {
 //   - Wide and full-width characters stand upright. The segmenter turns those
 //     of UAX #50 class Tr, such as ー, 〜 and （, sideways, but Japanese fonts
 //     have vertical forms for them and `vert` picks them up.
-//   - Dashes, leaders and quotes (see [byVerticalForm]) stand upright where the
-//     font has a vertical form for them and turn sideways where it does not,
-//     wherever they stand.
+//   - Dashes, leaders and quotes (see [byVerticalForm]) among upright text
+//     stand upright where the font has a vertical form for them and turn
+//     sideways where it does not. Among sideways text, as in "1990–2000",
+//     they stay sideways, but for the leaders and the dash that only Japanese
+//     uses (see [japaneseLeader]), which follow the font wherever they stand.
 //   - Everything else keeps the segmenter's choice.
+//
+// A run that is not vertical, as one of right-to-left text in a vertical
+// paragraph, stays as it is.
 func keepWideUpright(runs []shaping.Input) []shaping.Input {
 	out := make([]shaping.Input, 0, len(runs))
 	for _, run := range runs {
+		if !run.Direction.IsVertical() {
+			out = append(out, run)
+			continue
+		}
 		sub := run
 		for i := run.RunStart; i < run.RunEnd; i++ {
 			sideways := run.Direction.IsSideways()
 			if r := run.Text[i]; isWide(r) {
 				sideways = false
-			} else if byVerticalForm(r) {
+			} else if byVerticalForm(r) && (!sideways || japaneseLeader(r)) {
 				sideways = !hasVerticalForm(run.Face, r)
 			}
 			if i == run.RunStart {
@@ -96,6 +105,10 @@ func byVerticalForm(r rune) bool {
 	}
 	return false
 }
+
+// japaneseLeader reports whether r is a leader or dash of Japanese text, which
+// stands upright in vertical text even after Latin: … ‥ ―.
+func japaneseLeader(r rune) bool { return r == '…' || r == '‥' || r == '―' }
 
 // vertTag is the OpenType feature that holds vertical forms, the one HarfBuzz
 // applies to upright vertical text. `vrt2` is left out: its glyphs are the
