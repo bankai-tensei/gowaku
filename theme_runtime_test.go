@@ -135,7 +135,7 @@ func TestSetTheme_WithoutAThemeHostDoesNothing(t *testing.T) {
 	// A context of no tree has the host of no window, which keeps no theme.
 	var ctx BuildContext
 	SetTheme(ctx, theme.FromAccent(geom.Hex(0xc0392b)), ThemeDark)
-	if set, mode := CurrentTheme(ctx); set != theme.Default() || mode != ThemeSystem {
-		t.Errorf("got %v %v, want the default theme following the OS", set, mode)
+	if set, mode := CurrentTheme(ctx); set != (theme.Set{}) || mode != ThemeSystem {
+		t.Errorf("got %v %v, want the zero set following the OS", set, mode)
 	}
 }

@@ -165,3 +165,43 @@ func TestShowFileDialog_WithoutADialogHostFails(t *testing.T) {
 		t.Errorf("got %v, want ErrNoFileDialog", err)
 	}
 }
+
+// A ctx can outlive its window, as that of a tray menu: the dialog then goes
+// in front of a window still open.
+func TestShowFileDialog_OutlivingItsWindowUsesAnother(t *testing.T) {
+	var p *fakePlatform
+	var b *fakeBackend
+	var first, second []*theme.Theme
+	var ctx BuildContext
+	var answered bool
+	p, b = newFakes(t,
+		func() {
+			if _, err := OpenWindow(WindowOptions{}, themeRecorder{seen: &second, ctx: &ctx}); err != nil {
+				t.Fatal(err)
+			}
+			p.send(platform.Event{Kind: platform.EventWake})
+		},
+		func() {
+			p.send(platform.Event{Kind: platform.EventClose, Window: 2})
+		},
+		func() {
+			if _, ok := p.windows[2]; ok && !p.windows[2].closed {
+				t.Fatal("the second window must be closed")
+			}
+			ShowFileDialog(ctx, FileDialog{Name: "a.txt"}, func([]string, error) { answered = true })
+			p.send(platform.Event{Kind: platform.EventWake})
+		},
+		func() {
+			if len(p.windows[1].dialogs) != 1 {
+				t.Errorf("the open window must show the dialog, got %d", len(p.windows[1].dialogs))
+			}
+			if !answered {
+				t.Error("done must run")
+			}
+			p.send(platform.Event{Kind: platform.EventClose, Window: 1})
+		},
+	)
+	if err := run(p, b, testutil.NewShaper(t), App{Home: themeRecorder{seen: &first}}); err != nil {
+		t.Fatal(err)
+	}
+}

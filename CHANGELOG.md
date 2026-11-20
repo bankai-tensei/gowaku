@@ -7,11 +7,18 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 ### Changed
 
 - `gowaku.FileDialog`, `FileFilter`, `ClipboardContent` and `ClipboardKinds` no longer come from `platform`, which promises no compatibility: they are defined in `core` and named in gowaku, as `Widget` and `BuildContext` are. They have the same fields, so code that uses them through gowaku still builds; code that passed them to or from `platform` must convert. `gowaku.ThemeMode` is likewise `theme.Mode`, with `ThemeSystem`, `ThemeLight` and `ThemeDark` as before.
-- `gowaku.ShowFileDialog`, `SetTheme` and `CurrentTheme` take a `BuildContext` first, as `ShowTray` and the clipboard functions do: `ShowFileDialog(ctx, d, done)`, `SetTheme(ctx, set, mode)`, `CurrentTheme(ctx)`. They go through the window of `ctx`, so they work under a `gowakutest.Tester`, and the file dialog opens in front of that window instead of the focused one. Outside a window they no longer panic: `ShowFileDialog` calls `done` with `ErrNoFileDialog`, `SetTheme` does nothing, and `CurrentTheme` returns `theme.Default()` and `ThemeSystem`.
-- `gowakutest.Tester.ClipboardContent` and `SetClipboardContent` take a `core.ClipboardContent`, which is `gowaku.ClipboardContent`. The Tester shows file dialogs that the test answers, through `FileDialogs`, `FileDialog` and `FileDialog.Choose`, `Cancel` and `Fail`, and takes the theme of `gowaku.SetTheme`.
+- `gowaku.ShowFileDialog`, `SetTheme` and `CurrentTheme` take a `BuildContext` first, as `ShowTray` and the clipboard functions do: `ShowFileDialog(ctx, d, done)`, `SetTheme(ctx, set, mode)`, `CurrentTheme(ctx)`. They go through the window of `ctx`, so they work under a `gowakutest.Tester`, and the file dialog opens in front of that window instead of the focused one, or of another open window once that one has closed. Code with no context of its own, as a callback of `Post`, keeps the `BuildContext` of a widget, or uses `WindowHandle.ShowFileDialog`. Outside a window they no longer panic: `ShowFileDialog` calls `done` with `ErrNoFileDialog`, `SetTheme` does nothing, and `CurrentTheme` returns the zero `theme.Set`, which stands for `theme.Default()`, and `ThemeSystem`.
+- `gowakutest.Tester.ClipboardContent` and `SetClipboardContent` take a `core.ClipboardContent`, which is `gowaku.ClipboardContent`.
+- `ClipboardContent.Kinds` has a value receiver, so that `gowaku.ReadClipboard(ctx, k).Kinds()` builds.
 - `field.Input` takes `OnFocus func(focused bool)` as a field of its own, and `field.Extras` and `Input.Extras` are gone. Replace `Extras: field.Extras{OnFocus: f}` with `OnFocus: f`.
 - `overlay.Dialog.OnDismissRequest` and `overlay.Sheet.OnDismissRequest` are now `func() bool`, as `OnCloseRequest` of a window is: Escape or a click beside the dialog or sheet closes it when the function returns true and leaves it open when it returns false. A function that kept the dialog open and called `dismiss` itself to close it should now `return false`; one that only looked on can `return true` and need not call `dismiss`.
 - `overlay.ShowDialog` and `overlay.ShowSheet` return `dismiss func()`, as `overlay.ShowToast` does: the same function that `build` gets, which does nothing once the dialog or sheet is closing or gone. Code that called them as a statement compiles as before; code that saved the `dismiss` of `build` in a variable only to close the dialog from outside can take the return value instead.
+
+### Added
+
+- `core.FileDialogHost`, which a host implements to show file dialogs.
+- `theme.Mode`, with `ModeSystem`, `ModeLight`, `ModeDark` and `Mode.For`, which `gowaku.ThemeMode` names.
+- `gowakutest`: file dialogs that the test answers, through `Tester.FileDialogs`, `Tester.FileDialog` and `FileDialog.Options`, `Choose`, `Cancel` and `Fail`; `gowaku.SetTheme` changes the theme of the Tester's tree, and `ThemeSystem` follows `Options.Dark`.
 
 ## [0.1.2] - 2026-11-20
 

@@ -32,7 +32,7 @@ type ClipboardContent struct {
 }
 
 // Kinds returns the kinds that c holds.
-func (c *ClipboardContent) Kinds() ClipboardKinds {
+func (c ClipboardContent) Kinds() ClipboardKinds {
 	var k ClipboardKinds
 	if c.Text != "" {
 		k |= ClipboardText
