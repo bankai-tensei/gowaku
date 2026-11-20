@@ -47,6 +47,32 @@ func TestVertical_PunctuationTakesItsVerticalForm(t *testing.T) {
 	}
 }
 
+// Dashes, leaders and quotes are narrow or ambiguous width, and UAX #50 turns
+// them sideways, but Japanese fonts have vertical forms for most of them. Each
+// must either take its vertical form or turn sideways, wherever it stands:
+// upright in its horizontal form, a dash crosses the column.
+func TestVertical_DashesAndQuotesNeverStandInTheirHorizontalForm(t *testing.T) {
+	s := systemShaper(t)
+	for _, r := range "…‥―—–‐“”‘’" {
+		h := s.Shape(string(r), Style{Size: 16}).glyphs[0].id
+		for _, ctx := range [][2]string{{"", ""}, {"あ", "あ"}, {"ab", ""}, {"", "あ"}, {"ab", "cd"}} {
+			text := ctx[0] + string(r) + ctx[1]
+			p := s.Shape(text, Style{Size: 16, Orientation: Vertical})
+			c := p.clusters[len([]rune(ctx[0]))]
+			if !c.sideways && p.glyphs[c.glyphStart].id == h {
+				t.Errorf("%U in %q stands upright in its horizontal form", r, text)
+			}
+		}
+	}
+	// Japanese fonts have vertical leaders and the JIS dash, and they take
+	// them even with nothing Japanese around.
+	for _, r := range []string{"…", "‥", "―"} {
+		if p := s.Shape(r, Style{Size: 16, Orientation: Vertical}); p.clusters[0].sideways {
+			t.Errorf("%s alone turned sideways instead of taking its vertical form", r)
+		}
+	}
+}
+
 func TestVertical_WesternTurnsSideways(t *testing.T) {
 	s := systemShaper(t)
 	p := s.Shape("漢ab", Style{Size: 16, Orientation: Vertical})
