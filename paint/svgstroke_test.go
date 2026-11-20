@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/bankai-tensei/gowaku/geom"
 )
@@ -215,5 +216,39 @@ func TestPathVertices(t *testing.T) {
 	// The closed subpath joins its ends.
 	if v.list[0].in != v.list[3].in || v.list[3].out != v.list[0].out {
 		t.Errorf("got %+v", v.list[:4])
+	}
+}
+
+// Extreme offsets and patterns end instead of looping forever on float32
+// rounding.
+func TestDash_ExtremeInput(t *testing.T) {
+	line := &Path{}
+	line.MoveTo(0, 0)
+	line.LineTo(10, 0)
+	cases := []struct {
+		dashes        []float32
+		offset, scale float32
+	}{
+		{[]float32{0.00037687042, 0.00069576484}, 1.9377327e26, 1},
+		{[]float32{1.8261683, 0.6013986}, 4.899783e32, 1},
+		{[]float32{1e-3, 1e-3}, 1e30, 1},
+		{[]float32{1e-7, 1e-7}, 3e38, 1},
+		{[]float32{1e-3, 1e-3}, -1e30, 1},
+		{[]float32{3e38, 3e38}, 1, 1},
+		{[]float32{1, 1}, 1, float32(math.Inf(1))},
+		{[]float32{1, 1}, 1, float32(math.NaN())},
+		{[]float32{1, 1}, float32(math.NaN()), 1},
+	}
+	for _, c := range cases {
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			dash(line, c.dashes, c.offset, c.scale, 0.01)
+		}()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatalf("dash(%v, offset %v, scale %v) does not end", c.dashes, c.offset, c.scale)
+		}
 	}
 }

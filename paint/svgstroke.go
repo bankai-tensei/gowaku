@@ -1,6 +1,7 @@
 package paint
 
 import (
+	"math"
 	"strings"
 
 	"github.com/bankai-tensei/gowaku/geom"
@@ -118,6 +119,9 @@ func dash(p *Path, dashes []float32, offset, scale, tol float32) *Path {
 	for _, d := range dashes {
 		total += d * scale
 	}
+	if !(total > 0) || math.IsInf(float64(total), 0) {
+		return p
+	}
 	out := &Path{}
 	count := 0
 	for ci, start := range starts {
@@ -133,10 +137,24 @@ func dash(p *Path, dashes []float32, offset, scale, tol float32) *Path {
 			continue
 		}
 		// Where in the pattern the contour starts.
-		phase := offset * scale
-		phase -= geom.Floor32(phase/total) * total
+		// The offset is reduced in float64: in float32 a large offset
+		// over a short pattern leaves a phase that no dash can eat into.
+		ph := math.Mod(float64(offset)*float64(scale), float64(total))
+		if ph < 0 {
+			ph += float64(total)
+		}
+		if math.IsNaN(ph) {
+			ph = 0
+		}
+		phase := float32(ph)
 		i := 0
-		for phase >= dashes[i]*scale && phase > 0 {
+		// The phase is under one pattern, so one pass over the dashes
+		// is enough; rounding can leave a sliver, which is dropped.
+		for n := 0; phase >= dashes[i]*scale && phase > 0; n++ {
+			if n == len(dashes) {
+				phase = 0
+				break
+			}
 			phase -= dashes[i] * scale
 			i = (i + 1) % len(dashes)
 		}

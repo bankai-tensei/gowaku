@@ -186,6 +186,12 @@ func (s *svgParser) arcTo(rx, ry, rotation float32, large, sweep bool, to geom.O
 	} else if !sweep && delta > 0 {
 		delta -= 2 * math.Pi
 	}
+	// Extreme input can leave no sweep at all, or no number: such an arc
+	// is drawn as the line it nearly is.
+	if delta == 0 || math.IsNaN(delta) || math.IsInf(delta, 0) || math.IsNaN(cx) || math.IsNaN(cy) {
+		s.lineTo(to)
+		return
+	}
 	segments := int(math.Ceil(math.Abs(delta) / (math.Pi / 2)))
 	defer func() { s.arcStart = s.path.points[len(s.path.points)-3*segments] }()
 	step := delta / float64(segments)
