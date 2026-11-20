@@ -4,6 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-20
+
 ### Fixed
 
 - SVG: an arc whose numbers sweep no angle, or overflow, panicked with an index out of range; it is now drawn as a line. A large `stroke-dashoffset` over a short `stroke-dasharray` could loop forever; the offset is now reduced in float64, and a pattern whose length is not finite draws the stroke solid.
@@ -26,5 +28,6 @@ The first public release.
 - Desktop: multiple windows, modal windows, menus, custom title bars, tray icons, notifications, clipboard, file dialogs, drag and drop.
 - `gowakutest` for tests without a window, `gowakupreview` and `cmd/gowaku-preview` for live previews.
 
-[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bankai-tensei/gowaku/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bankai-tensei/gowaku/releases/tag/v0.1.0
