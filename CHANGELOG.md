@@ -4,6 +4,12 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+
+- `gowaku.FileDialog`, `FileFilter`, `ClipboardContent` and `ClipboardKinds` no longer come from `platform`, which promises no compatibility: they are defined in `core` and named in gowaku, as `Widget` and `BuildContext` are. They have the same fields, so code that uses them through gowaku still builds; code that passed them to or from `platform` must convert. `gowaku.ThemeMode` is likewise `theme.Mode`, with `ThemeSystem`, `ThemeLight` and `ThemeDark` as before.
+- `gowaku.ShowFileDialog`, `SetTheme` and `CurrentTheme` take a `BuildContext` first, as `ShowTray` and the clipboard functions do: `ShowFileDialog(ctx, d, done)`, `SetTheme(ctx, set, mode)`, `CurrentTheme(ctx)`. They go through the window of `ctx`, so they work under a `gowakutest.Tester`, and the file dialog opens in front of that window instead of the focused one. Outside a window they no longer panic: `ShowFileDialog` calls `done` with `ErrNoFileDialog`, `SetTheme` does nothing, and `CurrentTheme` returns `theme.Default()` and `ThemeSystem`.
+- `gowakutest.Tester.ClipboardContent` and `SetClipboardContent` take a `core.ClipboardContent`, which is `gowaku.ClipboardContent`. The Tester shows file dialogs that the test answers, through `FileDialogs`, `FileDialog` and `FileDialog.Choose`, `Cancel` and `Fail`, and takes the theme of `gowaku.SetTheme`.
+
 ## [0.1.2] - 2026-11-20
 
 ### Fixed

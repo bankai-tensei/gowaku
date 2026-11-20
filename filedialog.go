@@ -1,62 +1,83 @@
 package gowaku
 
-import "github.com/bankai-tensei/gowaku/platform"
+import (
+	"github.com/bankai-tensei/gowaku/core"
+	"github.com/bankai-tensei/gowaku/platform"
+)
 
 // FileDialog configures the file dialog of the system. The zero value opens one
 // existing file. See ShowFileDialog.
-type FileDialog = platform.FileDialogOptions
+type FileDialog = core.FileDialog
 
 // FileFilter is a choice of file types in a FileDialog, such as
 // {Name: "Images", Patterns: []string{"*.png", "*.jpg"}}.
-type FileFilter = platform.FileFilter
+type FileFilter = core.FileFilter
 
 // ErrNoFileDialog means that the system has no file dialog to show. Linux needs
 // xdg-desktop-portal for one; without it, ask for a path some other way.
 var ErrNoFileDialog = platform.ErrNoFileDialog
 
-// ShowFileDialog shows the file dialog of the system in front of the window
-// that has the focus, and later calls done on the UI goroutine with the chosen
-// paths, or nil if the user canceled. It must be called on the UI goroutine,
-// during Run.
+// ShowFileDialog shows the file dialog of the system in front of the window of
+// ctx, and later calls done on the UI goroutine with the chosen paths, or nil
+// if the user canceled. It must be called on the UI goroutine, outside a
+// Build, as from a callback.
+//
+// The dialog goes through the core.Host of the tree of ctx, as ShowTray and
+// the clipboard functions do: in a window of Run that is the dialog of the OS,
+// and under a gowakutest.Tester a fake one that the test answers. A host that
+// shows no file dialogs, as outside both, calls done with ErrNoFileDialog
+// before ShowFileDialog returns.
 //
 // On Windows the dialog is modal, and the windows of the application wait
 // until it closes. On Linux it comes from xdg-desktop-portal, and the
 // application goes on meanwhile.
-func ShowFileDialog(d FileDialog, done func(paths []string, err error)) {
-	ap := currentApp.Load()
-	if ap == nil {
-		panic("gowaku: ShowFileDialog called outside Run")
+func ShowFileDialog(ctx BuildContext, d FileDialog, done func(paths []string, err error)) {
+	if done == nil {
+		panic("gowaku: ShowFileDialog needs a done function")
 	}
-	var target *window
-	for _, w := range ap.windows {
-		if w.closing {
-			continue
-		}
-		if target == nil || w.focused && !target.focused ||
-			w.focused == target.focused && w.native.ID() < target.native.ID() {
-			target = w
-		}
+	h, ok := ctx.Host().(core.FileDialogHost)
+	if !ok {
+		done(nil, ErrNoFileDialog)
+		return
 	}
-	if target == nil {
-		panic("gowaku: ShowFileDialog called with no window open")
-	}
-	ap.showFileDialog(target, d, done)
+	h.ShowFileDialog(d, done)
 }
 
-// ShowFileDialog is the package function in front of this window.
+// ShowFileDialog is the package function in front of this window, for code
+// that holds the window and no BuildContext of it.
 func (h *WindowHandle) ShowFileDialog(d FileDialog, done func(paths []string, err error)) {
 	if h.app.windows[h.window.native.ID()] != h.window {
 		panic("gowaku: ShowFileDialog called on a closed window")
 	}
-	h.app.showFileDialog(h.window, d, done)
-}
-
-func (ap *app) showFileDialog(w *window, d FileDialog, done func([]string, error)) {
 	if done == nil {
 		panic("gowaku: ShowFileDialog needs a done function")
 	}
+	h.app.showFileDialog(h.window, d, done)
+}
+
+// ShowFileDialog implements core.FileDialogHost, for ShowFileDialog.
+func (h windowHost) ShowFileDialog(d FileDialog, done func([]string, error)) {
+	h.w.app.showFileDialog(h.w, d, done)
+}
+
+func (ap *app) showFileDialog(w *window, d FileDialog, done func([]string, error)) {
 	// The platform may answer on any goroutine, and even before it returns.
-	w.native.ShowFileDialog(d, func(paths []string, err error) {
+	w.native.ShowFileDialog(platformDialog(d), func(paths []string, err error) {
 		ap.post(func() { done(paths, err) })
 	})
+}
+
+// platformDialog returns d as the platform takes it.
+func platformDialog(d FileDialog) platform.FileDialogOptions {
+	o := platform.FileDialogOptions{
+		Title: d.Title, Save: d.Save, Name: d.Name, Multiple: d.Multiple,
+		Directory: d.Directory, Folder: d.Folder,
+	}
+	if d.Filters != nil {
+		o.Filters = make([]platform.FileFilter, len(d.Filters))
+		for i, f := range d.Filters {
+			o.Filters[i] = platform.FileFilter(f)
+		}
+	}
+	return o
 }

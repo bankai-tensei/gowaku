@@ -51,11 +51,12 @@ func TestCounter(t *testing.T) {
 | `Screenshot()`、`SaveScreenshot(path)` | `*image.NRGBA`、なし | フレームを CPU で描画する。`SaveScreenshot` は PNG で書き出す |
 | `Warnings()` | `[]Warning` | フレームに潜んでいそうな問題を検査する。はみ出し（親の端を越えて配置された子を含む）、ラベルの無い部品、低いコントラストなど。ビューアーのズームなどの変形をたどり、実際に描かれた位置で調べる |
 | `Semantics()`、`Dump()` | `*Node`、`string` | アクセシビリティのツリーを、値または文字列で返す。矩形は `Find` と同じくウィンドウの座標で、リストが表示域のすぐ外に作った行も含む |
-| `Clipboard()`、`SetClipboard(s)`、`ClipboardContent()`、`SetClipboardContent(c)` | `string`、なし、`platform.ClipboardContent`、なし | Tester 専用のクリップボード。入力欄のコピーと貼り付け、`gowaku.WriteClipboard` と `ReadClipboard` はここを使う |
+| `Clipboard()`、`SetClipboard(s)`、`ClipboardContent()`、`SetClipboardContent(c)` | `string`、なし、`gowaku.ClipboardContent`、なし | Tester 専用のクリップボード。入力欄のコピーと貼り付け、`gowaku.WriteClipboard` と `ReadClipboard` はここを使う |
+| `FileDialogs()`、`FileDialog()` | `[]*FileDialog`、`*FileDialog` | `gowaku.ShowFileDialog` が表示し、テストがまだ答えていないファイルダイアログ。`FileDialog` には `Options()`、`Choose(paths...)`、`Cancel()`、`Fail(err)` がある |
 | `Trays()`、`Notifications()`、`ClickNotification()` | `[]*Tray`、`[]Notification`、なし | `gowaku.ShowTray` と `gowaku.Notify` が表示したもの。`Tray` には `Options()`、`Activate()`、`Choose(label)` がある |
 | `Tree()` | `*core.Tree` | `core.Tree` を返す。Tester に無い操作を行うためのもの |
 
-頼まれたことができないとき、たとえばタップするラベルが無いときや、スクリーンショットを書き出せないときは、テストを失敗させる。そのため、どのメソッドもエラーを返さない。ラベルで指す操作は、利用者が届かないノード、つまりウィンドウの外にあるもの、リストの外へスクロールした行のようにクリップで隠れたもの、上に描かれたものに覆われたものに対しても、テストを失敗させる。一部だけ見えるノードには、見えている部分で操作する。クリップボードと同じく、トレイと通知も Tester 専用のものになる。`gowaku.ShowTray` と `gowaku.Notify` は `Trays()` と `Notifications()` に記録されるので、テストからメニューを読んだり、項目を選んだり、通知をクリックしたりできる。
+頼まれたことができないとき、たとえばタップするラベルが無いときや、スクリーンショットを書き出せないときは、テストを失敗させる。そのため、どのメソッドもエラーを返さない。ラベルで指す操作は、利用者が届かないノード、つまりウィンドウの外にあるもの、リストの外へスクロールした行のようにクリップで隠れたもの、上に描かれたものに覆われたものに対しても、テストを失敗させる。一部だけ見えるノードには、見えている部分で操作する。クリップボードと同じく、トレイと通知とファイルダイアログも Tester 専用のものになる。`gowaku.ShowTray` と `gowaku.Notify` は `Trays()` と `Notifications()` に記録されるので、テストからメニューを読んだり、項目を選んだり、通知をクリックしたりできる。`gowaku.ShowFileDialog` は `FileDialogs()` に入り、テストが答えるまで待つ。`gowaku.SetTheme` は Tester のツリーのテーマを切り替え、`ThemeSystem` は `Options.Dark` に従う。
 
 操作系のメソッド（タップ、ホバー、スクロール、ドラッグ、ドロップ、`Type`、`Key`）は操作の後で状態が落ち着くまで待つので、テストは遷移が終わった後の状態を読み取れる。`Tap` を 2 回続けても、位置が近くてもシングルクリック 2 回として扱う。ダブルクリックには `DoubleTap` を使う。誰からも見えないもの、たとえば `Opacity` が 0 のもの、`Navigator` の最前面より下にあるページ、折りたたまれたペインなどはツリーに含まれない。操作部品の中にあって、その部品と同じ内容を示す文字もツリーに含まれないので、`Find` は部品の方を返す。
 

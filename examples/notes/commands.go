@@ -47,7 +47,7 @@ func (s *windowState) newWindow() {
 func (s *windowState) openDialog() {
 	w := s.Widget().model
 	d := gowaku.FileDialog{Title: "開く", Multiple: true, Folder: w.app.settings.Library, Filters: textFilters()}
-	w.app.shell.fileDialog(d, func(paths []string, err error) {
+	w.app.shell.fileDialog(s.Context(), d, func(paths []string, err error) {
 		if err != nil {
 			w.toast("ファイルのダイアログを開けません: " + errText(err))
 			return
@@ -87,7 +87,7 @@ func (s *windowState) saveAs(d *document) {
 		folder = filepath.Dir(d.path)
 	}
 	dialog := gowaku.FileDialog{Title: "名前を付けて保存", Save: true, Name: d.title() + ".txt", Folder: folder, Filters: textFilters()}
-	a.shell.fileDialog(dialog, func(paths []string, err error) {
+	a.shell.fileDialog(s.Context(), dialog, func(paths []string, err error) {
 		if err != nil {
 			w.toast("ファイルのダイアログを開けません: " + errText(err))
 			return

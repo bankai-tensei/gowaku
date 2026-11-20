@@ -39,6 +39,7 @@ func TestSetTheme_RebuildsEveryWindowAndFollowsTheOSAgain(t *testing.T) {
 	var p *fakePlatform
 	var b *fakeBackend
 	var first, second []*theme.Theme
+	var ctx BuildContext
 	red := theme.FromAccent(geom.Hex(0xc0392b))
 	wake := func() { p.send(platform.Event{Kind: platform.EventWake}) }
 	p, b = newFakes(t,
@@ -46,7 +47,7 @@ func TestSetTheme_RebuildsEveryWindowAndFollowsTheOSAgain(t *testing.T) {
 			if _, err := OpenWindow(WindowOptions{}, themeRecorder{seen: &second}); err != nil {
 				t.Fatal(err)
 			}
-			SetTheme(red, ThemeDark)
+			SetTheme(ctx, red, ThemeDark)
 			wake()
 		},
 		func() {
@@ -61,11 +62,11 @@ func TestSetTheme_RebuildsEveryWindowAndFollowsTheOSAgain(t *testing.T) {
 			if b.clear != red.Dark.Color.Canvas {
 				t.Errorf("the background must follow, got %+v", b.clear)
 			}
-			if set, mode := CurrentTheme(); set != red || mode != ThemeDark {
+			if set, mode := CurrentTheme(ctx); set != red || mode != ThemeDark {
 				t.Errorf("CurrentTheme: got %v %v", set, mode)
 			}
 			// Back to the OS, which is light.
-			SetTheme(red, ThemeSystem)
+			SetTheme(ctx, red, ThemeSystem)
 			wake()
 		},
 		func() {
@@ -84,7 +85,7 @@ func TestSetTheme_RebuildsEveryWindowAndFollowsTheOSAgain(t *testing.T) {
 			}
 			// The same theme again changes nothing.
 			n := len(first)
-			SetTheme(red, ThemeSystem)
+			SetTheme(ctx, red, ThemeSystem)
 			wake()
 			p.script = append([]func(){func() {
 				if len(first) != n {
@@ -95,7 +96,7 @@ func TestSetTheme_RebuildsEveryWindowAndFollowsTheOSAgain(t *testing.T) {
 			}}, p.script...)
 		},
 	)
-	if err := run(p, b, testutil.NewShaper(t), App{Home: themeRecorder{seen: &first}}); err != nil {
+	if err := run(p, b, testutil.NewShaper(t), App{Home: themeRecorder{seen: &first, ctx: &ctx}}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -115,7 +116,7 @@ func TestSetTheme_ReachesAShowingDialog(t *testing.T) {
 			if last(dialog) != theme.Default().Light {
 				t.Errorf("the dialog must open in the theme of the app, got %p", last(dialog))
 			}
-			SetTheme(red, ThemeDark)
+			SetTheme(ctx, red, ThemeDark)
 			p.send(platform.Event{Kind: platform.EventWake})
 		},
 		func() {
@@ -130,11 +131,11 @@ func TestSetTheme_ReachesAShowingDialog(t *testing.T) {
 	}
 }
 
-func TestSetTheme_OutsideRunPanics(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("SetTheme outside Run must panic")
-		}
-	}()
-	SetTheme(theme.Set{}, ThemeDark)
+func TestSetTheme_WithoutAThemeHostDoesNothing(t *testing.T) {
+	// A context of no tree has the host of no window, which keeps no theme.
+	var ctx BuildContext
+	SetTheme(ctx, theme.FromAccent(geom.Hex(0xc0392b)), ThemeDark)
+	if set, mode := CurrentTheme(ctx); set != theme.Default() || mode != ThemeSystem {
+		t.Errorf("got %v %v, want the default theme following the OS", set, mode)
+	}
 }

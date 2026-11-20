@@ -53,7 +53,7 @@ func (s *settingsState) InitState() { s.draft = s.Widget().app.settings }
 func (s *settingsState) chooseFolder() {
 	a := s.Widget().app
 	d := gowaku.FileDialog{Title: "ノート帳のフォルダ", Directory: true, Folder: s.draft.Library}
-	a.shell.fileDialog(d, func(paths []string, err error) {
+	a.shell.fileDialog(s.Context(), d, func(paths []string, err error) {
 		if err == nil && len(paths) > 0 {
 			s.SetState(func() { s.draft.Library = paths[0] })
 		}

@@ -95,7 +95,8 @@ type Options struct {
 	// Zero selects 1.
 	Scale float32
 	// Theme is the look, as in gowaku.App. Dark picks its dark half; the light
-	// half is the default, so that results do not depend on the OS.
+	// half is the default, so that results do not depend on the OS. Dark
+	// stands for the OS: gowaku.SetTheme with gowaku.ThemeSystem follows it.
 	Theme theme.Set
 	Dark  bool
 	// Fonts are the fonts to set text in. Nil uses the fonts of the system,
@@ -130,10 +131,16 @@ type Tester struct {
 	tree   *core.Tree
 	shaper *text.Shaper
 	theme  *theme.Theme
-	size   geom.Size
-	scale  float32
-	now    time.Duration
-	settle time.Duration
+	// themes and mode are those of gowaku.SetTheme, and dark that of the
+	// OS. themeRoot rebuilds when they change.
+	themes    theme.Set
+	mode      theme.Mode
+	dark      bool
+	themeRoot *themedState
+	size      geom.Size
+	scale     float32
+	now       time.Duration
+	settle    time.Duration
 	// pointerTime is the millisecond clock of the pointer events of the
 	// taps. See click.
 	pointerTime uint32
@@ -178,6 +185,8 @@ func New(t testing.TB, root core.Widget, opts Options) *Tester {
 		t:      t,
 		shaper: shaper,
 		theme:  opts.Theme.For(b),
+		themes: opts.Theme,
+		dark:   opts.Dark,
 		size:   geom.Size{W: opts.Width, H: opts.Height},
 		scale:  opts.Scale,
 		settle: max(opts.Settle, 0),
@@ -196,8 +205,8 @@ func New(t testing.TB, root core.Widget, opts Options) *Tester {
 	// The same services as the root of a window of Run.
 	tt.tree = core.NewTree(core.Inherited[*text.Shaper]{Value: shaper, Child: basic.MediaQuery{
 		Data: basic.MediaQueryData{Brightness: b, Scale: tt.scale, ReduceMotion: opts.ReduceMotion, Locale: opts.Locale, Size: tt.size},
-		Child: basic.Localizations{Strings: opts.Strings, Child: basic.Theme{
-			Data: tt.theme, Child: overlay.Overlay{Child: root},
+		Child: basic.Localizations{Strings: opts.Strings, Child: themed{
+			tt: tt, child: overlay.Overlay{Child: root},
 		}},
 	}})
 	tt.tree.SetHost(tt.host)

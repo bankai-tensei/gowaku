@@ -44,14 +44,14 @@ OS が描画するタイトルバーと背景もテーマに従う。
 
 ## 実行中にテーマを変える
 
-`gowaku.SetTheme(set, mode)` を呼び出すと、起動時に `App.Theme` と `App.ThemeMode` で指定したときと同じように、すべてのウィンドウの見た目が切り替わる。`gowaku.CurrentTheme()` は現在のテーマとモードを返す。設定画面でモードを選ばせる例を示す。
+`gowaku.SetTheme(ctx, set, mode)` を呼び出すと、起動時に `App.Theme` と `App.ThemeMode` で指定したときと同じように、すべてのウィンドウの見た目が切り替わる。`gowaku.CurrentTheme(ctx)` は現在のテーマとモードを返す。どちらも `ctx` のウィンドウを通るので、`gowakutest.Tester` の下では Tester のツリーのテーマが切り替わる。設定画面でモードを選ばせる例を示す。
 
 ```go
-func modeButtons() gowaku.Widget {
+func modeButtons(ctx gowaku.BuildContext) gowaku.Widget {
 	set := func(mode gowaku.ThemeMode) func() {
 		return func() {
-			s, _ := gowaku.CurrentTheme()
-			gowaku.SetTheme(s, mode)
+			s, _ := gowaku.CurrentTheme(ctx)
+			gowaku.SetTheme(ctx, s, mode)
 		}
 	}
 	return basic.Row{Spacing: theme.Space8, Children: []gowaku.Widget{
@@ -65,10 +65,10 @@ func modeButtons() gowaku.Widget {
 アクセントカラーを選ばせる例:
 
 ```go
-func accentButton(accent geom.Color) gowaku.Widget {
+func accentButton(ctx gowaku.BuildContext, accent geom.Color) gowaku.Widget {
 	return control.Button{Label: "Use this color", OnPress: func() {
-		_, mode := gowaku.CurrentTheme()
-		gowaku.SetTheme(theme.FromAccent(accent), mode)
+		_, mode := gowaku.CurrentTheme(ctx)
+		gowaku.SetTheme(ctx, theme.FromAccent(accent), mode)
 	}}
 }
 ```

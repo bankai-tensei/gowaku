@@ -19,6 +19,7 @@ type host struct {
 	clip          platform.ClipboardContent
 	trays         []*Tray
 	notifications []Notification
+	dialogs       []*FileDialog
 }
 
 var (
@@ -84,11 +85,13 @@ func (tt *Tester) SetClipboard(s string) { tt.host.SetClipboardText(s) }
 
 // ClipboardContent returns every kind on the clipboard of the Tester, for
 // what gowaku.WriteClipboard put there beyond the text: HTML, an image, files.
-func (tt *Tester) ClipboardContent() platform.ClipboardContent {
-	return tt.host.ReadClipboard(platform.ClipboardText | platform.ClipboardHTML | platform.ClipboardImage | platform.ClipboardFiles)
+func (tt *Tester) ClipboardContent() core.ClipboardContent {
+	return core.ClipboardContent(tt.host.ReadClipboard(platform.ClipboardText | platform.ClipboardHTML | platform.ClipboardImage | platform.ClipboardFiles))
 }
 
 // SetClipboardContent puts c on the clipboard of the Tester, in place of all
 // it held, as another program copying an image or files, for what reads it
 // with gowaku.ReadClipboard.
-func (tt *Tester) SetClipboardContent(c platform.ClipboardContent) { tt.host.WriteClipboard(c) }
+func (tt *Tester) SetClipboardContent(c core.ClipboardContent) {
+	tt.host.WriteClipboard(platform.ClipboardContent(c))
+}

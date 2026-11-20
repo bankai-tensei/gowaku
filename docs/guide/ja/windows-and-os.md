@@ -229,10 +229,10 @@ gowaku.WriteClipboard(ctx, gowaku.ClipboardContent{Text: "gowaku", HTML: "<b>gow
 
 ## ファイルダイアログ
 
-`gowaku.ShowFileDialog` は OS のファイルダイアログを表示し、後で UI ゴルーチンで `done` を呼び出す。`done` には選択されたパスが渡され、キャンセルされた場合は nil が渡される。ゼロ値の `FileDialog` は既存のファイルを 1 つ開くダイアログになり、`Save`、`Multiple`、`Directory`、`Name`、`Folder`、`Filters` で動作を変えられる。
+`gowaku.ShowFileDialog` は `ctx` のウィンドウの手前に OS のファイルダイアログを表示し、後で UI ゴルーチンで `done` を呼び出す。`done` には選択されたパスが渡され、キャンセルされた場合は nil が渡される。ゼロ値の `FileDialog` は既存のファイルを 1 つ開くダイアログになり、`Save`、`Multiple`、`Directory`、`Name`、`Folder`、`Filters` で動作を変えられる。
 
 ```go
-gowaku.ShowFileDialog(gowaku.FileDialog{
+gowaku.ShowFileDialog(ctx, gowaku.FileDialog{
 	Title:   "画像を開く",
 	Filters: []gowaku.FileFilter{{Name: "Images", Patterns: []string{"*.png", "*.jpg"}}},
 }, func(paths []string, err error) {
@@ -243,7 +243,7 @@ gowaku.ShowFileDialog(gowaku.FileDialog{
 })
 ```
 
-`WindowHandle.ShowFileDialog` を使うと、指定したウィンドウの手前に同じダイアログを表示する。Windows のダイアログはモーダルである。Linux では xdg-desktop-portal のダイアログを使い、表示中もアプリは動き続ける。ポータルが無い場合は結果が `gowaku.ErrNoFileDialog` になるので、パスは別の方法で尋ねる必要がある。gowaku は自前のファイルダイアログのウィジェットを提供しない。macOS では `NSOpenPanel` と `NSSavePanel` を使う。
+`WindowHandle.ShowFileDialog` は、ウィンドウを持っていてもその `ctx` を持たないコードのためのもので、同じダイアログを表示する。`gowakutest.Tester` の下では偽のダイアログになり、テストが `tt.FileDialog().Choose(paths...)` で答える。Windows のダイアログはモーダルである。Linux では xdg-desktop-portal のダイアログを使い、表示中もアプリは動き続ける。ポータルが無い場合は結果が `gowaku.ErrNoFileDialog` になるので、パスは別の方法で尋ねる必要がある。gowaku は自前のファイルダイアログのウィジェットを提供しない。macOS では `NSOpenPanel` と `NSSavePanel` を使う。
 
 ## ドラッグ & ドロップ
 
@@ -287,7 +287,7 @@ Windows では ShellExecute、macOS では NSWorkspace、Linux では OpenURI �
 
 ## 実行中のテーマ切り替え
 
-`gowaku.SetTheme(set, mode)` はすべてのウィンドウのテーマを差し替え、`gowaku.CurrentTheme` は現在のテーマを返す。`ThemeSystem` を指定すると、実行中も OS のライトモードとダークモードの切り替えに追従する。
+`gowaku.SetTheme(ctx, set, mode)` はすべてのウィンドウのテーマを差し替え、`gowaku.CurrentTheme(ctx)` は現在のテーマを返す。`ThemeSystem` を指定すると、実行中も OS のライトモードとダークモードの切り替えに追従する。
 
 ## ゴルーチンの規則のまとめ
 
