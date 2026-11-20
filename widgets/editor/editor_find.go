@@ -2,6 +2,7 @@ package editor
 
 import (
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -113,7 +114,9 @@ func (f *finder) splice(b *lineBuffer, ch lineChange) {
 			f.matches[k].End.Line += shift
 		}
 	}
-	f.matches = append(f.matches[:lo], append(found, f.matches[hi:]...)...)
+	// In place: a copy of the matches after the edit for each edit cost an
+	// allocation of megabytes a keystroke with many matches.
+	f.matches = slices.Replace(f.matches, lo, hi, found...)
 	if len(f.matches) > maxMatches {
 		f.matches = f.matches[:maxMatches]
 	}
