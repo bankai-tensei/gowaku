@@ -84,9 +84,8 @@ func (f *finder) all(b *lineBuffer) {
 		return
 	}
 	for i := range b.lineCount() {
-		f.matches = f.searchLine(i, b.line(i), f.matches)
+		f.matches = f.searchLine(i, b.line(i), f.matches, maxMatches)
 		if len(f.matches) >= maxMatches {
-			f.matches = f.matches[:maxMatches]
 			return
 		}
 	}
@@ -105,7 +104,7 @@ func (f *finder) splice(b *lineBuffer, ch lineChange) {
 	hi := f.firstInLine(ch.first + ch.removed)
 	var found []TextRange
 	for i := ch.first; i < ch.first+ch.added; i++ {
-		found = f.searchLine(i, b.line(i), found)
+		found = f.searchLine(i, b.line(i), found, maxMatches)
 	}
 	shift := ch.added - ch.removed
 	if shift != 0 {
@@ -120,16 +119,15 @@ func (f *finder) splice(b *lineBuffer, ch lineChange) {
 	}
 }
 
-// searchLine appends the matches in line i, whose text is s, to dst.
-func (f *finder) searchLine(i int, s string, dst []TextRange) []TextRange {
-	if f.re != nil {
-		for _, m := range f.re.FindAllStringIndex(s, -1) {
-			if m[0] == m[1] || f.opts.WholeWord && !wholeWord(s, m[0], m[1]) {
-				continue
-			}
-			dst = append(dst, TextRange{Start: TextPosition{i, m[0]}, End: TextPosition{i, m[1]}})
-		}
+// searchLine appends the matches in line i, whose text is s, to dst, until
+// dst holds limit of them: a line of a gigabyte holds a billion matches of
+// "e".
+func (f *finder) searchLine(i int, s string, dst []TextRange, limit int) []TextRange {
+	if len(dst) >= limit {
 		return dst
+	}
+	if f.re != nil {
+		return f.searchRegexp(i, s, dst, limit)
 	}
 	needle := f.query
 	index := strings.Index
@@ -138,7 +136,7 @@ func (f *finder) searchLine(i int, s string, dst []TextRange) []TextRange {
 		// case in place, without a lowered copy of each line; any other line
 		// folds Unicode case.
 		if !isASCII(s) {
-			return f.searchFolded(i, s, dst)
+			return f.searchFolded(i, s, dst, limit)
 		}
 		needle, index = f.lower, indexASCIIFold
 	}
@@ -150,10 +148,38 @@ func (f *finder) searchLine(i int, s string, dst []TextRange) []TextRange {
 		a, z := at+k, at+k+len(needle)
 		if !f.opts.WholeWord || wholeWord(s, a, z) {
 			dst = append(dst, TextRange{Start: TextPosition{i, a}, End: TextPosition{i, z}})
+			if len(dst) == limit {
+				break
+			}
 		}
 		at = z
 	}
 	return dst
+}
+
+// searchRegexp is searchLine for a regular expression. It asks for as many
+// matches as are missing, and for twice as many again while the empty ones
+// and those that are not whole words leave some missing: the matches must
+// come from one search of the whole line, as what is around them decides what
+// \b, ^ or $ find.
+func (f *finder) searchRegexp(i int, s string, dst []TextRange, limit int) []TextRange {
+	base := len(dst)
+	for n := limit - base; ; n *= 2 {
+		locs := f.re.FindAllStringIndex(s, n)
+		dst = dst[:base]
+		for _, m := range locs {
+			if m[0] == m[1] || f.opts.WholeWord && !wholeWord(s, m[0], m[1]) {
+				continue
+			}
+			dst = append(dst, TextRange{Start: TextPosition{i, m[0]}, End: TextPosition{i, m[1]}})
+			if len(dst) == limit {
+				return dst
+			}
+		}
+		if len(locs) < n {
+			return dst
+		}
+	}
 }
 
 // indexASCIIFold returns where q, ASCII in lower case, first occurs in s, an
@@ -214,8 +240,9 @@ func equalASCIIFold(s, q string) bool {
 	return true
 }
 
-// searchFolded searches a line that is not ASCII without regard to case.
-func (f *finder) searchFolded(i int, s string, dst []TextRange) []TextRange {
+// searchFolded searches a line that is not ASCII without regard to case,
+// until dst holds limit matches.
+func (f *finder) searchFolded(i int, s string, dst []TextRange, limit int) []TextRange {
 	for at := 0; at < len(s); {
 		k := indexFold(s[at:], f.query)
 		if k < 0 {
@@ -225,6 +252,9 @@ func (f *finder) searchFolded(i int, s string, dst []TextRange) []TextRange {
 		z := a + foldedLength(s[a:], f.query)
 		if !f.opts.WholeWord || wholeWord(s, a, z) {
 			dst = append(dst, TextRange{Start: TextPosition{i, a}, End: TextPosition{i, z}})
+			if len(dst) == limit {
+				break
+			}
 		}
 		at = max(z, a+1)
 	}

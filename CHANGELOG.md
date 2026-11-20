@@ -15,6 +15,7 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 - Vertical text: dashes, leaders and curly quotes (`… ‥ ― — – ‐ “ ” ‘ ’`) took their orientation from the script around them, so between kana a dash with no vertical form in the font, such as `—` in Yu Gothic, stood upright and crossed the column, and alone or next to Latin `…` turned sideways instead of taking its vertical form. They now stand upright where the font has a `vert` form for them and turn sideways where it does not.
 - JLReq Oikomi counted the space after the last character of a line, such as the quarter em before Western text, as room to squeeze, although that space goes with the line end. A character that must not start a line was then pushed in, and the line ran past its width.
 - JLReq: a quarter em of Japanese–Western space was put between the ideographic space U+3000 and Western text. JLReq puts none next to a full-width space.
+- Editor: a search on its own goroutine, as of a file, looked at `maxMatches` and at being stopped only every 65,536 lines, so that a frequent query over long lines gathered millions of matches before the cap applied, and a new query waited for the batch to end. It now stops at once, at exactly 100,000 matches, also within one line.
 
 ## [0.1.0] - 2026-11-18
 

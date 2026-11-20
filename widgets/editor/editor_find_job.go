@@ -23,6 +23,8 @@ type findJob struct {
 	q    finder
 	stop atomic.Bool
 	wake func()
+	// reported counts the matches handed over, on the search goroutine.
+	reported int
 
 	mu sync.Mutex
 	// segs are the segments not searched yet, and running says the goroutine
@@ -100,6 +102,7 @@ func (j *findJob) report(logAt int, m []TextRange) {
 	if len(m) == 0 {
 		return
 	}
+	j.reported += len(m)
 	j.mu.Lock()
 	j.pending = append(j.pending, findResult{logAt: logAt, matches: m})
 	j.mu.Unlock()
@@ -115,40 +118,56 @@ func (j *findJob) take() []findResult {
 	return r
 }
 
-// search searches one segment, reporting every findBatchLines lines.
+// search searches one segment, reporting every findBatchLines lines. It
+// looks at stop before every line, and ends, stopping the search, at
+// maxMatches matches: lines of a megabyte each, searched for "e", would
+// otherwise gather millions of matches in one batch, and a new query would
+// wait for the batch to end.
 func (j *findJob) search(s findSeg) {
 	var found []TextRange
 	count := 0
+	full := false
 	line := func(i int, l string) bool {
-		found = j.q.searchLine(s.line+i, l, found)
+		if j.stop.Load() {
+			return false
+		}
+		found = j.q.searchLine(s.line+i, l, found, maxMatches-j.reported)
+		if j.reported+len(found) >= maxMatches {
+			full = true
+			return false
+		}
 		count++
 		if count%findBatchLines == 0 {
-			if j.stop.Load() {
-				return false
-			}
 			j.report(s.logAt, found)
 			found = nil
 		}
 		return true
 	}
+	stopped := false
 	if s.rd == nil {
 		for i, l := range s.lines {
 			if !line(i, l) {
-				return
+				stopped = true
+				break
 			}
 		}
+	} else {
+		defer s.rd.Close() //nolint:errcheck // only read
+		if err := s.rd.ReadLines(s.from, s.to, func(i int, l string) bool {
+			stopped = !line(i-s.from, l)
+			return !stopped
+		}); err != nil && !full {
+			return
+		}
+	}
+	if full {
 		j.report(s.logAt, found)
+		j.stop.Store(true)
 		return
 	}
-	defer s.rd.Close() //nolint:errcheck // only read
-	stopped := false
-	if err := s.rd.ReadLines(s.from, s.to, func(i int, l string) bool {
-		stopped = !line(i-s.from, l)
-		return !stopped
-	}); err != nil || stopped {
-		return
+	if !stopped {
+		j.report(s.logAt, found)
 	}
-	j.report(s.logAt, found)
 }
 
 // async reports whether a search of b runs on a goroutine of its own.
