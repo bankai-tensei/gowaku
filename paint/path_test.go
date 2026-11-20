@@ -312,3 +312,22 @@ func TestParseSVGPath_NumberAfterCloseIsAnError(t *testing.T) {
 		}
 	}
 }
+
+// Arcs whose numbers sweep nothing, or overflow, draw a line instead of
+// panicking.
+func TestParseSVGPath_DegenerateArcs(t *testing.T) {
+	for _, d := range []string{
+		"M0 0 A1e30 1e30 0 0 1 1e-30 0",
+		"M0 0 A1 1 0 0 1 1e39 0",
+		"M0 0 A1e39 1e39 0 0 1 1 1",
+		"M0 0 A1e-30 1e-30 0 1 0 1e-30 1e-30",
+		"M1e38 1e38 A1 1 0 0 1 -1e38 -1e38",
+		"M0 0 A1 1 1e39 0 1 1 1",
+		"M3e38 0 A1 1 0 0 1 3.0000001e38 0",
+	} {
+		// An error is fine; a panic is not.
+		if _, err := ParseSVGPath(d); err != nil {
+			t.Logf("%q: %v", d, err)
+		}
+	}
+}
