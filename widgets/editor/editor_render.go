@@ -185,13 +185,20 @@ func (r *renderEditor) styleChanged() {
 
 // linesChanged follows an edit of the lines. An edit above the view keeps the
 // view on the same text.
-func (r *renderEditor) linesChanged(ch lineChange) {
-	if r.rowsValid {
-		if !r.reanchor {
-			// The rows still count the lines before the edit.
-			r.anchorPos = r.scrollPosition()
-		}
-		if p := &r.anchorPos; ch.first < p.Line {
+func (r *renderEditor) linesChanged(ch lineChange) { r.linesRewritten([]lineChange{ch}) }
+
+// linesRewritten follows edits of the lines, which come from the last line to
+// the first, so that the lines each names are those after the edits before
+// it, as ReplaceAll makes them: as linesChanged for each, but with the rows
+// counted again once, which cost all the lines for each edit that added
+// lines.
+func (r *renderEditor) linesRewritten(chs []lineChange) {
+	if r.rowsValid && !r.reanchor {
+		// The rows still count the lines before the edits.
+		r.anchorPos = r.scrollPosition()
+	}
+	for _, ch := range chs {
+		if p := &r.anchorPos; r.rowsValid && ch.first < p.Line {
 			r.reanchor = true
 			if ch.first+ch.removed <= p.Line {
 				p.Line += ch.added - ch.removed
@@ -199,10 +206,10 @@ func (r *renderEditor) linesChanged(ch lineChange) {
 				p.Line, p.Offset = ch.first, 0
 			}
 		}
+		r.cache.splice(ch)
 	}
-	r.cache.splice(ch)
 	if r.rowsValid {
-		r.rows.splice(ch.first, ch.removed, ch.added, r.estimate)
+		r.rows.spliceAll(chs, r.estimate)
 	}
 	r.MarkNeedsLayout()
 }

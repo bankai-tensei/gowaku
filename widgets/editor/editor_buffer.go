@@ -402,6 +402,84 @@ func (b *lineBuffer) splice(first, removed int, lines []string) {
 	b.sum(from)
 }
 
+// lineEdit says that line line gives way to lines.
+type lineEdit struct {
+	line  int
+	lines []string
+}
+
+// rewrite makes the edits, which are in order of their line, one a line, in
+// one pass over the pieces from the first edited line to the last: pieces in
+// memory are copied once with the edits in place, and a piece of the source is
+// cut around the lines edited in it, as splice would cut it for each, which
+// cost a move of the pieces after it for every edit.
+func (b *lineBuffer) rewrite(edits []lineEdit) {
+	b.ensure()
+	first, last := edits[0].line, edits[len(edits)-1].line
+	for _, e := range edits {
+		k, j := b.locate(e.line)
+		b.keep(k, j, k, j)
+	}
+	k0, _ := b.locate(first)
+	kz, _ := b.locate(last)
+	var mid []piece
+	var mem []string
+	flush := func() {
+		if mem != nil {
+			mid = append(mid, memoryPiece(mem))
+			mem = nil
+		}
+	}
+	e := 0
+	line := b.lineEnd[k0] - b.pieces[k0].n
+	for k := k0; k <= kz; k++ {
+		p := b.pieces[k]
+		if p.source {
+			at := 0
+			for ; e < len(edits) && edits[e].line < line+p.n; e++ {
+				j := edits[e].line - line
+				if j > at {
+					flush()
+					mid = append(mid, b.sourcePiece(p.start+at, j-at))
+				}
+				mem = append(mem, edits[e].lines...)
+				at = j + 1
+			}
+			if at < p.n {
+				flush()
+				mid = append(mid, b.sourcePiece(p.start+at, p.n-at))
+			}
+		} else {
+			if mem == nil {
+				mem = make([]string, 0, p.n)
+			}
+			for j, l := range p.lines {
+				if e < len(edits) && edits[e].line == line+j {
+					mem = append(mem, edits[e].lines...)
+					e++
+				} else {
+					mem = append(mem, l)
+				}
+			}
+		}
+		line += p.n
+	}
+	flush()
+	b.pieces = slices.Replace(b.pieces, k0, kz+1, mid...)
+	// Pieces in memory side by side become one, as in splice; inside mid
+	// there are none, so only those at its ends join.
+	from := max(k0-1, 0)
+	for i := min(k0+len(mid), len(b.pieces)-1); i > from; i-- {
+		if l, r := &b.pieces[i-1], &b.pieces[i]; !l.source && !r.source {
+			l.lines = append(slices.Clip(l.lines), r.lines...)
+			l.n, l.bytes = len(l.lines), l.bytes+r.bytes
+			b.pieces = slices.Delete(b.pieces, i, i+1)
+		}
+	}
+	b.sum(from)
+	b.gen++
+}
+
 // head returns the first j lines of piece k as a piece of their own.
 func (b *lineBuffer) head(k, j int) piece {
 	p := b.pieces[k]
