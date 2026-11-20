@@ -142,6 +142,8 @@ func TestJLReq_Spacing(t *testing.T) {
 		{"和欧間: 空白があれば足さない", "あ a", Options{}, []float32{0, 1, 1.5}},
 		{"和欧間: 約物には足さない", "」a", Options{}, []float32{0, 1}},
 		{"和欧間を切る", "あa", Options{WesternSpacing: WesternNone}, []float32{0, 1}},
+		{"和欧間: 全角スペースには足さない", "　a　", Options{}, []float32{0, 1, 1.5}},
+		{"和欧間: ノーブレークスペースには足さない", "あ a", Options{}, []float32{0, 1, 1.5}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

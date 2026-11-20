@@ -261,9 +261,14 @@ func (b *Breaker) squeeze(units []Unit, i int) {
 }
 
 // westernSpace adds a quarter em where Japanese and Western text meet (JLReq
-// 3.2.5). Punctuation brings its own space, and a real space is enough.
+// 3.2.5). Punctuation brings its own space, and a real space is enough: the
+// ideographic space U+3000 is classed with ideographs for line breaking, but
+// it is a space too and takes no quarter em next to Western text.
 func (b *Breaker) westernSpace(units []Unit, i int) {
 	a, c := b.endClass[i], b.class[i+1]
+	if units[i].last() == '　' || units[i+1].Rune == '　' {
+		return
+	}
 	switch {
 	case isJapanese(a) && c == ClassWestern:
 		b.after[i] += units[i].Em / 4
