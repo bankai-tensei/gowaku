@@ -1,6 +1,10 @@
 package collection
 
-import "github.com/bankai-tensei/gowaku/core"
+import (
+	"slices"
+
+	"github.com/bankai-tensei/gowaku/core"
+)
 
 // keyedRow is a row that a TableController picks out, at the last time the
 // controller remembered it: its index then, and its key.
@@ -27,6 +31,11 @@ type rowKeys struct {
 	hasFocus, hasAnchor bool
 	// want is the keys of sel, reused by follow.
 	want map[core.Key]struct{}
+	// taken is the selection when the keys were taken, and checked means
+	// follow has just seen each remembered row still at its index, so that
+	// remember need not take the keys again while the selection is taken.
+	taken   []RowRange
+	checked bool
 }
 
 // dropKeys forgets the keys, after a change from code.
@@ -34,9 +43,21 @@ func (c *TableController) dropKeys() { c.keys.valid = false }
 
 // remember takes the keys of the selected rows, the row in focus and the
 // anchor among n rows, which key names. A nil key forgets them. It costs one
-// call of key for each selected row, unless every row is selected.
+// call of key for each selected row, unless every row is selected, or follow
+// has just found the same selection where it was.
 func (c *TableController) remember(n int, key func(i int) core.Key) {
 	k := &c.keys
+	checked := k.checked
+	k.checked = false
+	all := n > 0 && len(c.ranges) == 1 && c.ranges[0] == RowRange{0, n}
+	if checked && key != nil && all == k.all && slices.Equal(c.ranges, k.taken) {
+		// The rows in sel are where they were, and still the selection.
+		k.rows = n
+		k.hasFocus = retake(&k.focus, k.hasFocus, c.row, n, key)
+		k.hasAnchor = retake(&k.anchor, k.hasAnchor, c.anchor, n, key)
+		return
+	}
+	k.taken = append(k.taken[:0], c.ranges...)
 	clear(k.sel)
 	k.sel = k.sel[:0]
 	k.focus, k.anchor = keyedRow{}, keyedRow{}
@@ -62,15 +83,40 @@ func (c *TableController) remember(n int, key func(i int) core.Key) {
 	}
 }
 
+// retake points r at row among n rows, calling key only when r was not
+// already at row, and reports whether row is one of them.
+func retake(r *keyedRow, had bool, row, n int, key func(i int) core.Key) bool {
+	if row < 0 || row >= n {
+		return false
+	}
+	if !had || r.row != row {
+		*r = keyedRow{row, key(row)}
+	}
+	return true
+}
+
 // follow finds the remembered rows among the n rows that key now names, and
 // moves the selection, the focus and the anchor to them. Rows that are gone
 // leave the selection; a focus whose row is gone stays at its index, on the
 // row that took its place. When every remembered row is where it was, as on
-// most builds, it costs a call of key for each of them; otherwise one for
-// each of the n rows.
+// most builds and when rows were only added or taken away at the end, it
+// costs a call of key for each of them; otherwise one for each of the n rows.
 func (c *TableController) follow(n int, key func(i int) core.Key) {
 	k := &c.keys
-	if !k.valid || key == nil || k.still(n, key) {
+	k.checked = false
+	if !k.valid || key == nil {
+		return
+	}
+	if k.still(n, key) {
+		// The keys are unique, so no remembered row is anywhere else: looking
+		// for them would find each where it is. Every row stays every row.
+		if k.all {
+			c.ranges = c.ranges[:0]
+			if n > 0 {
+				c.ranges = append(c.ranges, RowRange{0, n})
+			}
+		}
+		k.checked = true
 		return
 	}
 	if k.want == nil {
@@ -114,17 +160,15 @@ func (c *TableController) follow(n int, key func(i int) core.Key) {
 }
 
 // still reports whether each remembered row is still at its index among the n
-// rows that key names.
+// rows that key names, as when rows were only added or taken away after them.
 func (k *rowKeys) still(n int, key func(i int) core.Key) bool {
-	if n != k.rows {
-		return false
-	}
+	at := func(r keyedRow) bool { return r.row < n && key(r.row) == r.key }
 	for _, r := range k.sel {
-		if key(r.row) != r.key {
+		if !at(r) {
 			return false
 		}
 	}
-	return (!k.hasFocus || key(k.focus.row) == k.focus.key) && (!k.hasAnchor || key(k.anchor.row) == k.anchor.key)
+	return (!k.hasFocus || at(k.focus)) && (!k.hasAnchor || at(k.anchor))
 }
 
 // appendRow adds row to the selection, after every row already in it.

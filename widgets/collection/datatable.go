@@ -266,7 +266,8 @@ type Table[T any] struct {
 	// sort, a filter or a deletion the same rows stay selected and the focus
 	// stays on its row, wherever they now are. The keys must be comparable and
 	// unique. The table calls RowKey for the selected rows on each build,
-	// and for every row when they changed; returning a pointer or a small
+	// rows added or taken away at the end included, and for every row when
+	// selected rows moved or went away; returning a pointer or a small
 	// integer keeps that free of garbage. Without RowKey the selection is
 	// indexes, which stay where they are when the rows change: see
 	// TableController.

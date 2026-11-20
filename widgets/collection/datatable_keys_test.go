@@ -134,3 +134,91 @@ func TestGridView_SelectionFollowsTheItemKey(t *testing.T) {
 	r.wantSelection(2)
 	r.wantFocus(2)
 }
+
+// countingKeys names rows by their index plus offset, counting the calls.
+type countingKeys struct {
+	calls  int
+	offset int
+}
+
+func (k *countingKeys) key(i int) core.Key {
+	k.calls++
+	return i + k.offset
+}
+
+// build does what a Table does with its keys at a build of n rows.
+func (k *countingKeys) build(c *TableController, n int) {
+	c.follow(n, k.key)
+	c.clip(n)
+	c.remember(n, k.key)
+}
+
+// TestTableController_AppendLooksOnlyAtTheRemembered checks that a row added
+// at the end does not make the keys look through every row: each remembered
+// row is still where it was, so only those are looked at.
+func TestTableController_AppendLooksOnlyAtTheRemembered(t *testing.T) {
+	const n = 100000
+	k := &countingKeys{}
+	c := &TableController{}
+	c.ranges = []RowRange{{n - 3, n}}
+	c.row, c.anchor = n-1, n-3
+	k.build(c, n)
+
+	k.calls = 0
+	k.build(c, n+1)
+	if k.calls > 20 {
+		t.Errorf("appending a row called the key %d times", k.calls)
+	}
+	if got := selection(c); !sameRanges(got, []RowRange{{n - 3, n}}) || c.row != n-1 || c.anchor != n-3 {
+		t.Errorf("after the append: %v, focus %d, anchor %d", got, c.row, c.anchor)
+	}
+
+	// Every row selected stays every row, the new one too.
+	c.ranges = []RowRange{{0, n + 1}}
+	k.build(c, n+1)
+	k.calls = 0
+	k.build(c, n+2)
+	if k.calls > 20 {
+		t.Errorf("appending to all called the key %d times", k.calls)
+	}
+	if got := selection(c); !sameRanges(got, []RowRange{{0, n + 2}}) {
+		t.Errorf("after appending to all: %v", got)
+	}
+
+	// Rows that moved are still looked for.
+	k.offset = 1
+	k.build(c, n+2)
+	if c.row != n-2 || c.anchor != n-4 {
+		t.Errorf("after a shift: focus %d, anchor %d, want %d and %d", c.row, c.anchor, n-2, n-4)
+	}
+}
+
+// TestTableController_UnchangedRowsTakeEachKeyOnce checks that a build over
+// rows that did not change calls the key once for each selected row, to see
+// that it is still there, and not again to remember it.
+func TestTableController_UnchangedRowsTakeEachKeyOnce(t *testing.T) {
+	const n = 100000
+	k := &countingKeys{}
+	c := &TableController{}
+	c.ranges = []RowRange{{0, 500}, {501, n}}
+	c.row, c.anchor = 600, 0
+	k.build(c, n)
+
+	k.calls = 0
+	k.build(c, n)
+	if want := n - 1 + 2; k.calls > want {
+		t.Errorf("a build over the same rows called the key %d times, want at most %d", k.calls, want)
+	}
+
+	// A new selection is remembered, and followed when the rows move.
+	c.ranges = []RowRange{{0, 10}}
+	k.build(c, n)
+	if got := selection(c); !sameRanges(got, []RowRange{{0, 10}}) {
+		t.Errorf("after a new selection: %v", got)
+	}
+	k.offset = 5
+	k.build(c, n)
+	if got := selection(c); !sameRanges(got, []RowRange{{0, 5}}) || c.row != 595 {
+		t.Errorf("after the rows moved: %v, focus %d; want the first 5 rows and 595", got, c.row)
+	}
+}
