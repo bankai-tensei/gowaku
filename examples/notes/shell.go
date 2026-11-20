@@ -42,8 +42,8 @@ func (gowakuShell) tearOff(e nav.TabTearOff, title string, root core.Widget, onC
 	return err
 }
 
-func (gowakuShell) fileDialog(d gowaku.FileDialog, done func([]string, error)) {
-	gowaku.ShowFileDialog(d, done)
+func (gowakuShell) fileDialog(ctx core.BuildContext, d gowaku.FileDialog, done func([]string, error)) {
+	gowaku.ShowFileDialog(ctx, d, done)
 }
 
 func (gowakuShell) window(ctx core.BuildContext) windowHandle { return gowaku.WindowOf(ctx) }
@@ -85,7 +85,7 @@ func (l *localShell) tearOff(_ nav.TabTearOff, _ string, root core.Widget, _ fun
 	return nil
 }
 
-func (l *localShell) fileDialog(d gowaku.FileDialog, done func([]string, error)) {
+func (l *localShell) fileDialog(_ core.BuildContext, d gowaku.FileDialog, done func([]string, error)) {
 	l.dialogs = append(l.dialogs, d)
 	paths := l.dialogPaths
 	l.post(func() { done(paths, nil) })

@@ -6,7 +6,7 @@ import "github.com/bankai-tensei/gowaku/theme"
 // as App.Theme and App.ThemeMode set it at the start: a settings page calls it
 // to change the accent color or to choose light, dark or the mode of the OS.
 //
-//	gowaku.SetTheme(theme.FromAccent(accent), gowaku.ThemeDark)
+//	gowaku.SetTheme(ctx, theme.FromAccent(accent), gowaku.ThemeDark)
 //
 // Every widget that reads the theme rebuilds, and what the OS draws for the
 // windows, their title bars and backgrounds, follows. With ThemeSystem the
@@ -19,25 +19,41 @@ import "github.com/bankai-tensei/gowaku/theme"
 // take it too. Give part of the tree, or a whole window, a look of its own with
 // basic.Theme. See docs/ADR/0067-runtime-theme.md.
 //
-// It must be called on the UI goroutine, during Run, outside a Build.
-func SetTheme(set theme.Set, mode ThemeMode) {
-	ap := currentApp.Load()
-	if ap == nil {
-		panic("gowaku: SetTheme called outside Run")
+// The theme goes through the core.Host of the tree of ctx, as ShowTray and
+// the clipboard functions do: in a window of Run that is the application, and
+// under a gowakutest.Tester the Tester, whose tree takes the theme as the
+// windows do. A host that keeps no theme, as outside both, ignores it.
+//
+// It must be called on the UI goroutine, outside a Build, as from a callback.
+func SetTheme(ctx BuildContext, set theme.Set, mode ThemeMode) {
+	if h, ok := ctx.Host().(themeHost); ok {
+		h.SetTheme(set, mode)
 	}
-	ap.setTheme(set, mode)
 }
 
 // CurrentTheme returns the theme of the application and its mode: those of
-// App, or of the last SetTheme. It must be called on the UI goroutine, during
-// Run.
-func CurrentTheme() (theme.Set, ThemeMode) {
-	ap := currentApp.Load()
-	if ap == nil {
-		panic("gowaku: CurrentTheme called outside Run")
+// App, or of the last SetTheme. Under a gowakutest.Tester they are those of
+// its Options, or of the last SetTheme; a host that keeps no theme gives
+// theme.Default and ThemeSystem. It must be called on the UI goroutine.
+func CurrentTheme(ctx BuildContext) (theme.Set, ThemeMode) {
+	if h, ok := ctx.Host().(themeHost); ok {
+		return h.CurrentTheme()
 	}
-	return ap.themes, ap.mode
+	return theme.Default(), ThemeSystem
 }
+
+// themeHost is a core.Host that keeps the theme: the window of Run, and the
+// Tester of gowakutest.
+type themeHost interface {
+	SetTheme(set theme.Set, mode ThemeMode)
+	CurrentTheme() (theme.Set, ThemeMode)
+}
+
+// SetTheme implements themeHost, for SetTheme.
+func (h windowHost) SetTheme(set theme.Set, mode ThemeMode) { h.w.app.setTheme(set, mode) }
+
+// CurrentTheme implements themeHost, for CurrentTheme.
+func (h windowHost) CurrentTheme() (theme.Set, ThemeMode) { return h.w.app.themes, h.w.app.mode }
 
 // setTheme puts set and mode in place and passes the change on to every
 // window.

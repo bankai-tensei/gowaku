@@ -156,13 +156,7 @@ func (ap *app) theme() *theme.Theme { return ap.themes.For(ap.effectiveBrightnes
 
 // effectiveBrightness applies the mode of the application to that of the OS.
 func (ap *app) effectiveBrightness() theme.Brightness {
-	switch ap.mode {
-	case ThemeLight:
-		return theme.BrightnessLight
-	case ThemeDark:
-		return theme.BrightnessDark
-	}
-	return osBrightness(ap.brightness)
+	return ap.mode.For(osBrightness(ap.brightness))
 }
 
 func osBrightness(b platform.Brightness) theme.Brightness {

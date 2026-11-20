@@ -44,14 +44,14 @@ The title bars and backgrounds that the OS draws follow the theme too.
 
 ## Changing the theme while running
 
-`gowaku.SetTheme(set, mode)` changes the look of every window, as `App.Theme` and `App.ThemeMode` set it at the start. `gowaku.CurrentTheme()` returns what is in use. A settings page might offer the mode:
+`gowaku.SetTheme(ctx, set, mode)` changes the look of every window, as `App.Theme` and `App.ThemeMode` set it at the start. `gowaku.CurrentTheme(ctx)` returns what is in use. Both go through the window of `ctx`, so under a `gowakutest.Tester` they change the theme of its tree instead. A settings page might offer the mode:
 
 ```go
-func modeButtons() gowaku.Widget {
+func modeButtons(ctx gowaku.BuildContext) gowaku.Widget {
 	set := func(mode gowaku.ThemeMode) func() {
 		return func() {
-			s, _ := gowaku.CurrentTheme()
-			gowaku.SetTheme(s, mode)
+			s, _ := gowaku.CurrentTheme(ctx)
+			gowaku.SetTheme(ctx, s, mode)
 		}
 	}
 	return basic.Row{Spacing: theme.Space8, Children: []gowaku.Widget{
@@ -65,10 +65,10 @@ func modeButtons() gowaku.Widget {
 and the accent:
 
 ```go
-func accentButton(accent geom.Color) gowaku.Widget {
+func accentButton(ctx gowaku.BuildContext, accent geom.Color) gowaku.Widget {
 	return control.Button{Label: "Use this color", OnPress: func() {
-		_, mode := gowaku.CurrentTheme()
-		gowaku.SetTheme(theme.FromAccent(accent), mode)
+		_, mode := gowaku.CurrentTheme(ctx)
+		gowaku.SetTheme(ctx, theme.FromAccent(accent), mode)
 	}}
 }
 ```

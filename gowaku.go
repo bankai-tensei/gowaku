@@ -15,16 +15,16 @@ import (
 var ErrUnsupported = errors.New("gowaku: this platform is not supported yet")
 
 // ThemeMode says how an application treats the light and dark modes of the OS.
-type ThemeMode uint8
+type ThemeMode = theme.Mode
 
 // The theme modes.
 const (
 	// ThemeSystem follows the OS, also while running.
-	ThemeSystem ThemeMode = iota
+	ThemeSystem = theme.ModeSystem
 	// ThemeLight stays light.
-	ThemeLight
+	ThemeLight = theme.ModeLight
 	// ThemeDark stays dark.
-	ThemeDark
+	ThemeDark = theme.ModeDark
 )
 
 // App describes an application.

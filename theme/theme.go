@@ -33,6 +33,31 @@ func (b Brightness) String() string {
 	return "Brightness(" + strconv.Itoa(int(b)) + ")"
 }
 
+// Mode says how an application treats the light and dark modes of the OS: it
+// follows them, or stays light or dark.
+type Mode uint8
+
+// The modes.
+const (
+	// ModeSystem follows the OS, also while running.
+	ModeSystem Mode = iota
+	// ModeLight stays light.
+	ModeLight
+	// ModeDark stays dark.
+	ModeDark
+)
+
+// For returns the brightness that m asks for, where the OS asks for os.
+func (m Mode) For(os Brightness) Brightness {
+	switch m {
+	case ModeLight:
+		return BrightnessLight
+	case ModeDark:
+		return BrightnessDark
+	}
+	return os
+}
+
 // Theme is the full set of tokens for one brightness.
 type Theme struct {
 	Brightness Brightness

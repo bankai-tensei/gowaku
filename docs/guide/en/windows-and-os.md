@@ -229,10 +229,10 @@ Another program owns the data, so a read waits for it, up to a fraction of a sec
 
 ## File dialogs
 
-`gowaku.ShowFileDialog` shows the file dialog of the system and later calls `done` on the UI goroutine with the chosen paths, or nil if the user canceled. The zero `FileDialog` opens one existing file; `Save`, `Multiple`, `Directory`, `Name`, `Folder` and `Filters` change that.
+`gowaku.ShowFileDialog` shows the file dialog of the system in front of the window of `ctx`, and later calls `done` on the UI goroutine with the chosen paths, or nil if the user canceled. The zero `FileDialog` opens one existing file; `Save`, `Multiple`, `Directory`, `Name`, `Folder` and `Filters` change that.
 
 ```go
-gowaku.ShowFileDialog(gowaku.FileDialog{
+gowaku.ShowFileDialog(ctx, gowaku.FileDialog{
 	Title:   "画像を開く",
 	Filters: []gowaku.FileFilter{{Name: "Images", Patterns: []string{"*.png", "*.jpg"}}},
 }, func(paths []string, err error) {
@@ -243,7 +243,7 @@ gowaku.ShowFileDialog(gowaku.FileDialog{
 })
 ```
 
-`WindowHandle.ShowFileDialog` does the same in front of a given window. On Windows the dialog is modal. On Linux it comes from xdg-desktop-portal and the application goes on meanwhile; without a portal the result is `gowaku.ErrNoFileDialog`, and the application has to ask for a path another way. gowaku has no file dialog widget of its own. On macOS it is `NSOpenPanel` / `NSSavePanel`.
+`WindowHandle.ShowFileDialog` does the same for code that holds a window and no context of it. Under a `gowakutest.Tester` the dialog is a fake one that the test answers with `tt.FileDialog().Choose(paths...)`. On Windows the dialog is modal. On Linux it comes from xdg-desktop-portal and the application goes on meanwhile; without a portal the result is `gowaku.ErrNoFileDialog`, and the application has to ask for a path another way. gowaku has no file dialog widget of its own. On macOS it is `NSOpenPanel` / `NSSavePanel`.
 
 ## Drag and drop
 
@@ -287,7 +287,7 @@ It uses ShellExecute on Windows, NSWorkspace on macOS, and on Linux the OpenURI 
 
 ## Theme at run time
 
-`gowaku.SetTheme(set, mode)` replaces the theme of every window, and `gowaku.CurrentTheme` returns the current one. `ThemeSystem` follows the light and dark modes of the OS while running.
+`gowaku.SetTheme(ctx, set, mode)` replaces the theme of every window, and `gowaku.CurrentTheme(ctx)` returns the current one. `ThemeSystem` follows the light and dark modes of the OS while running.
 
 ## Summary of goroutine rules
 

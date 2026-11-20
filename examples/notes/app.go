@@ -66,7 +66,8 @@ type shell interface {
 	after(d time.Duration, fn func())
 	openWindow(title string, root core.Widget, onClose func()) error
 	tearOff(e nav.TabTearOff, title string, root core.Widget, onClose func()) error
-	fileDialog(d gowaku.FileDialog, done func(paths []string, err error))
+	// fileDialog shows d in front of the window of ctx.
+	fileDialog(ctx core.BuildContext, d gowaku.FileDialog, done func(paths []string, err error))
 	// window returns the window of ctx.
 	window(ctx core.BuildContext) windowHandle
 	quit()

@@ -1,24 +1,32 @@
 package gowaku
 
-import "github.com/bankai-tensei/gowaku/platform"
+import (
+	"github.com/bankai-tensei/gowaku/core"
+	"github.com/bankai-tensei/gowaku/platform"
+)
 
 // The clipboard beyond the text that field.Input copies and pastes. See
 // docs/ADR/0049-clipboard.md.
 type (
-	// ClipboardContent is platform.ClipboardContent: text, an HTML fragment,
+	// ClipboardContent is what the clipboard holds: text, an HTML fragment,
 	// an image and a list of files, each there or not.
-	ClipboardContent = platform.ClipboardContent
-	// ClipboardKinds is platform.ClipboardKinds, a set of kinds.
-	ClipboardKinds = platform.ClipboardKinds
+	ClipboardContent = core.ClipboardContent
+	// ClipboardKinds is a set of the kinds of clipboard data.
+	ClipboardKinds = core.ClipboardKinds
 )
 
 // The kinds of clipboard data.
 const (
-	ClipboardText  = platform.ClipboardText
-	ClipboardHTML  = platform.ClipboardHTML
-	ClipboardImage = platform.ClipboardImage
-	ClipboardFiles = platform.ClipboardFiles
+	ClipboardText  = core.ClipboardText
+	ClipboardHTML  = core.ClipboardHTML
+	ClipboardImage = core.ClipboardImage
+	// ClipboardFiles is a list of files, as a file manager copies them.
+	ClipboardFiles = core.ClipboardFiles
 )
+
+// The content crosses to the platform by conversion, so that a field added to
+// one struct and not the other fails to build; the kinds share their bits,
+// which TestClipboardKinds_MatchThePlatform checks.
 
 // ClipboardHas reports what kinds the clipboard holds, without reading them:
 // whether a Paste can be enabled. It must be called on the UI goroutine, outside
@@ -32,7 +40,7 @@ const (
 func ClipboardHas(ctx BuildContext) ClipboardKinds {
 	h := ctx.Host()
 	if c, ok := h.(platform.Clipboard); ok {
-		return c.ClipboardKinds()
+		return ClipboardKinds(c.ClipboardKinds())
 	}
 	if h.ClipboardText() != "" {
 		return ClipboardText
@@ -49,7 +57,7 @@ func ClipboardHas(ctx BuildContext) ClipboardKinds {
 func ReadClipboard(ctx BuildContext, kinds ClipboardKinds) ClipboardContent {
 	h := ctx.Host()
 	if c, ok := h.(platform.Clipboard); ok {
-		return c.ReadClipboard(kinds)
+		return ClipboardContent(c.ReadClipboard(platform.ClipboardKinds(kinds)))
 	}
 	if kinds&ClipboardText != 0 {
 		return ClipboardContent{Text: h.ClipboardText()}
@@ -64,7 +72,7 @@ func ReadClipboard(ctx BuildContext, kinds ClipboardKinds) ClipboardContent {
 func WriteClipboard(ctx BuildContext, c ClipboardContent) {
 	h := ctx.Host()
 	if clip, ok := h.(platform.Clipboard); ok {
-		clip.WriteClipboard(c)
+		clip.WriteClipboard(platform.ClipboardContent(c))
 		return
 	}
 	h.SetClipboardText(c.Text)

@@ -1,6 +1,7 @@
 package gowaku
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/bankai-tensei/gowaku/layout"
@@ -12,6 +13,7 @@ import (
 	"github.com/bankai-tensei/gowaku/input"
 	"github.com/bankai-tensei/gowaku/internal/testutil"
 	"github.com/bankai-tensei/gowaku/platform"
+	"github.com/bankai-tensei/gowaku/theme"
 )
 
 // pointer sends a press at a logical position of a window at scale 2.
@@ -127,22 +129,22 @@ func TestShowFileDialog_AnswersOnTheUIGoroutine(t *testing.T) {
 	var p *fakePlatform
 	var b *fakeBackend
 	var got []string
-	home := interact.GestureDetector{
-		OnTap: func() {
-			ShowFileDialog(FileDialog{Save: true, Name: "メモ.txt"}, func(paths []string, err error) {
-				if err != nil {
-					t.Error(err)
-				}
-				got = paths
-			})
-		},
-		Child: basic.Container{},
-	}
+	var seen []*theme.Theme
+	var ctx BuildContext
 	p, b = newFakes(t,
-		func() { click(p, 40, 40, 100) },
 		func() {
-			if len(p.windows[1].dialogs) != 1 || !p.windows[1].dialogs[0].Save {
-				t.Errorf("dialogs %+v", p.windows[1].dialogs)
+			ShowFileDialog(ctx, FileDialog{Save: true, Name: "メモ.txt", Filters: []FileFilter{{Name: "Text", Patterns: []string{"*.txt"}}}},
+				func(paths []string, err error) {
+					if err != nil {
+						t.Error(err)
+					}
+					got = paths
+				})
+			p.send(platform.Event{Kind: platform.EventWake})
+		},
+		func() {
+			if d := p.windows[1].dialogs; len(d) != 1 || !d[0].Save || len(d[0].Filters) != 1 || d[0].Filters[0].Patterns[0] != "*.txt" {
+				t.Errorf("dialogs %+v", d)
 			}
 			if len(got) != 1 || got[0] != "/tmp/メモ.txt" {
 				t.Errorf("got %q", got)
@@ -150,7 +152,16 @@ func TestShowFileDialog_AnswersOnTheUIGoroutine(t *testing.T) {
 			p.send(platform.Event{Kind: platform.EventClose, Window: 1})
 		},
 	)
-	if err := run(p, b, testutil.NewShaper(t), App{Home: home}); err != nil {
+	if err := run(p, b, testutil.NewShaper(t), App{Home: themeRecorder{seen: &seen, ctx: &ctx}}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestShowFileDialog_WithoutADialogHostFails(t *testing.T) {
+	var ctx BuildContext
+	var err error
+	ShowFileDialog(ctx, FileDialog{}, func(_ []string, e error) { err = e })
+	if !errors.Is(err, ErrNoFileDialog) {
+		t.Errorf("got %v, want ErrNoFileDialog", err)
 	}
 }
