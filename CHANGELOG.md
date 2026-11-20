@@ -4,6 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-21
+
 ### Changed
 
 - `gowaku.FileDialog`, `FileFilter`, `ClipboardContent` and `ClipboardKinds` no longer come from `platform`, which promises no compatibility: they are defined in `core` and named in gowaku, as `Widget` and `BuildContext` are. They have the same fields, so code that uses them through gowaku still builds; code that passed them to or from `platform` must convert. `gowaku.ThemeMode` is likewise `theme.Mode`, with `ThemeSystem`, `ThemeLight` and `ThemeDark` as before.
@@ -58,7 +60,8 @@ The first public release.
 - Desktop: multiple windows, modal windows, menus, custom title bars, tray icons, notifications, clipboard, file dialogs, drag and drop.
 - `gowakutest` for tests without a window, `gowakupreview` and `cmd/gowaku-preview` for live previews.
 
-[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bankai-tensei/gowaku/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bankai-tensei/gowaku/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bankai-tensei/gowaku/releases/tag/v0.1.0
