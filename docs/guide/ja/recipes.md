@@ -223,6 +223,7 @@ func main() {
 - `collection.Group` と `GroupRow` で設定画面を組む。左にラベル、右にコントロールが並ぶ。行のラベルは、自身のラベルを持たないコントロールの名前にもなる。
 - ページは、部分の間にセクション間の間隔 `theme.Space24` を置いた `Column` である。`basic.VStack` ではコントロール間の間隔 `theme.Space8` しか空かない。
 - `overlay.ShowDialog` には State の `BuildContext`（`s.Context()`）を渡し、コールバックの中から呼ぶ。必要な `Overlay` は `gowaku.Run` と `gowakutest.New` が用意している。
+- `ShowDialog` は、`build` が受け取るのと同じ `dismiss` を返す。これを使えば、待っている保存が終わったときなど、ダイアログの外からも閉じられる。閉じかけているときや閉じた後に呼んでも何も起きない。
 - ダイアログが開いている間、ページはアクセシビリティのツリーから外れるので、テストでは `tt.Tap("Reset")` でダイアログのリセットボタンを押せる。[ダイアログをテストする](testing-and-preview.md#ダイアログをテストする)を参照。
 
 ## 長い縦書きの文章

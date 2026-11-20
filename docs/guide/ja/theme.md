@@ -44,7 +44,7 @@ OS が描画するタイトルバーと背景もテーマに従う。
 
 ## 実行中にテーマを変える
 
-`gowaku.SetTheme(ctx, set, mode)` を呼び出すと、起動時に `App.Theme` と `App.ThemeMode` で指定したときと同じように、すべてのウィンドウの見た目が切り替わる。`gowaku.CurrentTheme(ctx)` は現在のテーマとモードを返す。どちらも `ctx` のウィンドウを通るので、`gowakutest.Tester` の下では Tester のツリーのテーマが切り替わる。設定画面でモードを選ばせる例を示す。
+`gowaku.SetTheme(ctx, set, mode)` を呼び出すと、起動時に `App.Theme` と `App.ThemeMode` で指定したときと同じように、すべてのウィンドウの見た目が切り替わる。`gowaku.CurrentTheme(ctx)` は現在のテーマとモードを返す。設定画面でモードを選ばせる例を示す。
 
 ```go
 func modeButtons(ctx gowaku.BuildContext) gowaku.Widget {
@@ -73,7 +73,7 @@ func accentButton(ctx gowaku.BuildContext, accent geom.Color) gowaku.Widget {
 }
 ```
 
-テーマを読み出しているウィジェットはすべて再ビルドされ、後から開くウィンドウにも新しいテーマが適用される。`SetTheme` は UI ゴルーチン上で、`Build` の外（コールバックなど）から呼び出す。[ADR 0067](../../ADR/0067-runtime-theme.md) も参照のこと。
+テーマを読み出しているウィジェットはすべて再ビルドされ、後から開くウィンドウにも新しいテーマが適用される。`SetTheme` は UI ゴルーチン上で、`Build` の外（コールバックなど）から呼び出す。`SetTheme` と `CurrentTheme` は `ctx` を通るので、`gowakutest.Tester` の下では Tester のツリーのテーマを扱う。[ADR 0067](../../ADR/0067-runtime-theme.md) も参照のこと。
 
 ## テーマを読み出す
 
