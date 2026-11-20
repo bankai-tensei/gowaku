@@ -181,8 +181,8 @@ func (r *renderEntryHits) HitTest(pos geom.Offset, res *core.HitTestResult) bool
 
 // ShowDialog opens a modal dialog in the nearest Overlay, with what build returns
 // inside, usually a Dialog. Call the function that build gets to close it; Escape
-// and a click beside the dialog do the same, unless the Dialog has an
-// OnDismissRequest, which then decides. The dialog fades and scales in and
+// and a click beside the dialog do the same, unless the OnDismissRequest of the
+// Dialog returns false. The dialog fades and scales in and
 // out, keeps Tab to itself, and gives the focus back when it is gone.
 //
 // Closing it starts a fade of about 120 ms, a timer of the clock, and the
@@ -232,7 +232,7 @@ type dialogRouteState struct {
 // dialogGate is how a Dialog tells the route around it what Escape and a
 // click beside it do. The Dialog sets request as it builds; nil closes.
 type dialogGate struct {
-	request func()
+	request func() bool
 }
 
 // CreateState implements core.StatefulWidget.
@@ -268,8 +268,7 @@ func (s *dialogRouteState) requestDismiss() {
 	if s.controller.Status() == motion.Reversing {
 		return
 	}
-	if f := s.gate.request; f != nil {
-		f()
+	if f := s.gate.request; f != nil && !f() {
 		return
 	}
 	s.dismiss()
@@ -350,12 +349,15 @@ type Dialog struct {
 	// the Glass color of the theme over a backdrop blur of 20 logical pixels.
 	// The default is the opaque Raised card. See docs/ADR/0044-drawing-extensions.md.
 	Glass bool
-	// OnDismissRequest, if set, runs instead of closing the dialog when
-	// Escape or a click beside it asks to close it, so that a dialog with
-	// unsaved work can keep itself open or ask first, as a "discard the
-	// draft?" prompt does; call the dismiss function of ShowDialog to close
-	// it. Nil closes the dialog, and the dismiss function always does.
-	OnDismissRequest func()
+	// OnDismissRequest, if set, runs when Escape or a click beside the
+	// dialog asks to close it, as OnCloseRequest does for a window: the
+	// dialog closes if it returns true and stays open if it returns false.
+	// A dialog with unsaved work returns false to keep itself open, or to
+	// ask first, as a "discard the draft?" prompt does, and calls the
+	// dismiss function of ShowDialog once the answer is to close. Nil
+	// closes the dialog. The dismiss function always closes it, without
+	// asking.
+	OnDismissRequest func() bool
 }
 
 // Build implements core.StatelessWidget.

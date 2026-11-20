@@ -71,17 +71,20 @@ type Sheet struct {
 	// Persistent keeps the sheet open on a click beside it. Escape and the
 	// dismiss function still close it.
 	Persistent bool
-	// OnDismissRequest, if set, runs instead of closing the sheet when Escape
-	// or a click beside it asks to close it, as Dialog.OnDismissRequest does;
-	// a Persistent sheet still ignores the click. The dismiss function always
-	// closes the sheet.
-	OnDismissRequest func()
+	// OnDismissRequest, if set, runs when Escape or a click beside the sheet
+	// asks to close it, as Dialog.OnDismissRequest does: the sheet closes if
+	// it returns true and stays open if it returns false. A click beside a
+	// Persistent sheet asks nothing, so there only Escape runs it. Nil
+	// closes the sheet. The dismiss function always closes it, without
+	// asking.
+	OnDismissRequest func() bool
 }
 
 // ShowSheet opens a modal panel from an edge of the window, over a scrim, with
 // what build returns inside, padded by 24. Call the function that build gets to
-// close it; Escape and a click beside the panel do the same unless the sheet is
-// Persistent or has an OnDismissRequest. The panel slides in and out, or fades
+// close it; Escape and a click beside the panel do the same, except that a
+// Persistent sheet ignores the click and that its OnDismissRequest may return
+// false to keep it open. The panel slides in and out, or fades
 // when the window asks for less motion, keeps Tab to itself, and gives the
 // focus back when it is gone.
 // While it is open, what lies under it is out of the accessibility tree, as
@@ -150,13 +153,12 @@ func (s *sheetRouteState) scrimTap() {
 }
 
 // requestDismiss is Escape or a click beside the sheet: it closes the sheet,
-// or runs its OnDismissRequest.
+// unless its OnDismissRequest says no.
 func (s *sheetRouteState) requestDismiss() {
 	if s.controller.Status() == motion.Reversing {
 		return
 	}
-	if f := s.Widget().(sheetRoute).sheet.OnDismissRequest; f != nil {
-		f()
+	if f := s.Widget().(sheetRoute).sheet.OnDismissRequest; f != nil && !f() {
 		return
 	}
 	s.dismiss()

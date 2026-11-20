@@ -15,7 +15,7 @@ import (
 
 // openDialog shows a Dialog with a Close button from the sheet rig. request
 // is its OnDismissRequest; the dismiss function it returns closes it from code.
-func (r *sheetRig) openDialog(request func()) *func() {
+func (r *sheetRig) openDialog(request func() bool) *func() {
 	var closeIt func()
 	ShowDialog(r.ctx, func(dismiss func()) core.Widget {
 		closeIt = dismiss
@@ -50,7 +50,7 @@ func TestDialog_ClosesOnEscapeAndScrimWithoutARequest(t *testing.T) {
 func TestDialog_OnDismissRequestDecides(t *testing.T) {
 	r := newSheetRig(t, basic.MediaQueryData{Scale: 1})
 	asked := 0
-	closeIt := r.openDialog(func() { asked++ })
+	closeIt := r.openDialog(func() bool { asked++; return false })
 	r.tree.DispatchKey(core.KeyEvent{Key: input.KeyEscape})
 	// A held Escape asks once.
 	r.tree.DispatchKey(core.KeyEvent{Key: input.KeyEscape, Repeat: true})
@@ -84,7 +84,7 @@ func TestDialog_OnDismissRequestDecides(t *testing.T) {
 func TestDialog_DismissButtonClosesDespiteARequest(t *testing.T) {
 	r := newSheetRig(t, basic.MediaQueryData{Scale: 1})
 	asked := 0
-	r.openDialog(func() { asked++ })
+	r.openDialog(func() bool { asked++; return false })
 	root, _ := r.tree.SemanticsTree()
 	wtest.Tap(r.tree, wtest.Center(wtest.ByLabel(t, root, "閉じる").Rect))
 	wtest.Settled(t, r.tree, wtest.Screen, &r.now)
@@ -97,7 +97,7 @@ func TestSheet_OnDismissRequestDecides(t *testing.T) {
 	for _, persistent := range []bool{false, true} {
 		r := newSheetRig(t, basic.MediaQueryData{Scale: 1})
 		asked := 0
-		r.open(Sheet{Persistent: persistent, OnDismissRequest: func() { asked++ }})
+		r.open(Sheet{Persistent: persistent, OnDismissRequest: func() bool { asked++; return false }})
 		wtest.Settled(t, r.tree, wtest.Screen, &r.now)
 		r.tree.DispatchKey(core.KeyEvent{Key: input.KeyEscape})
 		wtest.Tap(r.tree, geom.Offset{X: 10, Y: 10})
