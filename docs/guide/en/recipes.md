@@ -222,7 +222,7 @@ What makes it work:
 
 - `collection.Group` and `GroupRow` lay out a settings page: a label on the left, the control on the right. The row's label also names a control that has none of its own.
 - The page is a `Column` with `theme.Space24` between its parts, the gap between sections. `basic.VStack` would put only `theme.Space8` between them, the gap between controls.
-- `overlay.ShowDialog` takes the `BuildContext` of the State, `s.Context()`; call it from a callback. `gowaku.Run` and `gowakutest.New` already provide the `Overlay` it needs.
+- `overlay.ShowDialog` takes the `BuildContext` of the State, `s.Context()`; call it from a callback. `gowaku.Run` and `gowakutest.New` already provide the `Overlay` it needs. It returns the same `dismiss` that `build` gets, to close the dialog from outside it, as when a save it waits for ends; once the dialog is closing or gone, calling `dismiss` does nothing.
 - While the dialog is open, the page is out of the accessibility tree, so a test can press the dialog's Reset with `tt.Tap("Reset")`: see [Testing a dialog](testing-and-preview.md#testing-a-dialog).
 
 ## A long vertical text

@@ -50,7 +50,7 @@ func open(tt *gowakutest.Tester) bool {
 func TestDialog_OnDismissRequestReturnsWhetherToClose(t *testing.T) {
 	tt, ctx := newPlace(t)
 	allow, asked := false, 0
-	overlay.ShowDialog(ctx, func(dismiss func()) core.Widget {
+	overlay.ShowDialog(ctx, func(func()) core.Widget {
 		return overlay.Dialog{Title: "Draft", OnDismissRequest: func() bool {
 			asked++
 			return allow
@@ -88,5 +88,78 @@ func TestSheet_OnDismissRequestReturnsWhetherToClose(t *testing.T) {
 		if open(tt) {
 			t.Errorf("Persistent %v: the sheet stays open although OnDismissRequest returned true", persistent)
 		}
+	}
+}
+
+func TestShowDialog_ReturnsTheDismissOfBuild(t *testing.T) {
+	tt, ctx := newPlace(t)
+	var inner func()
+	dismiss := overlay.ShowDialog(ctx, func(d func()) core.Widget {
+		inner = d
+		return overlay.Dialog{Title: "Draft", OnDismissRequest: func() bool { return false }}
+	})
+	tt.Settle()
+	if !open(tt) {
+		t.Fatal("the dialog did not open")
+	}
+	// It closes without asking OnDismissRequest.
+	dismiss()
+	tt.Advance(300 * time.Millisecond)
+	if open(tt) {
+		t.Fatal("the dismiss ShowDialog returned did not close the dialog")
+	}
+	// Both are harmless once the dialog is gone.
+	dismiss()
+	inner()
+	tt.Settle()
+	if _, ok := tt.Find("Page"); !ok {
+		t.Errorf("the page is lost after a late dismiss:\n%s", tt.Dump())
+	}
+}
+
+func TestShowDialog_DismissTwiceWhileClosing(t *testing.T) {
+	tt, ctx := newPlace(t)
+	dismiss := overlay.ShowDialog(ctx, func(func()) core.Widget { return overlay.Dialog{Title: "Draft"} })
+	tt.Settle()
+	dismiss()
+	tt.Advance(50 * time.Millisecond)
+	dismiss()
+	tt.Advance(300 * time.Millisecond)
+	if open(tt) {
+		t.Error("the dialog stays open")
+	}
+	// A dialog dismissed before its first frame never shows.
+	dismiss = overlay.ShowDialog(ctx, func(func()) core.Widget { return overlay.Dialog{Title: "Draft"} })
+	dismiss()
+	dismiss()
+	tt.Settle()
+	if open(tt) {
+		t.Error("a dialog dismissed at once still shows")
+	}
+}
+
+func TestShowSheet_ReturnsTheDismissOfBuild(t *testing.T) {
+	tt, ctx := newPlace(t)
+	var inner func()
+	dismiss := overlay.ShowSheet(ctx, overlay.Sheet{Label: "Draft", Persistent: true}, func(d func()) core.Widget {
+		inner = d
+		return basic.Text{Content: "Body"}
+	})
+	tt.Settle()
+	if !open(tt) {
+		t.Fatal("the sheet did not open")
+	}
+	inner()
+	tt.Advance(50 * time.Millisecond)
+	dismiss()
+	tt.Advance(300 * time.Millisecond)
+	if open(tt) {
+		t.Fatal("the sheet stays open")
+	}
+	dismiss()
+	inner()
+	tt.Settle()
+	if _, ok := tt.Find("Page"); !ok {
+		t.Errorf("the page is lost after a late dismiss:\n%s", tt.Dump())
 	}
 }

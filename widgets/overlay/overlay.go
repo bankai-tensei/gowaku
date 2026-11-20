@@ -180,10 +180,13 @@ func (r *renderEntryHits) HitTest(pos geom.Offset, res *core.HitTestResult) bool
 }
 
 // ShowDialog opens a modal dialog in the nearest Overlay, with what build returns
-// inside, usually a Dialog. Call the function that build gets to close it; Escape
-// and a click beside the dialog do the same, unless the OnDismissRequest of the
-// Dialog returns false. The dialog fades and scales in and
-// out, keeps Tab to itself, and gives the focus back when it is gone.
+// inside, usually a Dialog, and returns a function that closes it. build gets
+// the same function. Call it to close the dialog from a button in it or from
+// elsewhere, as when the work it waits for ends; once the dialog is closing or
+// gone, calling it again does nothing. Escape and a click beside the dialog
+// close it too, unless the OnDismissRequest of the Dialog returns false. The
+// dialog fades and scales in and out, keeps Tab to itself, and gives the focus
+// back when it is gone.
 //
 // Closing it starts a fade of about 120 ms, a timer of the clock, and the
 // dialog leaves the overlay only when that ends. In a gowakutest.Tester, a tap
@@ -202,18 +205,45 @@ func (r *renderEntryHits) HitTest(pos geom.Offset, res *core.HitTestResult) bool
 // basic.Theme around part of the tree gives its dialogs its look; see
 // Host.InsertFrom. build runs again whenever the overlay rebuilds or
 // they change. It must not be called during a Build.
-func ShowDialog(ctx core.BuildContext, build func(dismiss func()) core.Widget) {
-	var entry *Entry
-	entry = Of(ctx).InsertFrom(ctx, func() core.Widget {
-		return dialogRoute{build: build, onGone: func() { entry.Remove() }}
+func ShowDialog(ctx core.BuildContext, build func(dismiss func()) core.Widget) (dismiss func()) {
+	h := &routeHandle{}
+	dismiss = h.dismiss
+	h.entry = Of(ctx).InsertFrom(ctx, func() core.Widget {
+		return dialogRoute{build: build, handle: h, dismiss: dismiss}
 	})
+	return dismiss
+}
+
+// routeHandle is what ShowDialog and ShowSheet share with the route they open:
+// its dismiss is the function they return and build gets.
+type routeHandle struct {
+	entry *Entry
+	// leave starts the exit of the route while its state is mounted.
+	leave func()
+	// done is set once the route is closing or gone.
+	done bool
+}
+
+// dismiss closes the route. It does nothing once the route is closing or gone.
+func (h *routeHandle) dismiss() {
+	if h.done {
+		return
+	}
+	if h.leave != nil {
+		h.leave()
+		return
+	}
+	// The route has not been built yet: take it out before it shows.
+	h.done = true
+	h.entry.Remove()
 }
 
 // dialogRoute is the scrim and transition around a dialog.
 type dialogRoute struct {
 	core.StatefulBase
-	build  func(dismiss func()) core.Widget
-	onGone func()
+	build   func(dismiss func()) core.Widget
+	handle  *routeHandle
+	dismiss func()
 }
 
 // enteringOpacity is the least opacity of a dialog that comes in: too faint
@@ -251,13 +281,19 @@ func (s *dialogRouteState) InitState() {
 		}
 	}
 	c.Forward()
+	s.Widget().(dialogRoute).handle.leave = s.dismiss
 }
 
 // Dispose implements core.State.
-func (s *dialogRouteState) Dispose() { s.controller.Dispose() }
+func (s *dialogRouteState) Dispose() {
+	h := s.Widget().(dialogRoute).handle
+	h.leave, h.done = nil, true
+	s.controller.Dispose()
+}
 
 func (s *dialogRouteState) dismiss() {
 	if s.controller.Status() != motion.Reversing {
+		s.Widget().(dialogRoute).handle.done = true
 		s.controller.Reverse()
 	}
 }
@@ -278,7 +314,7 @@ func (s *dialogRouteState) gone() {
 	if s.previous != nil {
 		core.RestoreFocus(s.previous)
 	}
-	s.Widget().(dialogRoute).onGone()
+	s.Widget().(dialogRoute).handle.entry.Remove()
 }
 
 func (s *dialogRouteState) key(e *core.KeyEvent) bool {
@@ -293,6 +329,7 @@ func (s *dialogRouteState) key(e *core.KeyEvent) bool {
 
 // Build implements core.State.
 func (s *dialogRouteState) Build(ctx core.BuildContext) core.Widget {
+	route := s.Widget().(dialogRoute)
 	th := basic.ThemeOf(ctx)
 	v := s.controller.Value()
 	fade := geom.Clamp32(v, 0, 1)
@@ -325,7 +362,7 @@ func (s *dialogRouteState) Build(ctx core.BuildContext) core.Widget {
 					// keyboard away.
 					Child: interact.GestureDetector{OnTapDown: func() {}, Child: core.Inherited[*dialogGate]{
 						Value: &s.gate,
-						Child: s.Widget().(dialogRoute).build(s.dismiss),
+						Child: route.build(route.dismiss),
 					}},
 				}}},
 			}}},

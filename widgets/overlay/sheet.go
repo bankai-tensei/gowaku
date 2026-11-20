@@ -81,12 +81,13 @@ type Sheet struct {
 }
 
 // ShowSheet opens a modal panel from an edge of the window, over a scrim, with
-// what build returns inside, padded by 24. Call the function that build gets to
-// close it; Escape and a click beside the panel do the same, except that a
-// Persistent sheet ignores the click and that its OnDismissRequest may return
-// false to keep it open. The panel slides in and out, or fades
-// when the window asks for less motion, keeps Tab to itself, and gives the
-// focus back when it is gone.
+// what build returns inside, padded by 24, and returns a function that closes
+// it: the same function that build gets, which does nothing once the sheet is
+// closing or gone, as for ShowDialog. Escape and a click beside the panel close
+// it too, except that a Persistent sheet ignores the click and that its
+// OnDismissRequest may return false to keep it open. The panel slides in and
+// out, or fades when the window asks for less motion, keeps Tab to itself, and
+// gives the focus back when it is gone.
 // While it is open, what lies under it is out of the accessibility tree, as
 // for ShowDialog.
 //
@@ -97,19 +98,22 @@ type Sheet struct {
 //	ShowSheet(ctx, Sheet{Edge: SheetTrailing, Label: "詳細"}, func(dismiss func()) core.Widget {
 //		return Column{Children: []core.Widget{info, Button{Label: "閉じる", OnPress: dismiss}}}
 //	})
-func ShowSheet(ctx core.BuildContext, s Sheet, build func(dismiss func()) core.Widget) {
-	var entry *Entry
-	entry = Of(ctx).InsertFrom(ctx, func() core.Widget {
-		return sheetRoute{sheet: s, build: build, onGone: func() { entry.Remove() }}
+func ShowSheet(ctx core.BuildContext, s Sheet, build func(dismiss func()) core.Widget) (dismiss func()) {
+	h := &routeHandle{}
+	dismiss = h.dismiss
+	h.entry = Of(ctx).InsertFrom(ctx, func() core.Widget {
+		return sheetRoute{sheet: s, build: build, handle: h, dismiss: dismiss}
 	})
+	return dismiss
 }
 
 // sheetRoute is the scrim and transition around a sheet.
 type sheetRoute struct {
 	core.StatefulBase
-	sheet  Sheet
-	build  func(dismiss func()) core.Widget
-	onGone func()
+	sheet   Sheet
+	build   func(dismiss func()) core.Widget
+	handle  *routeHandle
+	dismiss func()
 }
 
 type sheetRouteState struct {
@@ -135,13 +139,19 @@ func (s *sheetRouteState) InitState() {
 		}
 	}
 	c.Forward()
+	s.Widget().(sheetRoute).handle.leave = s.dismiss
 }
 
 // Dispose implements core.State.
-func (s *sheetRouteState) Dispose() { s.controller.Dispose() }
+func (s *sheetRouteState) Dispose() {
+	h := s.Widget().(sheetRoute).handle
+	h.leave, h.done = nil, true
+	s.controller.Dispose()
+}
 
 func (s *sheetRouteState) dismiss() {
 	if s.controller.Status() != motion.Reversing {
+		s.Widget().(sheetRoute).handle.done = true
 		s.controller.Reverse()
 	}
 }
@@ -168,7 +178,7 @@ func (s *sheetRouteState) gone() {
 	if s.previous != nil {
 		core.RestoreFocus(s.previous)
 	}
-	s.Widget().(sheetRoute).onGone()
+	s.Widget().(sheetRoute).handle.entry.Remove()
 }
 
 func (s *sheetRouteState) key(e *core.KeyEvent) bool {
@@ -217,7 +227,7 @@ func (s *sheetRouteState) Build(ctx core.BuildContext) core.Widget {
 		Border:  paint.Stroke{Width: 1, Color: th.Color.Hair},
 		Shadows: th.Color.Shadows(theme.LiftFloat),
 		Padding: pad,
-		Child:   route.build(s.dismiss),
+		Child:   route.build(route.dismiss),
 	}
 	return kit.ModalScope{
 		Active:         s.controller.Status() != motion.Reversing,
