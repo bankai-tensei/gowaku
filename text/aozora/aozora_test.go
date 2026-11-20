@@ -36,6 +36,12 @@ func TestMarks(t *testing.T) {
 			{"〆切《しめきり》", "〆切", "しめきり"},
 		}, "佐々木と〆切"},
 		{"一ヶ月《いっかげつ》", []marked{{"一ヶ月《いっかげつ》", "一ヶ月", "いっかげつ"}}, "一ヶ月"},
+		// A variation selector stays with the kanji it follows.
+		{"葛\U000E0100《かつら》", []marked{{"葛\U000E0100《かつら》", "葛\U000E0100", "かつら"}}, "葛\U000E0100"},
+		{"葛\U000E0100飾《かつしか》", []marked{{"葛\U000E0100飾《かつしか》", "葛\U000E0100飾", "かつしか"}}, "葛\U000E0100飾"},
+		{"神︀社《じんじゃ》", []marked{{"神︀社《じんじゃ》", "神︀社", "じんじゃ"}}, "神︀社"},
+		// A selector after kana is not part of the base.
+		{"か︀字《じ》", []marked{{"字《じ》", "字", "じ"}}, "か︀字"},
 		// A bar lets the base be anything, kana and Latin included.
 		{"お｜ABC《エービーシー》だ", []marked{{"｜ABC《エービーシー》", "ABC", "エービーシー"}}, "おABCだ"},
 		{"｜東京《とうきょう》｜大阪《おおさか》", []marked{
