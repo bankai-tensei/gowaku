@@ -66,6 +66,51 @@ func (t *rowTable) splice(first, removed, added int, estimate func(i int) int32)
 	t.rebuild()
 }
 
+// spliceAll follows edits that come from the last line to the first, as
+// linesRewritten takes them, moving the counts once; estimate is asked for
+// the lines as they are after all the edits.
+func (t *rowTable) spliceAll(chs []lineChange, estimate func(i int) int32) {
+	if len(chs) == 1 {
+		t.splice(chs[0].first, chs[0].removed, chs[0].added, estimate)
+		return
+	}
+	delta, same := 0, true
+	for _, ch := range chs {
+		delta += ch.added - ch.removed
+		same = same && ch.added == ch.removed
+	}
+	if t.uniform {
+		t.n += delta
+		return
+	}
+	if same {
+		for _, ch := range chs {
+			for i := ch.first; i < ch.first+ch.added; i++ {
+				t.set(i, estimate(i), false)
+			}
+		}
+		return
+	}
+	n := len(t.rows) + delta
+	rows, exact := make([]int32, n), make([]bool, n)
+	from, to := 0, 0
+	for k := len(chs) - 1; k >= 0; k-- {
+		ch := chs[k]
+		m := copy(rows[to:], t.rows[from:ch.first])
+		copy(exact[to:], t.exact[from:ch.first])
+		to += m
+		for j := range ch.added {
+			rows[to+j] = estimate(to + j)
+		}
+		to += ch.added
+		from = ch.first + ch.removed
+	}
+	copy(rows[to:], t.rows[from:])
+	copy(exact[to:], t.exact[from:])
+	t.rows, t.exact = rows, exact
+	t.rebuild()
+}
+
 func resize[T any](s []T, n int) []T {
 	if cap(s) >= n {
 		return s[:n]

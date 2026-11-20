@@ -470,36 +470,20 @@ func (c *Controller) ReplaceAll(s string) int {
 	if n == 0 {
 		return 0
 	}
-	// From the last match back, so that the positions of the others hold. The
-	// steps are folded into one for Undo.
-	matches := append([]TextRange(nil), c.find.matches...)
+	// A copy, as refind fills the matches anew in place.
+	matches := slices.Clone(c.find.matches)
 	first := c.buf.offset(matches[0].Start)
-	last := c.buf.offset(matches[n-1].End)
-	before := c.buf.slice(matches[0].Start, matches[n-1].End)
 	sel := c.cur()
 	anchor, caret := c.buf.offset(sel.anchor), c.buf.offset(sel.caret)
-	oldLength := c.buf.length()
-	// The search sleeps meanwhile, or each step would update every match.
-	query := c.find.query
-	c.find.query = ""
-	// Expanded before the first step: a replacement changes what the regular
+	// Expanded before the text changes: a replacement changes what the regular
 	// expression sees around the matches before it.
 	with := c.find.expand(&c.buf, matches, s)
-	for k := n - 1; k >= 0; k-- {
-		m := matches[k]
-		if with != nil {
-			s = with[k]
-		}
-		c.splice(m.Start, m.End, s)
-	}
-	c.find.query = query
+	before, after, ends := c.replaceLines(matches, with, s)
 	c.refind()
-	after := c.buf.slice(c.buf.position(first), c.buf.position(last+c.buf.length()-oldLength))
 	c.history.Seal()
 	c.history.Record(kit.Edit{Kind: kit.EditOther, At: first, Removed: before, Inserted: after, Anchor: anchor, Caret: caret})
 	c.history.Seal()
-	end := c.buf.position(first + len(after))
-	sel.anchor, sel.caret = end, end
+	sel.anchor, sel.caret = ends[n-1], ends[n-1]
 	c.changed()
 	return n
 }
