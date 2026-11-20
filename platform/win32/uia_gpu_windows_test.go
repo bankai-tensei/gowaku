@@ -163,15 +163,15 @@ func runClient(t *testing.T, hwnd HWND, ready <-chan struct{}, actions <-chan pl
 	defer windows.CoUninitialize()
 
 	var uia *com.Unknown
-	if hr, _, _ := procCoCreateInstance.Call(addr(&CLSID_CUIAutomation), 0, CLSCTX_INPROC_SERVER,
-		addr(&IID_IUIAutomation), addrOf(&uia)); com.Failed(hr) {
+	if hr, _, _ := procCoCreateInstance.Call(uintptr(unsafe.Pointer(&CLSID_CUIAutomation)), 0, CLSCTX_INPROC_SERVER,
+		uintptr(unsafe.Pointer(&IID_IUIAutomation)), uintptr(unsafe.Pointer(&uia))); com.Failed(hr) {
 		t.Errorf("CoCreateInstance(CUIAutomation): %#x", uint32(hr))
 		return
 	}
 	defer uia.Release()
 
 	var window *com.Unknown
-	if hr := uia.Call(iUIAutomation_ElementFromHandle, uintptr(hwnd), addrOf(&window)); com.Failed(hr) {
+	if hr := uia.Call(iUIAutomation_ElementFromHandle, uintptr(hwnd), uintptr(unsafe.Pointer(&window))); com.Failed(hr) {
 		t.Errorf("ElementFromHandle: %#x", uint32(hr))
 		return
 	}
@@ -272,7 +272,7 @@ func runClient(t *testing.T, hwnd HWND, ready <-chan struct{}, actions <-chan pl
 		t.Errorf("name after the update: %q", name)
 	}
 	var b *uint16
-	if hr := done.Call(iUIAutomationElement_CurrentName, addrOfBSTR(&b)); uint32(hr) != UIA_E_ELEMENTNOTAVAILABLE {
+	if hr := done.Call(iUIAutomationElement_CurrentName, uintptr(unsafe.Pointer(&b))); uint32(hr) != UIA_E_ELEMENTNOTAVAILABLE {
 		t.Errorf("a removed element answered %#x, want UIA_E_ELEMENTNOTAVAILABLE", uint32(hr))
 	}
 	com.SysFreeString(b)
@@ -286,7 +286,7 @@ func checkText(t *testing.T, field *com.Unknown) {
 	}
 	defer text.Release()
 	var doc *com.Unknown
-	if hr := text.Call(iUIAutomationTextPattern_DocumentRange, addrOf(&doc)); com.Failed(hr) || doc == nil {
+	if hr := text.Call(iUIAutomationTextPattern_DocumentRange, uintptr(unsafe.Pointer(&doc))); com.Failed(hr) || doc == nil {
 		t.Errorf("DocumentRange: %#x", uint32(hr))
 		return
 	}
@@ -309,7 +309,7 @@ func checkText(t *testing.T, field *com.Unknown) {
 	}
 
 	var sel *com.Unknown
-	if hr := text.Call(iUIAutomationTextPattern_GetSelection, addrOf(&sel)); com.Failed(hr) || sel == nil {
+	if hr := text.Call(iUIAutomationTextPattern_GetSelection, uintptr(unsafe.Pointer(&sel))); com.Failed(hr) || sel == nil {
 		t.Errorf("GetSelection: %#x", uint32(hr))
 		return
 	}
@@ -321,7 +321,7 @@ func checkText(t *testing.T, field *com.Unknown) {
 		return
 	}
 	var caret *com.Unknown
-	sel.Call(iUIAutomationTextRangeArray_GetElement, 0, addrOf(&caret))
+	sel.Call(iUIAutomationTextRangeArray_GetElement, 0, uintptr(unsafe.Pointer(&caret)))
 	defer caret.Release()
 	if hr := caret.Call(iUIAutomationTextRange_Move, TextUnit_Character, ^uintptr(1), uintptr(unsafe.Pointer(&moved))); com.Failed(hr) || moved != -2 {
 		t.Errorf("caret back two characters: %#x, moved %d", uint32(hr), moved)
@@ -337,12 +337,12 @@ func checkText(t *testing.T, field *com.Unknown) {
 func findAll(t *testing.T, uia, root *com.Unknown) []*com.Unknown {
 	t.Helper()
 	var cond, arr *com.Unknown
-	if hr := uia.Call(iUIAutomation_CreateTrueCondition, addrOf(&cond)); com.Failed(hr) {
+	if hr := uia.Call(iUIAutomation_CreateTrueCondition, uintptr(unsafe.Pointer(&cond))); com.Failed(hr) {
 		t.Errorf("CreateTrueCondition: %#x", uint32(hr))
 		return nil
 	}
 	defer cond.Release()
-	if hr := root.Call(iUIAutomationElement_FindAll, TreeScope_Descendants, cond.Addr(), addrOf(&arr)); com.Failed(hr) || arr == nil {
+	if hr := root.Call(iUIAutomationElement_FindAll, TreeScope_Descendants, cond.Addr(), uintptr(unsafe.Pointer(&arr))); com.Failed(hr) || arr == nil {
 		t.Errorf("FindAll: %#x", uint32(hr))
 		return nil
 	}
@@ -351,14 +351,14 @@ func findAll(t *testing.T, uia, root *com.Unknown) []*com.Unknown {
 	arr.Call(iUIAutomationElementArray_Length, uintptr(unsafe.Pointer(&n)))
 	out := make([]*com.Unknown, n)
 	for i := range out {
-		arr.Call(iUIAutomationElementArray_GetElement, uintptr(i), addrOf(&out[i]))
+		arr.Call(iUIAutomationElementArray_GetElement, uintptr(i), uintptr(unsafe.Pointer(&out[i])))
 	}
 	return out
 }
 
 func elementName(e *com.Unknown) string {
 	var b *uint16
-	if hr := e.Call(iUIAutomationElement_CurrentName, addrOfBSTR(&b)); com.Failed(hr) {
+	if hr := e.Call(iUIAutomationElement_CurrentName, uintptr(unsafe.Pointer(&b))); com.Failed(hr) {
 		return ""
 	}
 	defer com.SysFreeString(b)
@@ -386,7 +386,7 @@ func property(t *testing.T, e *com.Unknown, prop int32) *com.VARIANT {
 func pattern(t *testing.T, e *com.Unknown, id int32, iid *windows.GUID) *com.Unknown {
 	t.Helper()
 	var p *com.Unknown
-	if hr := e.Call(iUIAutomationElement_GetCurrentPatternAs, uintptr(id), addr(iid), addrOf(&p)); com.Failed(hr) || p == nil {
+	if hr := e.Call(iUIAutomationElement_GetCurrentPatternAs, uintptr(id), uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(&p))); com.Failed(hr) || p == nil {
 		t.Errorf("pattern %d: %#x", id, uint32(hr))
 		return nil
 	}
@@ -395,7 +395,7 @@ func pattern(t *testing.T, e *com.Unknown, id int32, iid *windows.GUID) *com.Unk
 
 func rangeText(r *com.Unknown) string {
 	var b *uint16
-	if hr := r.Call(iUIAutomationTextRange_GetText, ^uintptr(0), addrOfBSTR(&b)); com.Failed(hr) {
+	if hr := r.Call(iUIAutomationTextRange_GetText, ^uintptr(0), uintptr(unsafe.Pointer(&b))); com.Failed(hr) {
 		return "<error>"
 	}
 	defer com.SysFreeString(b)
@@ -420,6 +420,3 @@ func expectAction(t *testing.T, actions <-chan platform.Event, want platform.Eve
 		}
 	}
 }
-
-func addr(g *windows.GUID) uintptr  { return uintptr(unsafe.Pointer(g)) }
-func addrOfBSTR(b **uint16) uintptr { return uintptr(unsafe.Pointer(b)) }

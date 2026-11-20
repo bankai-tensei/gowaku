@@ -8,6 +8,7 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 - SVG: an arc whose numbers sweep no angle, or overflow, panicked with an index out of range; it is now drawn as a line. A large `stroke-dashoffset` over a short `stroke-dasharray` could loop forever; the offset is now reduced in float64, and a pattern whose length is not finite draws the stroke solid.
 - Layers of `RepaintBoundary` that left the tree stayed in the renderer's layer pool for good, and with them the boundary and its whole subtree, so that scrolling a `List` or `GridView` leaked every row that had shown. Entries not drawn for 120 frames are now dropped. `Canvas.Reset` and the render children of an element no longer keep references past their length.
+- Windows: the COM calls of the file dialog and of DirectComposition did not keep pointer arguments alive and in place during the call, and the filter specs of the file dialog were not kept until it returned. `SysAllocString` and a UI Automation call converted pointers to `uintptr` outside the call. Wayland: the locale string given to xkb compose was not kept alive during the call.
 
 ## [0.1.0] - 2026-11-18
 

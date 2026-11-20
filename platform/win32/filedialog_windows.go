@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -65,6 +66,12 @@ func mustGUID(s string) windows.GUID {
 // comObject is any COM interface: a pointer to its vtable.
 type comObject struct{ vtbl *[32]uintptr }
 
+// call calls method slot of o. Pointers converted to uintptr in args stay
+// valid during the call, as for syscall.SyscallN: the directive below puts
+// what they point to on the heap and keeps it alive, though the stack of the
+// dialog's own message loop grows and moves.
+//
+//go:uintptrescapes
 func (o *comObject) call(slot int, args ...uintptr) uintptr {
 	r, _, _ := syscall.SyscallN(o.vtbl[slot], append([]uintptr{uintptr(unsafe.Pointer(o))}, args...)...)
 	return r
@@ -123,8 +130,10 @@ func (w *Window) showFileDialog(opts platform.FileDialogOptions) ([]string, erro
 	}
 	dialog.call(iFileDialog_SetOptions, uintptr(flags))
 
-	// The strings must outlive the calls that take them; keep holds them.
+	// The strings and the filters must outlive the calls that take them,
+	// until the dialog is done; keep and specs hold them.
 	var keep [][]uint16
+	var specs []comdlgFilterSpec
 	str := func(s string) *uint16 {
 		u, err := windows.UTF16FromString(s)
 		if err != nil {
@@ -138,7 +147,7 @@ func (w *Window) showFileDialog(opts platform.FileDialogOptions) ([]string, erro
 		dialog.call(iFileDialog_SetTitle, uintptr(unsafe.Pointer(str(opts.Title))))
 	}
 	if len(opts.Filters) > 0 && !opts.Directory {
-		specs := make([]comdlgFilterSpec, len(opts.Filters))
+		specs = make([]comdlgFilterSpec, len(opts.Filters))
 		for i, f := range opts.Filters {
 			specs[i] = comdlgFilterSpec{name: str(f.Name), spec: str(strings.Join(f.Patterns, ";"))}
 		}
@@ -161,7 +170,8 @@ func (w *Window) showFileDialog(opts platform.FileDialogOptions) ([]string, erro
 	}
 
 	hr = dialog.call(iModalWindow_Show, uintptr(w.hwnd))
-	keepAlive(keep)
+	runtime.KeepAlive(keep)
+	runtime.KeepAlive(specs)
 	if uint32(hr) == errorCancelled {
 		return nil, nil
 	}
@@ -201,11 +211,6 @@ func (w *Window) showFileDialog(opts platform.FileDialogOptions) ([]string, erro
 	}
 	return paths, nil
 }
-
-// keepAlive keeps the strings of a dialog until it returned.
-//
-//go:noinline
-func keepAlive([][]uint16) {}
 
 // itemPath returns the file system path of an IShellItem.
 func itemPath(item *comObject) (string, error) {

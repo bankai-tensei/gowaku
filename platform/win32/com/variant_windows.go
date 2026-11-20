@@ -113,12 +113,14 @@ func (v *VARIANT) Clear() {
 // SysFreeString. It never returns nil, even for "".
 func SysAllocString(s string) *uint16 {
 	u := utf16.Encode([]rune(s))
-	var p uintptr
-	if len(u) > 0 {
-		p = uintptr(unsafe.Pointer(&u[0]))
-	}
 	// SysAllocStringLen copies u, which only needs to live through the call.
-	r, _, _ := procSysAllocStringLen.Call(p, uintptr(len(u)))
+	// The conversion stays in the call, which keeps u alive until it returns;
+	// a uintptr held in a variable would not.
+	var p *uint16
+	if len(u) > 0 {
+		p = &u[0]
+	}
+	r, _, _ := procSysAllocStringLen.Call(uintptr(unsafe.Pointer(p)), uintptr(len(u)))
 	if r == 0 {
 		panic("gowaku: SysAllocStringLen: out of memory")
 	}

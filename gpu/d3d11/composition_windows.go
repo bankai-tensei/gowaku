@@ -69,6 +69,11 @@ func (c *composition) release() {
 }
 
 // call runs method i of the COM object u with args after the object itself.
+// Pointers converted to uintptr in args stay valid during the call, as for
+// syscall.SyscallN: the directive below puts what they point to on the heap
+// and keeps it alive.
+//
+//go:uintptrescapes
 func (u *unknown) call(i int, args ...uintptr) hresult {
 	r, _, _ := syscall.SyscallN(u.vtbl[i], append([]uintptr{uintptr(unsafe.Pointer(u))}, args...)...)
 	return hr(r)
