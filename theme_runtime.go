@@ -33,17 +33,19 @@ func SetTheme(ctx BuildContext, set theme.Set, mode ThemeMode) {
 
 // CurrentTheme returns the theme of the application and its mode: those of
 // App, or of the last SetTheme. Under a gowakutest.Tester they are those of
-// its Options, or of the last SetTheme; a host that keeps no theme gives
-// theme.Default and ThemeSystem. It must be called on the UI goroutine.
+// its Options, or of the last SetTheme. The zero theme.Set stands for
+// theme.Default, as in App, and a host that keeps no theme gives it with
+// ThemeSystem. It must be called on the UI goroutine.
 func CurrentTheme(ctx BuildContext) (theme.Set, ThemeMode) {
 	if h, ok := ctx.Host().(themeHost); ok {
 		return h.CurrentTheme()
 	}
-	return theme.Default(), ThemeSystem
+	return theme.Set{}, ThemeSystem
 }
 
 // themeHost is a core.Host that keeps the theme: the window of Run, and the
-// Tester of gowakutest.
+// Tester of gowakutest, which matches it by its methods without importing
+// gowaku; gowakutest's TestSetTheme_TheTreeTakesIt fails if the two part.
 type themeHost interface {
 	SetTheme(set theme.Set, mode ThemeMode)
 	CurrentTheme() (theme.Set, ThemeMode)

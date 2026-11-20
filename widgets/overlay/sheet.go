@@ -68,8 +68,9 @@ type Sheet struct {
 	Size float32
 	// Label names the sheet for assistive technology, as a title does.
 	Label string
-	// Persistent keeps the sheet open on a click beside it. Escape and the
-	// dismiss function still close it.
+	// Persistent keeps the sheet open on a click beside it, without asking
+	// OnDismissRequest. Escape still asks it, and the dismiss function still
+	// closes the sheet.
 	Persistent bool
 	// OnDismissRequest, if set, runs when Escape or a click beside the sheet
 	// asks to close it, as Dialog.OnDismissRequest does: the sheet closes if

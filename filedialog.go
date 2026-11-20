@@ -46,7 +46,7 @@ func ShowFileDialog(ctx BuildContext, d FileDialog, done func(paths []string, er
 // ShowFileDialog is the package function in front of this window, for code
 // that holds the window and no BuildContext of it.
 func (h *WindowHandle) ShowFileDialog(d FileDialog, done func(paths []string, err error)) {
-	if h.app.windows[h.window.native.ID()] != h.window {
+	if !h.app.alive(h.window) {
 		panic("gowaku: ShowFileDialog called on a closed window")
 	}
 	if done == nil {
@@ -55,9 +55,41 @@ func (h *WindowHandle) ShowFileDialog(d FileDialog, done func(paths []string, er
 	h.app.showFileDialog(h.window, d, done)
 }
 
-// ShowFileDialog implements core.FileDialogHost, for ShowFileDialog.
+// ShowFileDialog implements core.FileDialogHost, for ShowFileDialog. A ctx
+// can outlive its window, as that of a tray menu or of a timer: the dialog
+// then goes in front of another window, the focused one first, and with no
+// window open, done gets ErrNoFileDialog.
 func (h windowHost) ShowFileDialog(d FileDialog, done func([]string, error)) {
-	h.w.app.showFileDialog(h.w, d, done)
+	ap := h.w.app
+	w := h.w
+	if !ap.alive(w) {
+		w = ap.frontWindow()
+	}
+	if w == nil {
+		ap.post(func() { done(nil, ErrNoFileDialog) })
+		return
+	}
+	ap.showFileDialog(w, d, done)
+}
+
+// alive reports whether w is open and not closing.
+func (ap *app) alive(w *window) bool {
+	return ap.windows[w.native.ID()] == w && !w.closing
+}
+
+// frontWindow returns the focused open window, or the first opened, or nil.
+func (ap *app) frontWindow() *window {
+	var front *window
+	for _, w := range ap.windows {
+		if w.closing {
+			continue
+		}
+		if front == nil || w.focused && !front.focused ||
+			w.focused == front.focused && w.native.ID() < front.native.ID() {
+			front = w
+		}
+	}
+	return front
 }
 
 func (ap *app) showFileDialog(w *window, d FileDialog, done func([]string, error)) {
@@ -66,6 +98,33 @@ func (ap *app) showFileDialog(w *window, d FileDialog, done func([]string, error
 		ap.post(func() { done(paths, err) })
 	})
 }
+
+// dialogFields and platformDialogFields are the fields of FileDialog and of
+// platform.FileDialogOptions. The conversions below fail to build when a field
+// is added to one of them, so that platformDialog is changed with it.
+type (
+	dialogFields struct {
+		Title               string
+		Save                bool
+		Name                string
+		Multiple, Directory bool
+		Folder              string
+		Filters             []FileFilter
+	}
+	platformDialogFields struct {
+		Title               string
+		Save                bool
+		Name                string
+		Multiple, Directory bool
+		Folder              string
+		Filters             []platform.FileFilter
+	}
+)
+
+var (
+	_ = dialogFields(FileDialog{})
+	_ = platformDialogFields(platform.FileDialogOptions{})
+)
 
 // platformDialog returns d as the platform takes it.
 func platformDialog(d FileDialog) platform.FileDialogOptions {

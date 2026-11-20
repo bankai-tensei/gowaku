@@ -22,3 +22,11 @@ func TestClipboardKinds_MatchThePlatform(t *testing.T) {
 		}
 	}
 }
+
+func TestFileDialog_CrossesToThePlatform(t *testing.T) {
+	d := FileDialog{Title: "t", Save: true, Name: "n", Multiple: true, Directory: true, Folder: "f", Filters: []FileFilter{{Name: "x", Patterns: []string{"*.x"}}}}
+	p := platformDialog(d)
+	if p.Title != "t" || !p.Save || p.Name != "n" || !p.Multiple || !p.Directory || p.Folder != "f" || len(p.Filters) != 1 || p.Filters[0].Patterns[0] != "*.x" {
+		t.Errorf("got %+v", p)
+	}
+}
