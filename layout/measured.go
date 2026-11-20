@@ -32,50 +32,64 @@ type MeasuredExtents struct {
 }
 
 // Resize sets the number of rows to n. The rows below both lengths keep their
-// heights; new rows are not measured. Memory grows by doubling, so that a list
-// that grows a row at a time does not copy itself each time.
+// heights; new rows are not measured. Rows come and go at the end, so adding
+// k rows costs O(k log n) and dropping any number costs O(log n): a list of a
+// hundred million rows that grows by one does not walk them all. Memory grows
+// by doubling, so that a list that grows a row at a time does not copy itself
+// each time.
 func (m *MeasuredExtents) Resize(n int) {
 	n = max(n, 0)
 	old := len(m.extents)
 	if n == old {
 		return
 	}
+	if n < old {
+		// A node of the trees holds only rows at or before it, so the first
+		// n+1 nodes stay right; the totals become the sums of the rows kept.
+		m.extents = m.extents[:n]
+		m.sums = m.sums[:n+1]
+		m.counts = m.counts[:n+1]
+		m.total, m.measured = m.prefix(n)
+		return
+	}
 	if cap(m.extents) < n {
-		grown := make([]float32, n, max(n, 2*cap(m.extents)))
-		copy(grown, m.extents)
-		m.extents = grown
-		m.sums = make([]float64, n+1, cap(grown)+1)
-		m.counts = make([]int32, n+1, cap(grown)+1)
+		c := max(n, 2*cap(m.extents))
+		extents := make([]float32, n, c)
+		sums := make([]float64, n+1, c+1)
+		counts := make([]int32, n+1, c+1)
+		copy(extents, m.extents)
+		copy(sums, m.sums)
+		copy(counts, m.counts)
+		m.extents, m.sums, m.counts = extents, sums, counts
 	} else {
 		m.extents = m.extents[:n]
 		m.sums = m.sums[:n+1]
 		m.counts = m.counts[:n+1]
 	}
-	for i := old; i < n; i++ {
-		m.extents[i] = unmeasured
+	for k := old + 1; k <= n; k++ {
+		m.extents[k-1] = unmeasured
+		// Node k holds the rows after k-k&-k up to k. Row k is not measured,
+		// so the node is the sum of the nodes below it in that span.
+		var sum float64
+		var count int32
+		for j := k - 1; j > k-k&-k; j -= j & -j {
+			sum += m.sums[j]
+			count += m.counts[j]
+		}
+		m.sums[k], m.counts[k] = sum, count
 	}
-	m.rebuild()
 }
 
-// rebuild fills the trees from extents in O(n).
-func (m *MeasuredExtents) rebuild() {
-	clear(m.sums)
-	clear(m.counts)
-	m.total, m.measured = 0, 0
-	n := len(m.extents)
-	for i, e := range m.extents {
-		k := i + 1
-		if e >= 0 {
-			m.sums[k] += float64(e)
-			m.counts[k]++
-			m.total += float64(e)
-			m.measured++
-		}
-		if up := k + k&-k; up <= n {
-			m.sums[up] += m.sums[k]
-			m.counts[up] += m.counts[k]
-		}
+// prefix returns the sum and the number of the measured heights of the rows
+// before row i.
+func (m *MeasuredExtents) prefix(i int) (float64, int) {
+	var sum float64
+	var count int32
+	for k := i; k > 0; k -= k & -k {
+		sum += m.sums[k]
+		count += m.counts[k]
 	}
+	return sum, int(count)
 }
 
 // SetEstimate sets the height of a row not measured yet. With average set, the
@@ -162,13 +176,8 @@ func (m *MeasuredExtents) Extent(i int) float32 {
 
 // Offset returns the top of row i, for 0 <= i <= Len; Offset(Len()) is Total.
 func (m *MeasuredExtents) Offset(i int) float64 {
-	var sum float64
-	var count int32
-	for k := i; k > 0; k -= k & -k {
-		sum += m.sums[k]
-		count += m.counts[k]
-	}
-	return sum + float64(i-int(count))*float64(m.Estimate())
+	sum, count := m.prefix(i)
+	return sum + float64(i-count)*float64(m.Estimate())
 }
 
 // Total returns the height of all the rows, the unmeasured ones at the
