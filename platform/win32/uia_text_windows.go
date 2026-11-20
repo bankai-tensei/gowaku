@@ -268,7 +268,7 @@ func rangeGetAttributeValue(this *com.Unknown, _ uintptr, ret *com.VARIANT) uint
 	var unsupported *com.Unknown
 	// The reserved value is a static object of UI Automation; reference
 	// counting does not apply to it.
-	if hr, _, _ := procUiaGetReservedNotSupportedValue.Call(addrOf(&unsupported)); com.Failed(hr) {
+	if hr, _, _ := procUiaGetReservedNotSupportedValue.Call(uintptr(unsafe.Pointer(&unsupported))); com.Failed(hr) {
 		return hr
 	}
 	ret.SetUnknown(unsupported)
@@ -406,7 +406,3 @@ func rangeGetChildren(this *com.Unknown, ret **com.SAFEARRAY) uintptr {
 	*ret = com.NewSafeArrayUnknown(nil)
 	return com.S_OK
 }
-
-// addrOf returns the address of an out parameter for a syscall, which writes
-// it during the call only.
-func addrOf(p **com.Unknown) uintptr { return uintptr(unsafe.Pointer(p)) }

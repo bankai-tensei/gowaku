@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime"
 	"sync"
 	"unsafe"
 
@@ -122,7 +123,11 @@ func newKeyboard() (*keyboard, error) {
 		return nil, fmt.Errorf("wayland: xkb_context_new failed")
 	}
 	if k.x.composeTableNew != 0 {
-		k.table = k.hot(k.x.composeTableNew, k.context, uintptr(unsafe.Pointer(cstr(locale()+"\x00"))), xkbComposeCompileNone)
+		// The string is built here, so that nothing else keeps it alive
+		// during the call.
+		name := cstr(locale() + "\x00")
+		k.table = k.hot(k.x.composeTableNew, k.context, uintptr(unsafe.Pointer(name)), xkbComposeCompileNone)
+		runtime.KeepAlive(name)
 		if k.table != 0 {
 			k.compose = k.hot(k.x.composeStateNew, k.table, xkbComposeStateNoFlags)
 		}
@@ -140,6 +145,11 @@ func locale() string {
 	return "C"
 }
 
+// hot calls fn through the buffer of k, which keeps the calls of each key
+// from allocating. A uintptr does not keep its object alive or in place, so
+// that pointers among args must lead to memory that outlives the call by
+// itself: fields of k, static strings, or an object the caller keeps alive
+// with runtime.KeepAlive.
 func (k *keyboard) hot(fn uintptr, args ...uintptr) uintptr {
 	n := copy(k.call[:], args)
 	r, _, _ := purego.SyscallN(fn, k.call[:n]...)

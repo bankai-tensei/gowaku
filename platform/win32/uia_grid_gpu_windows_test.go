@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 
@@ -88,14 +89,14 @@ func runGridClient(t *testing.T, hwnd HWND, ready <-chan struct{}) {
 	}
 	defer windows.CoUninitialize()
 	var uia *com.Unknown
-	if hr, _, _ := procCoCreateInstance.Call(addr(&CLSID_CUIAutomation), 0, CLSCTX_INPROC_SERVER,
-		addr(&IID_IUIAutomation), addrOf(&uia)); com.Failed(hr) {
+	if hr, _, _ := procCoCreateInstance.Call(uintptr(unsafe.Pointer(&CLSID_CUIAutomation)), 0, CLSCTX_INPROC_SERVER,
+		uintptr(unsafe.Pointer(&IID_IUIAutomation)), uintptr(unsafe.Pointer(&uia))); com.Failed(hr) {
 		t.Errorf("CoCreateInstance(CUIAutomation): %#x", uint32(hr))
 		return
 	}
 	defer uia.Release()
 	var window *com.Unknown
-	if hr := uia.Call(iUIAutomation_ElementFromHandle, uintptr(hwnd), addrOf(&window)); com.Failed(hr) {
+	if hr := uia.Call(iUIAutomation_ElementFromHandle, uintptr(hwnd), uintptr(unsafe.Pointer(&window))); com.Failed(hr) {
 		t.Errorf("ElementFromHandle: %#x", uint32(hr))
 		return
 	}

@@ -56,24 +56,24 @@ func TestDrop_ThroughIDropTarget(t *testing.T) {
 
 	// The point is on the screen: the top left of the client area.
 	pt := POINT{}
-	_, _, _ = procClientToScreen.Call(uintptr(w.hwnd), uintptrOf(&pt))
+	_, _, _ = procClientToScreen.Call(uintptr(w.hwnd), uintptr(unsafe.Pointer(&pt)))
 	packed := uintptr(uint32(pt.x)) | uintptr(uint32(pt.y))<<32
 	effect := uint32(input.DropCopy | input.DropMove)
-	if hr := target.Call(iIDropTarget_DragEnter, data.Addr(), MK_CONTROL, packed, uintptrOf(&effect)); hr != com.S_OK {
+	if hr := target.Call(iIDropTarget_DragEnter, data.Addr(), MK_CONTROL, packed, uintptr(unsafe.Pointer(&effect))); hr != com.S_OK {
 		t.Fatalf("DragEnter: %#x", hr)
 	}
 	if effect != uint32(input.DropMove) {
 		t.Errorf("DragEnter effect %d, want a move", effect)
 	}
 	effect = uint32(input.DropCopy)
-	target.Call(iIDropTarget_DragOver, MK_CONTROL, packed, uintptrOf(&effect))
+	target.Call(iIDropTarget_DragOver, MK_CONTROL, packed, uintptr(unsafe.Pointer(&effect)))
 	if effect != 0 {
 		t.Errorf("a move that the source does not allow must be refused, got %d", effect)
 	}
 	target.Call(iIDropTarget_DragLeave)
 	effect = uint32(input.DropMove)
-	target.Call(iIDropTarget_DragEnter, data.Addr(), 0, packed, uintptrOf(&effect))
-	target.Call(iIDropTarget_Drop, data.Addr(), 0, packed, uintptrOf(&effect))
+	target.Call(iIDropTarget_DragEnter, data.Addr(), 0, packed, uintptr(unsafe.Pointer(&effect)))
+	target.Call(iIDropTarget_Drop, data.Addr(), 0, packed, uintptr(unsafe.Pointer(&effect)))
 	if effect != uint32(input.DropMove) {
 		t.Errorf("Drop effect %d", effect)
 	}
@@ -94,6 +94,3 @@ func TestDrop_ThroughIDropTarget(t *testing.T) {
 		t.Errorf("drop data %+v", last.Data)
 	}
 }
-
-// uintptrOf passes a pointer to a call that only uses it during the call.
-func uintptrOf[T any](v *T) uintptr { return uintptr(unsafe.Pointer(v)) }
