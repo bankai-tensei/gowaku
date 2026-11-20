@@ -647,12 +647,22 @@ func (p *Paragraph) allowedOverhang(i int, rubyEm float32) (before, after float3
 		lo, hi = p.blocks[b].clusterStart, p.blocks[b].clusterEnd
 	}
 	free := func(n int) float32 {
-		if n >= lo && n < hi && jlreq.Classify(p.units[n].Rune) == jlreq.ClassKana && !p.hasRuby(n) && !p.hasMark(n) {
+		if n >= lo && n < hi && overhangable(p.units[n].Rune) && !p.hasRuby(n) && !p.hasMark(n) {
 			return rubyEm
 		}
 		return 0
 	}
 	return free(i - 1), free(i + 1)
+}
+
+// overhangable reports whether ruby may reach over r: a kana of either size,
+// or the prolonged sound mark (JLReq 3.3.8).
+func overhangable(r rune) bool {
+	switch jlreq.Classify(r) {
+	case jlreq.ClassKana, jlreq.ClassSmallKana, jlreq.ClassProlonged:
+		return true
+	}
+	return false
 }
 
 func (p *Paragraph) hasRuby(i int) bool {

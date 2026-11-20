@@ -159,3 +159,18 @@ func TestRuby_GroupMeetsItsNeighborsByItsEnds(t *testing.T) {
 		}
 	}
 }
+
+// Ruby may overhang small kana and the prolonged sound mark as it does other
+// kana (JLReq 3.3.8).
+func TestRuby_OverhangsSmallKanaAndTheProlongedMark(t *testing.T) {
+	s := systemShaper(t)
+	const em = 20
+	for _, after := range []string{"い", "ょ", "ー"} {
+		// Four ruby characters are 2 em over a base of 1 em, and reach half
+		// an em over the character after it.
+		l := s.ShapeSpans([]Span{{Text: "漢"}, {Text: "字", Ruby: "ああああ"}, {Text: after}}, Style{Size: em}).Layout(inf)
+		if w := l.Size().W; w != 3.5*em {
+			t.Errorf("before %s: width %v, want %v", after, w, 3.5*em)
+		}
+	}
+}
