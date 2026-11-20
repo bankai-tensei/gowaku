@@ -243,7 +243,9 @@ gowaku.ShowFileDialog(ctx, gowaku.FileDialog{
 })
 ```
 
-`WindowHandle.ShowFileDialog` は、ウィンドウを持っていてもその `ctx` を持たないコードのためのもので、同じダイアログを表示する。`gowakutest.Tester` の下では偽のダイアログになり、テストが `tt.FileDialog().Choose(paths...)` で答える。Windows のダイアログはモーダルである。Linux では xdg-desktop-portal のダイアログを使い、表示中もアプリは動き続ける。ポータルが無い場合は結果が `gowaku.ErrNoFileDialog` になるので、パスは別の方法で尋ねる必要がある。gowaku は自前のファイルダイアログのウィジェットを提供しない。macOS では `NSOpenPanel` と `NSSavePanel` を使う。
+ウィンドウを持っていてもその `ctx` を持たないコードは、`WindowHandle.ShowFileDialog` を使う。そのウィンドウの手前に同じダイアログを表示する。Windows のダイアログはモーダルである。Linux では xdg-desktop-portal のダイアログを使い、表示中もアプリは動き続ける。ポータルが無い場合は結果が `gowaku.ErrNoFileDialog` になるので、パスは別の方法で尋ねる必要がある。gowaku は自前のファイルダイアログのウィジェットを提供しない。macOS では `NSOpenPanel` と `NSSavePanel` を使う。
+
+`gowakutest.Tester` の下では、`gowaku.ShowFileDialog` は偽のダイアログを表示する。テストはそれに `tt.FileDialog().Choose(paths...)` で答える。
 
 ## ドラッグ & ドロップ
 
