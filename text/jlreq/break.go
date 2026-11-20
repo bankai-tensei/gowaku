@@ -363,7 +363,7 @@ func (b *Breaker) tryOikomi(units []Unit, start, i int, indent, maxWidth float32
 	}
 	var give float32
 	for k := start; k < end; k++ {
-		give += b.shrinkable(units, k)
+		give += b.shrinkable(units, k, k == end-1)
 	}
 	overflow := b.naturalWidth(units, start, end, indent, opts) - maxWidth
 	if give < overflow {
@@ -376,7 +376,7 @@ func (b *Breaker) tryOikomi(units []Unit, start, i int, indent, maxWidth float32
 			x += b.before[k]
 		}
 		b.X[k] = x
-		x += b.advanceAt(units, k, x, opts) + b.after[k] - b.shrinkable(units, k)*ratio
+		x += b.advanceAt(units, k, x, opts) + b.after[k] - b.shrinkable(units, k, k == end-1)*ratio
 		if k == start {
 			x += units[k].StartExtra
 			b.Advance[k] += units[k].StartExtra
@@ -405,16 +405,22 @@ func (b *Breaker) naturalWidth(units []Unit, start, end int, indent float32, opt
 
 // shrinkable returns what unit k can give up under Oikomi: the rest of the
 // blank half of punctuation, half of a Western space, or half of the space
-// between Japanese and Western text.
-func (b *Breaker) shrinkable(units []Unit, k int) float32 {
+// between Japanese and Western text. last is set for the last unit of the
+// line: the space after it, b.after[k], goes with the line end and is not in
+// the line's width, so the unit gives up only its own blank half.
+func (b *Breaker) shrinkable(units []Unit, k int, last bool) float32 {
 	u := &units[k]
+	after := b.after[k]
+	if last {
+		after = 0
+	}
 	switch {
 	case endsWithBlank(b.endClass[k]) && u.FullWidth:
-		return max(u.Em/2+b.after[k], 0)
+		return max(u.Em/2+after, 0)
 	case b.class[k] == ClassSpace:
 		return u.Advance / 2
-	case b.after[k] > 0:
-		return b.after[k] / 2
+	case after > 0:
+		return after / 2
 	}
 	return 0
 }

@@ -240,6 +240,23 @@ func TestJLReq_OikomiFitsTheWidth(t *testing.T) {
 	}
 }
 
+// The space after the last character of a line disappears at the line end, so
+// Oikomi cannot squeeze it to make room.
+func TestJLReq_OikomiDoesNotCountTheSpaceAfterTheLine(t *testing.T) {
+	var b Breaker
+	// 々 must not start a line, and a quarter em of space would follow it
+	// before the A. Only that space could give, and it is past the line end.
+	us := units("あああ々A")
+	b.Break(us, 3.9*em, Options{Kinsoku: Oikomi})
+	l := b.Lines[0]
+	if l.End == 4 {
+		t.Fatalf("々 was pushed in: the line is %v wide, over %v", l.Width, 3.9*em)
+	}
+	if l.Width > 3.9*em {
+		t.Errorf("line is %v wide, over %v", l.Width, 3.9*em)
+	}
+}
+
 func TestJLReq_MinWidth(t *testing.T) {
 	for _, tc := range []struct {
 		s    string
