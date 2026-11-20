@@ -4,6 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-20
+
 ### Fixed
 
 - Ruby: a group ruby drew its whole base with the font and orientation of its first character, so that in `AI時代` the kanji took a Latin font, or a kanji from a fallback font became tofu, and in vertical text the kanji turned with the Latin letters. The base now keeps the look of each character. Line breaking and the space between Japanese and Western text after the group follow its last character, not its first; `jlreq.Unit` has a new `Last` field for that. Ruby longer than its base now overhangs small kana and the prolonged sound mark as it does other kana (JLReq 3.3.8). In `text/aozora`, a kanji with a variation selector, as in `葛󠄀《かつら》`, is part of the implicit base.
@@ -40,6 +42,7 @@ The first public release.
 - Desktop: multiple windows, modal windows, menus, custom title bars, tray icons, notifications, clipboard, file dialogs, drag and drop.
 - `gowakutest` for tests without a window, `gowakupreview` and `cmd/gowaku-preview` for live previews.
 
-[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bankai-tensei/gowaku/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bankai-tensei/gowaku/releases/tag/v0.1.0

@@ -3,7 +3,7 @@ module github.com/bankai-tensei/gowaku/markdown
 go 1.27.3
 
 require (
-	github.com/bankai-tensei/gowaku v0.1.1
+	github.com/bankai-tensei/gowaku v0.1.2
 	golang.org/x/text v0.43.0
 )
 
