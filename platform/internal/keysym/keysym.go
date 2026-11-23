@@ -34,8 +34,12 @@ const (
 	XK_KP_Page_Up   = 0xff9a
 	XK_KP_Page_Down = 0xff9b
 	XK_KP_End       = 0xff9c
+	XK_KP_Begin     = 0xff9d
 	XK_KP_Insert    = 0xff9e
 	XK_KP_Delete    = 0xff9f
+	XK_KP_Decimal   = 0xffae
+	XK_KP_0         = 0xffb0
+	XK_KP_9         = 0xffb9
 	XK_Delete       = 0xffff
 	XK_Menu         = 0xff67
 	XK_F1           = 0xffbe
@@ -66,6 +70,8 @@ func KeyCode(keysym uint64) input.KeyCode {
 		return input.KeyCode(keysym - 'a' + 'A')
 	case keysym >= 'A' && keysym <= 'Z', keysym >= '0' && keysym <= '9':
 		return input.KeyCode(keysym)
+	case keysym >= XK_KP_0 && keysym <= XK_KP_9:
+		return input.KeyCode(keysym - XK_KP_0 + '0')
 	case keysym >= XK_F1 && keysym <= XK_F12:
 		return input.KeyF1 + input.KeyCode(keysym-XK_F1)
 	}
@@ -100,6 +106,8 @@ func KeyCode(keysym uint64) input.KeyCode {
 		return input.KeyDelete
 	case XK_Insert, XK_KP_Insert:
 		return input.KeyInsert
+	case XK_KP_Decimal:
+		return input.KeyPeriod
 	case XK_Menu:
 		return input.KeyContextMenu
 	// Some layouts put Alt on the Meta keysyms.
@@ -128,6 +136,13 @@ func KeyCode(keysym uint64) input.KeyCode {
 		return input.PunctuationKey(rune(keysym))
 	}
 	return input.KeyNone
+}
+
+// IsKeypadNumLockKey reports whether a keypad symbol can mean either a digit or
+// navigation, depending on Num Lock and Shift.
+func IsKeypadNumLockKey(keysym uint64) bool {
+	return keysym >= XK_KP_Home && keysym <= XK_KP_Delete ||
+		keysym >= XK_KP_0 && keysym <= XK_KP_9 || keysym == XK_KP_Decimal
 }
 
 // TypedText returns what a key press adds to a document: the printable part of

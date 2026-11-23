@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/bankai-tensei/gowaku/input"
+	"github.com/bankai-tensei/gowaku/platform/internal/keysym"
 )
 
 // Values of xkbcommon.h and xkbcommon-compose.h.
@@ -249,6 +250,16 @@ func (k *keyboard) plainSym(key uint32) uint64 {
 		return 0
 	}
 	return uint64(*(*uint32)(cptr(k.syms)))
+}
+
+// keySym returns the unmodified symbol, except for keypad keys whose meaning
+// depends on Num Lock and Shift.
+func (k *keyboard) keySym(key uint32) uint64 {
+	plain := k.plainSym(key)
+	if k.state == 0 || !keysym.IsKeypadNumLockKey(plain) {
+		return plain
+	}
+	return uint64(k.hot(k.x.stateKeyGetOneSym, k.state, uintptr(key+xkbKeycodeOffset)))
 }
 
 // repeats reports whether the key repeats while held.

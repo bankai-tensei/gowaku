@@ -263,23 +263,23 @@ var kept struct {
 // xlib holds every function gowaku calls. Loading fills all of it or reports what
 // is missing, so that a call never goes through a nil pointer.
 type xlib struct {
-	XInitThreads, XOpenDisplay, XCloseDisplay, XSetErrorHandler uintptr
-	XDefaultScreen, XRootWindow, XConnectionNumber              uintptr
-	XPending, XEventsQueued, XNextEvent, XFlush                 uintptr
-	XCreateWindow, XDestroyWindow, XMapWindow, XSelectInput     uintptr
-	XInternAtom, XChangeProperty, XGetWindowProperty, XFree     uintptr
-	XSetWMProtocols, XFilterEvent, XSendEvent                   uintptr
-	XLookupKeysym, XLookupString, Xutf8LookupString             uintptr
-	XSetSelectionOwner, XConvertSelection                       uintptr
-	XCreateFontCursor, XDefineCursor, XFreeCursor               uintptr
-	XUngrabPointer, XGrabPointer                                uintptr
-	XkbSetDetectableAutoRepeat                                  uintptr
-	XSupportsLocale, XSetLocaleModifiers                        uintptr
-	XOpenIM, XCloseIM, XCreateIC, XDestroyIC, XGetICValues      uintptr
-	XSetICFocus, XUnsetICFocus, Xutf8ResetIC                    uintptr
-	XTranslateCoordinates, XMoveWindow                          uintptr
-	XMatchVisualInfo, XCreateColormap, XFreeColormap            uintptr
-	XDeleteProperty                                             uintptr
+	XInitThreads, XOpenDisplay, XCloseDisplay, XSetErrorHandler       uintptr
+	XDefaultScreen, XRootWindow, XConnectionNumber                    uintptr
+	XPending, XEventsQueued, XNextEvent, XFlush                       uintptr
+	XCreateWindow, XDestroyWindow, XMapWindow, XSelectInput           uintptr
+	XInternAtom, XChangeProperty, XGetWindowProperty, XFree           uintptr
+	XSetWMProtocols, XFilterEvent, XSendEvent                         uintptr
+	XLookupKeysym, XKeysymToKeycode, XLookupString, Xutf8LookupString uintptr
+	XSetSelectionOwner, XConvertSelection                             uintptr
+	XCreateFontCursor, XDefineCursor, XFreeCursor                     uintptr
+	XUngrabPointer, XGrabPointer                                      uintptr
+	XkbSetDetectableAutoRepeat, XkbLookupKeySym                       uintptr
+	XSupportsLocale, XSetLocaleModifiers                              uintptr
+	XOpenIM, XCloseIM, XCreateIC, XDestroyIC, XGetICValues            uintptr
+	XSetICFocus, XUnsetICFocus, Xutf8ResetIC                          uintptr
+	XTranslateCoordinates, XMoveWindow                                uintptr
+	XMatchVisualInfo, XCreateColormap, XFreeColormap                  uintptr
+	XDeleteProperty                                                   uintptr
 
 	setlocale uintptr
 }
@@ -316,11 +316,13 @@ func (x *xlib) load() error {
 		{"XInternAtom", &x.XInternAtom}, {"XChangeProperty", &x.XChangeProperty},
 		{"XGetWindowProperty", &x.XGetWindowProperty}, {"XFree", &x.XFree}, {"XSetWMProtocols", &x.XSetWMProtocols},
 		{"XFilterEvent", &x.XFilterEvent}, {"XSendEvent", &x.XSendEvent}, {"XLookupKeysym", &x.XLookupKeysym},
+		{"XKeysymToKeycode", &x.XKeysymToKeycode},
 		{"XLookupString", &x.XLookupString}, {"Xutf8LookupString", &x.Xutf8LookupString},
 		{"XSetSelectionOwner", &x.XSetSelectionOwner}, {"XConvertSelection", &x.XConvertSelection},
 		{"XCreateFontCursor", &x.XCreateFontCursor}, {"XDefineCursor", &x.XDefineCursor}, {"XFreeCursor", &x.XFreeCursor},
 		{"XUngrabPointer", &x.XUngrabPointer}, {"XGrabPointer", &x.XGrabPointer},
-		{"XkbSetDetectableAutoRepeat", &x.XkbSetDetectableAutoRepeat}, {"XSupportsLocale", &x.XSupportsLocale},
+		{"XkbSetDetectableAutoRepeat", &x.XkbSetDetectableAutoRepeat}, {"XkbLookupKeySym", &x.XkbLookupKeySym},
+		{"XSupportsLocale", &x.XSupportsLocale},
 		{"XSetLocaleModifiers", &x.XSetLocaleModifiers}, {"XOpenIM", &x.XOpenIM}, {"XCloseIM", &x.XCloseIM},
 		{"XCreateIC", &x.XCreateIC}, {"XDestroyIC", &x.XDestroyIC}, {"XGetICValues", &x.XGetICValues},
 		{"XSetICFocus", &x.XSetICFocus}, {"XUnsetICFocus", &x.XUnsetICFocus}, {"Xutf8ResetIC", &x.Xutf8ResetIC},
