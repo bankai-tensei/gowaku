@@ -104,6 +104,15 @@ func TestTextFieldController_EditsTellTheTextFirst(t *testing.T) {
 	h.expectLog("select 3 3")
 }
 
+func TestInput_KeypadDigitTypesAtTheCaret(t *testing.T) {
+	h := newControlled(t, Input{Value: "ab"})
+	h.c.SetSelection(1, 1)
+	h.Key(input.Key4, 0)
+	h.typeText("4")
+	h.expect("a4b")
+	h.expectControlled(2, 2)
+}
+
 func TestTextFieldController_CompositionMovesNothingUntilCommitted(t *testing.T) {
 	h := newControlled(t, Input{Value: "ab"})
 	h.c.SetSelection(1, 1)

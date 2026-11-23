@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bankai-tensei/gowaku/platform"
+	"github.com/bankai-tensei/gowaku/platform/internal/keysym"
 )
 
 // These need an X server, but no GPU. They run with the GPU tests because CI has
@@ -33,6 +34,30 @@ func drain(p *Platform, want func(*platform.Event) bool) bool {
 		}
 	}
 	return false
+}
+
+func TestKeySym_UsesNumLockFromXKeyState(t *testing.T) {
+	p := newTestPlatform(t)
+	keycode := p.hot(p.x.XKeysymToKeycode, uintptr(p.display), uintptr(keysym.XK_KP_Left))
+	if keycode == 0 {
+		t.Skip("the X server has no keypad 4 key")
+	}
+	w := &Window{platform: p}
+	e := &XKeyEvent{Display: p.display, Keycode: uint32(keycode)}
+	if got := w.keySym(e); got != keysym.XK_KP_Left {
+		t.Skipf("the X server maps keypad 4 to %#x without modifiers", got)
+	}
+	e.State = 1 << 4 // Num Lock is Mod2 in the core X keyboard state.
+	if got := w.keySym(e); got != keysym.XK_KP_0+4 {
+		t.Errorf("keySym with Num Lock = %#x, want %#x", got, keysym.XK_KP_0+4)
+	}
+	qKeycode := p.hot(p.x.XKeysymToKeycode, uintptr(p.display), uintptr('q'))
+	if qKeycode != 0 {
+		e = &XKeyEvent{Display: p.display, Keycode: uint32(qKeycode), State: ShiftMask | ControlMask}
+		if got := w.keySym(e); got != 'q' {
+			t.Errorf("keySym for Ctrl+Shift+Q = %#x, want 'q'", got)
+		}
+	}
 }
 
 func TestWaitEvent_DoesNotAllocateWhenIdle(t *testing.T) {

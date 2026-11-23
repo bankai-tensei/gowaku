@@ -268,7 +268,7 @@ func (s *seat) wlKeyboardKey(serial, stamp, key, state uint32) {
 		if s.repeating && s.repeatKey == key {
 			s.repeating = false
 		}
-		if code := keysym.KeyCode(s.kb.plainSym(key)); code != input.KeyNone {
+		if code := keysym.KeyCode(s.kb.keySym(key)); code != input.KeyNone {
 			s.push(platform.Event{Kind: platform.EventKeyUp, Window: w.id, Key: code, Modifiers: s.kb.modifiers(), Time: stamp})
 		}
 		return
@@ -284,7 +284,7 @@ func (s *seat) wlKeyboardKey(serial, stamp, key, state uint32) {
 // press pushes a key and then its text.
 func (s *seat) press(w *Window, key uint32, repeat bool) {
 	mods := s.kb.modifiers()
-	if code := keysym.KeyCode(s.kb.plainSym(key)); code != input.KeyNone {
+	if code := keysym.KeyCode(s.kb.keySym(key)); code != input.KeyNone {
 		s.push(platform.Event{
 			Kind: platform.EventKeyDown, Window: w.id, Key: code, Modifiers: mods, Repeat: repeat, Time: s.time,
 		})

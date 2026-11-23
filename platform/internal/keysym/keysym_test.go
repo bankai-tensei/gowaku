@@ -15,6 +15,9 @@ func TestKeyCode(t *testing.T) {
 		{"小文字", 'c', input.KeyC},
 		{"大文字", 'C', input.KeyC},
 		{"数字", '9', input.Key9},
+		{"テンキーの 4", XK_KP_0 + 4, input.Key4},
+		{"テンキーの 0", XK_KP_0, input.Key0},
+		{"テンキーの小数点", XK_KP_Decimal, input.KeyPeriod},
 		{"Enter", XK_Return, input.KeyEnter},
 		{"テンキーの Enter", XK_KP_Enter, input.KeyEnter},
 		{"Shift+Tab", XK_ISO_Left_Tab, input.KeyTab},
@@ -40,6 +43,34 @@ func TestKeyCode(t *testing.T) {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestIsKeypadNumLockKey(t *testing.T) {
+	for _, tt := range []struct {
+		keysym uint64
+		want   bool
+	}{
+		{XK_KP_Left, true},
+		{XK_KP_Begin, true},
+		{XK_KP_0 + 4, true},
+		{XK_KP_Decimal, true},
+		{XK_KP_Enter, false},
+		{XK_KP_Add, false},
+		{'4', false},
+	} {
+		if got := IsKeypadNumLockKey(tt.keysym); got != tt.want {
+			t.Errorf("IsKeypadNumLockKey(%#x) = %v, want %v", tt.keysym, got, tt.want)
+		}
+	}
+}
+
+func TestKeyCode_NumericKeypadDigits(t *testing.T) {
+	for digit := uint64(0); digit <= 9; digit++ {
+		want := input.KeyCode('0' + digit)
+		if got := KeyCode(XK_KP_0 + digit); got != want {
+			t.Errorf("KeyCode(KP_%d) = %v, want %v", digit, got, want)
+		}
 	}
 }
 

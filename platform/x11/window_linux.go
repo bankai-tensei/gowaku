@@ -425,7 +425,7 @@ func (w *Window) keyRelease(ev *XEvent) {
 	p := w.platform
 	e := as[XKeyEvent](ev)
 	w.keysDown[e.Keycode&0xFF] = false
-	key := keysym.KeyCode(uint64(p.hot(p.x.XLookupKeysym, ptr(ev), 0)))
+	key := keysym.KeyCode(w.keySym(e))
 	if key != input.KeyNone {
 		p.queue.Push(platform.Event{
 			Kind: platform.EventKeyUp, Window: w.id, Key: key, Modifiers: modifiersOf(e.State), Time: uint32(e.Time),
@@ -439,8 +439,9 @@ func (w *Window) keyPress(ev *XEvent) {
 	p := w.platform
 	e := as[XKeyEvent](ev)
 	if e.Keycode != 0 {
-		// Index 0 ignores the modifiers, so that Ctrl+Shift+Z stays a Z.
-		key := keysym.KeyCode(uint64(p.hot(p.x.XLookupKeysym, ptr(ev), 0)))
+		// Ordinary keys ignore modifiers here, so Ctrl+Shift+Z stays a Z.
+		// The keypad uses the effective modifier state to select its meaning.
+		key := keysym.KeyCode(w.keySym(e))
 		repeat := w.keysDown[e.Keycode&0xFF]
 		w.keysDown[e.Keycode&0xFF] = true
 		if key != input.KeyNone {
@@ -458,6 +459,22 @@ func (w *Window) keyPress(ev *XEvent) {
 	if s := keysym.TypedText(text); s != "" {
 		p.queue.Push(platform.Event{Kind: platform.EventText, Window: w.id, Text: s})
 	}
+}
+
+// keySym returns the unmodified symbol, except for keypad keys whose meaning
+// depends on Num Lock and Shift.
+func (w *Window) keySym(e *XKeyEvent) uint64 {
+	p := w.platform
+	plain := uint64(p.hot(p.x.XLookupKeysym, ptr(e), 0))
+	if !keysym.IsKeypadNumLockKey(plain) {
+		return plain
+	}
+	var consumed uint32
+	var sym uintptr
+	if p.hot(p.x.XkbLookupKeySym, uintptr(p.display), uintptr(e.Keycode), uintptr(e.State), ptr(&consumed), ptr(&sym)) != 0 {
+		return uint64(sym)
+	}
+	return plain
 }
 
 func (w *Window) focus(e *XFocusChangeEvent, in bool) {
