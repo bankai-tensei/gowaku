@@ -4,6 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-24
+
 ### Fixed
 
 - Linux: with Num Lock on, a key of the numeric keypad sent the navigation key it carries without Num Lock as well as its digit, so that `124` typed on the keypad into a text field became `142`. On Wayland and X11 the keypad keys now follow Num Lock and Shift: with Num Lock on they send `Key0` to `Key9` and `KeyPeriod`.
@@ -64,7 +66,8 @@ The first public release.
 - Desktop: multiple windows, modal windows, menus, custom title bars, tray icons, notifications, clipboard, file dialogs, drag and drop.
 - `gowakutest` for tests without a window, `gowakupreview` and `cmd/gowaku-preview` for live previews.
 
-[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bankai-tensei/gowaku/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bankai-tensei/gowaku/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bankai-tensei/gowaku/compare/v0.1.0...v0.1.1
