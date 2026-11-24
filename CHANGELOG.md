@@ -4,6 +4,10 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Fixed
+
+- Linux: with Num Lock on, a key of the numeric keypad sent the navigation key it carries without Num Lock as well as its digit, so that `124` typed on the keypad into a text field became `142`. On Wayland and X11 the keypad keys now follow Num Lock and Shift: with Num Lock on they send `Key0` to `Key9` and `KeyPeriod`.
+
 ## [0.2.0] - 2026-11-21
 
 ### Changed
