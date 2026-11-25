@@ -74,7 +74,7 @@ h.Close()
 | `AlwaysOnTop`、`Fullscreen` | 名前のとおり。Wayland では `AlwaysOnTop` は無視される |
 | `Transparent` | 描画内容のアルファ値に応じてデスクトップを透かす。X11 ではコンポジットマネージャーが必要 |
 
-`gowaku.WindowOf(ctx)` は、そのウィジェットが属するウィンドウの `*WindowHandle` を返す。ハンドルからは `SetTitle`、`SetIcon`、`SetFullscreen`、`SetAlwaysOnTop`、`SetSizeLimits`、`Activate`、`Close`、`RequestClose` を呼び出せ、`Fullscreen()` と `Transparent()` で状態を取得できる。ハンドルのメソッドはすべて UI ゴルーチンで呼び出す。
+`gowaku.WindowOf(ctx)` は、そのウィジェットが属するウィンドウの `*WindowHandle` を返す。ハンドルからは `SetTitle`、`SetIcon`、`SetFullscreen`、`SetAlwaysOnTop`、`SetSizeLimits`、`Activate`、`Hide`、`Show`、`Close`、`RequestClose` を呼び出せ、`Fullscreen()`、`Transparent()`、`Hidden()` で状態を取得できる。ハンドルのメソッドはすべて UI ゴルーチンで呼び出す。
 
 ### 閉じる前に確認する
 
@@ -103,7 +103,25 @@ func (s *docState) Build(ctx gowaku.BuildContext) gowaku.Widget {
 }
 ```
 
-`Close`、`Quit`、モーダルウィンドウの親を閉じた場合のように、プログラムから閉じるときは確認しない。`RequestClose` は閉じるボタンと同じく確認を行う。macOS では、⌘Q や Dock の「終了」がすべてのウィンドウに閉じる要求を送る。
+`Close`、`Quit`、モーダルウィンドウの親を閉じた場合のように、プログラムから閉じるときは確認しない。`RequestClose` は閉じるボタンと同じく確認を行う。
+
+macOS では、OS がアプリ全体に終了を求めることもある。⌘Q、Dock の「終了」、ログアウトである。この要求には `App.OnQuitRequest` が答える。true を返すと `Quit` と同じく終了し、false を返すと動き続ける。指定しなければ、これまでどおりすべてのウィンドウに閉じる要求が送られ、すべて閉じたところでアプリが終わる。Windows と Linux にはこの要求が無く、呼ばれることは無い。
+
+### トレイに常駐する
+
+期限を知らせるアプリのようにトレイに常駐するアプリは、利用者がウィンドウを閉じたらウィンドウを隠し、終了を求められたときだけ終了する。
+
+```go
+var win *gowaku.WindowHandle // Home の InitState で WindowOf(ctx) を取っておく
+gowaku.Run(gowaku.App{
+	Home:           home{},
+	OnCloseRequest: func() bool { win.Hide(); return false }, // 閉じるボタン、⌘W
+	OnQuitRequest:  func() bool { return true },              // ⌘Q、Dock、ログアウト
+})
+// トレイ: OnActivate: func() { win.Show() } と、gowaku.Quit を呼ぶ項目。
+```
+
+`WindowHandle.Hide` は、ウィンドウを閉じずに画面とタスクバーから外す。その上のモーダルウィンドウも一緒に隠れる。ツリーと状態は残り、描画はせず、`Run` は続く。`Show` で元に戻して前面に出し、`Hidden` で状態を取得できる。macOS では Dock のアイコンをクリックすると、隠したウィンドウが再び表示される。Wayland にはウィンドウを隠す手段が無いので、`Hide` は最小化になり、`Show` では戻せない。利用者がタスクバーから戻す。
 
 ### モーダルウィンドウ
 
@@ -187,7 +205,7 @@ overlay.ContextMenu{
 
 ## トレイアイコンと通知
 
-`gowaku.ShowTray` はデスクトップのトレイにアイコンを表示する。メニューは OS が描画し、メニューバーと同じ `overlay.MenuItem` を受け取る。`Run` の実行中に UI ゴルーチンで呼び出す必要があり、たとえば `InitState` から `Post` する。
+`gowaku.ShowTray` はデスクトップのトレイにアイコンを表示する。メニューは OS が描画し、メニューバーと同じ `overlay.MenuItem` を受け取る。`Run` の実行中に UI ゴルーチンで呼び出す必要があり、たとえば `InitState` から呼ぶ。
 
 ```go
 tray, err := gowaku.ShowTray(ctx, gowaku.TrayOptions{
@@ -203,7 +221,18 @@ if errors.Is(err, gowaku.ErrNoTray) {
 
 `tray.Update` で表示内容を差し替え、`tray.Close` でアイコンを消す。
 
-`gowaku.Notify(ctx, title, body)` は通知を表示する。Windows ではトースト、Linux では通知サービス、macOS では通知センターを使う。通知がクリックされると、最初に作ったトレイの `OnNotificationClick` が呼ばれる。通知を表示できないデスクトップでは `gowaku.ErrNoNotifications` を返す。macOS では、.app バンドルから起動していないプログラムはすべてこのエラーになる。[ビルドと配布](packaging.md)を参照。
+`gowaku.Notify(ctx, title, body)` は通知を表示する。Windows ではトースト、Linux では通知サービス、macOS では通知センターを使う。アプリが前面にあるときも表示される。通知がクリックされると、最初に作ったトレイの `OnNotificationClick` が呼ばれる。通知を表示できないデスクトップや、利用者が通知を許可していない場合は `gowaku.ErrNoNotifications` を返す。macOS では、.app バンドルから起動していないプログラムはすべてこのエラーになる。[ビルドと配布](packaging.md)を参照。
+
+macOS は、最初の通知の前に利用者に許可を求める。`gowaku.RequestNotifications` を使うと、起動時などに前もって許可を求め、その答えを受け取れる。
+
+```go
+gowaku.RequestNotifications(ctx, func(err error) {
+	// 呼び出しが戻った後に、UI ゴルーチンで呼ばれる。
+	s.SetState(func() { s.canNotify = err == nil })
+})
+```
+
+答えが出る前に送った通知は答えを待ち、利用者が拒否すると破棄される。拒否された後は `Notify` が `ErrNoNotifications` を返す。後でシステム設定で変えた場合は、次の `Notify` か `RequestNotifications` から反映される。Windows は何も聞かず nil を返し、Linux は通知サービスが動いているかを返す。`gowakutest.Tester` の下では、`SetNotificationsAllowed` で答えを決める。
 
 | | トレイ | 通知 |
 |---|---|---|
@@ -295,6 +324,6 @@ Windows では ShellExecute、macOS では NSWorkspace、Linux では OpenURI �
 
 | どのゴルーチンからでも呼び出せる | UI ゴルーチンからのみ |
 |---|---|
-| `Post`、`Quit`、`OpenURL`、`OpenInspector` | `SetState`、`OpenWindow`、`ShowModal`、`TearOffWindow`、`WindowOf` と `WindowHandle` のすべてのメソッド、`ShowTray` と `Tray` のメソッド、`Notify`、`ShowFileDialog`、クリップボードの関数、`SetTheme`、`CurrentTheme` |
+| `Post`、`Quit`、`OpenURL`、`OpenInspector` | `SetState`、`OpenWindow`、`ShowModal`、`TearOffWindow`、`WindowOf` と `WindowHandle` のすべてのメソッド、`ShowTray` と `Tray` のメソッド、`Notify`、`RequestNotifications`、`ShowFileDialog`、クリップボードの関数、`SetTheme`、`CurrentTheme` |
 
-設計の背景: [ADR 0046](../../ADR/0046-menus-and-shortcuts.md)（メニュー）、[ADR 0047](../../ADR/0047-modal-windows.md)（モーダルウィンドウ）、[ADR 0048](../../ADR/0048-custom-title-bar.md)（タイトルバー）、[ADR 0049](../../ADR/0049-clipboard.md)（クリップボード）、[ADR 0050](../../ADR/0050-drag-and-drop.md)（ドラッグ & ドロップ）、[ADR 0051](../../ADR/0051-tray-and-notifications.md)（トレイ）、[ADR 0076](../../ADR/0076-close-request.md)（閉じる要求）。
+設計の背景: [ADR 0046](../../ADR/0046-menus-and-shortcuts.md)（メニュー）、[ADR 0047](../../ADR/0047-modal-windows.md)（モーダルウィンドウ）、[ADR 0048](../../ADR/0048-custom-title-bar.md)（タイトルバー）、[ADR 0049](../../ADR/0049-clipboard.md)（クリップボード）、[ADR 0050](../../ADR/0050-drag-and-drop.md)（ドラッグ & ドロップ）、[ADR 0051](../../ADR/0051-tray-and-notifications.md)（トレイ）、[ADR 0076](../../ADR/0076-close-request.md)（閉じる要求）、[ADR 0161](../../ADR/0161-quit-request-hidden-windows-notification-permission.md)（終了の要求、隠したウィンドウ、通知の許可）。

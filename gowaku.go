@@ -46,6 +46,18 @@ type App struct {
 	// OnCloseRequest decides whether the first window closes when the user
 	// asks. See WindowOptions.OnCloseRequest.
 	OnCloseRequest func() bool
+	// OnQuitRequest decides whether the application quits when the OS asks
+	// it to as a whole, which only macOS does: Quit in the application menu
+	// or the Dock, ⌘Q, logging out. It runs on the UI goroutine, from the
+	// event loop, and must not block. Returning true quits as Quit does,
+	// closing every window without asking it; false keeps the application
+	// running, to ask about unsaved work and call Quit later. Nil asks each
+	// window, as its close button does, and the application ends once all
+	// have closed. An application that stays in the tray when its window is
+	// closed (WindowHandle.Hide) gives one, as the close requests of its
+	// windows refuse. Windows and Linux never call it. See
+	// docs/ADR/0161-quit-request-hidden-windows-notification-permission.md.
+	OnQuitRequest func() bool
 	// OnDrawError reports what the first window could not draw. See
 	// WindowOptions.OnDrawError.
 	OnDrawError func(error)

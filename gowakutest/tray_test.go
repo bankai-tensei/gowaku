@@ -97,10 +97,11 @@ func TestTray_RecordsAndClicks(t *testing.T) {
 // outside Run and outside a Tester, ShowTray and Notify return errors instead
 // of panicking.
 func TestTray_NoTrayOutsideAHost(t *testing.T) {
-	var trayErr, notifyErr error
+	var trayErr, notifyErr, askErr error
 	tree := core.NewTree(probe{run: func(ctx core.BuildContext) {
 		_, trayErr = gowaku.ShowTray(ctx, gowaku.TrayOptions{})
 		notifyErr = gowaku.Notify(ctx, "a", "b")
+		gowaku.RequestNotifications(ctx, func(err error) { askErr = err })
 	}})
 	tree.Build()
 	defer tree.Dispose()
@@ -109,6 +110,68 @@ func TestTray_NoTrayOutsideAHost(t *testing.T) {
 	}
 	if !errors.Is(notifyErr, gowaku.ErrNoNotifications) {
 		t.Errorf("Notify: %v, want ErrNoNotifications", notifyErr)
+	}
+	if !errors.Is(askErr, gowaku.ErrNoNotifications) {
+		t.Errorf("RequestNotifications: %v, want ErrNoNotifications", askErr)
+	}
+}
+
+// permissionApp asks for leave to notify when it starts, and says the answer.
+type permissionApp struct{ core.StatefulBase }
+
+func (permissionApp) CreateState() core.State { return &permissionAppState{status: "asking"} }
+
+type permissionAppState struct {
+	core.StateBase
+	status string
+}
+
+func (s *permissionAppState) InitState() { s.ask() }
+
+func (s *permissionAppState) ask() {
+	gowaku.RequestNotifications(s.Context(), func(err error) {
+		s.SetState(func() {
+			s.status = "allowed"
+			if err != nil {
+				s.status = "refused"
+			}
+		})
+	})
+}
+
+func (s *permissionAppState) Build(core.BuildContext) core.Widget {
+	return basic.Column{Children: []core.Widget{
+		control.Button{Label: "Ask", OnPress: s.ask},
+		control.Button{Label: "Notify", OnPress: func() {
+			if err := gowaku.Notify(s.Context(), "Notes", "due"); err != nil {
+				s.SetState(func() { s.status = "not shown" })
+			}
+		}},
+		basic.Text{Content: s.status},
+	}}
+}
+
+// TestRequestNotifications_TheTestDecides: the Tester answers
+// RequestNotifications after the call, as the desktop does, with what
+// SetNotificationsAllowed says, and a refusal keeps Notify from recording.
+func TestRequestNotifications_TheTestDecides(t *testing.T) {
+	tt := gowakutest.New(t, permissionApp{}, goFonts)
+	if _, ok := tt.Find("allowed"); !ok {
+		t.Fatalf("the first answer must allow:\n%s", tt.Dump())
+	}
+	tt.SetNotificationsAllowed(false)
+	tt.Tap("Ask")
+	if _, ok := tt.Find("refused"); !ok {
+		t.Fatalf("SetNotificationsAllowed(false) must refuse:\n%s", tt.Dump())
+	}
+	tt.Tap("Notify")
+	if _, ok := tt.Find("not shown"); !ok || len(tt.Notifications()) != 0 {
+		t.Errorf("a refused Notify must fail and record nothing: %v\n%s", tt.Notifications(), tt.Dump())
+	}
+	tt.SetNotificationsAllowed(true)
+	tt.Tap("Notify")
+	if len(tt.Notifications()) != 1 {
+		t.Errorf("notifications %v", tt.Notifications())
 	}
 }
 

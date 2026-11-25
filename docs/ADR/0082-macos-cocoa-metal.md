@@ -32,7 +32,7 @@ Phase 17（macOS と v2 公開）の最初の区切り。当初の計画の方�
 - 起動時に `[NSApp run]` を一度だけ回し、`applicationDidFinishLaunching:` で止める（GLFW と同じ）。こうしないと起動が完了した扱いにならない。
 - AppKit はメインスレッドでしか動かないので、`init` で `runtime.LockOSThread` する。規約 §3.2 の「`init` に副作用を持たせない」の例外で、`main` より前でないと取れないため。
 - ライブリサイズ中は AppKit がメインスレッドを持つので、`windowDidResize:` から modal handler を呼ぶ（ADR 0001 と同じ形）。
-- 終了（⌘Q、Dock）は `applicationShouldTerminate:` で取り消し、全ウィンドウに `EventClose` を送る。アプリが閉じるかどうかを決める（ADR 0076）。
+- 終了（⌘Q、Dock）は `applicationShouldTerminate:` で取り消し、全ウィンドウに `EventClose` を送る。アプリが閉じるかどうかを決める（ADR 0076）。ADR 0161 で、`EventQuit` を送って `App.OnQuitRequest` に聞く形に変えた。
 - キー: Command を `ModControl` に写す。Windows と Linux で Ctrl で書いたショートカット（コピー、貼り付け、元に戻す）がそのまま Mac の流儀で動く。Control キーも `ModControl`。Command のある打鍵は文字を打たない。`input.Modifiers` に Command を別に足すかは、メニューの表示（「⌘C」）を NSMenu に写すときに決め直す。
 - IME: `setMarkedText:` の属性の太い下線を注目文節、細い下線を変換済みの文節、太い下線が無ければ全体を未変換とする（単体テスト有り）。IME が受け取ったキー（変換中の Enter など）はアプリに `EventKeyDown` として送らない。Windows の `VK_PROCESSKEY` と同じ振る舞い。
 - スクロール: 精密なスクロール（タッチパッド、Magic Mouse）は 100pt を 1 ノッチにする。端数になるので ADR 0036 のとおり即時に動く。

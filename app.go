@@ -45,6 +45,8 @@ type app struct {
 	strings     []*basic.Strings
 	// appID is App.AppID, which every window gets.
 	appID string
+	// onQuitRequest is App.OnQuitRequest.
+	onQuitRequest func() bool
 
 	// start is the zero of the time that tickers see.
 	start time.Time
@@ -82,6 +84,8 @@ func runWith(p platform.Platform, b gpu.Backend, shaper *text.Shaper, a App, fir
 		locale:   a.Locale,
 		strings:  a.Strings,
 		appID:    a.AppID,
+
+		onQuitRequest: a.OnQuitRequest,
 	}
 	ap.brightness = p.Brightness()
 	ap.reduceMotion = p.ReduceMotion()
@@ -134,7 +138,7 @@ func (ap *app) waitTime() time.Duration {
 	now := time.Since(ap.start)
 	for _, w := range ap.windows {
 		if w.tree.Due(now) {
-			if !w.minimized {
+			if w.shown() {
 				return 0
 			}
 			// Nothing presents, so a minimized animation needs a pace of its own.
@@ -223,7 +227,7 @@ func (ap *app) pump() {
 		if w.tree.Due(now) {
 			w.tree.Tick(now)
 		}
-		if w.tree.NeedsFrame() && !w.minimized {
+		if w.tree.NeedsFrame() && w.shown() {
 			ap.frame(w)
 		}
 	}
@@ -262,6 +266,34 @@ func (ap *app) runPosts() {
 func Post(fn func()) {
 	if ap := currentApp.Load(); ap != nil {
 		ap.post(fn)
+	}
+}
+
+// quitRequested answers the OS asking the application to quit. See
+// App.OnQuitRequest.
+func (ap *app) quitRequested() {
+	if ap.onQuitRequest == nil {
+		for _, w := range ap.windows {
+			if ap.askClose(w) {
+				ap.close(w)
+			}
+		}
+		return
+	}
+	if ap.onQuitRequest() {
+		for _, w := range ap.windows {
+			ap.requestClose(w)
+		}
+	}
+}
+
+// reopen shows the windows that Hide hid, when the user opens the
+// application again from the Dock.
+func (ap *app) reopen() {
+	for _, w := range ap.windows {
+		if w.hidden && w.owner == nil {
+			w.show()
+		}
 	}
 }
 

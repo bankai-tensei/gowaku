@@ -136,9 +136,15 @@ func nrgba(img image.Image) *image.NRGBA {
 }
 
 // Notify shows a notification of the application: a toast on Windows, through
-// the tray icon, and the notification service on Linux. A click on it runs the
-// OnNotificationClick of the first tray. err is ErrNoNotifications where the
-// desktop shows none. It must be called on the UI goroutine, outside a Build.
+// the tray icon, the notification service on Linux, and the notification
+// center on macOS. A click on it runs the OnNotificationClick of the first
+// tray, and it shows also while the application is in front. err is
+// ErrNoNotifications where the desktop shows none, or the user has not let
+// the application show them. macOS asks the user the first time: the
+// notifications sent until the answer wait for it, and go if the user refuses,
+// after which Notify returns ErrNoNotifications. Call RequestNotifications
+// first to know the answer. It must be called on the UI goroutine, outside a
+// Build.
 // Like ShowTray it goes through the host of the tree of ctx, so that a
 // gowakutest.Tester records it, and gives ErrNoNotifications outside Run.
 func Notify(ctx BuildContext, title, body string) error {
@@ -147,4 +153,33 @@ func Notify(ctx BuildContext, title, body string) error {
 		return ErrNoNotifications
 	}
 	return trays.Notify(title, body)
+}
+
+// RequestNotifications asks the desktop for leave to show notifications, and
+// calls done on the UI goroutine, after it returns, with nil once Notify can
+// show them, or with ErrNoNotifications. macOS asks the user the first time,
+// and later answers with what the user chose, in System Settings as well; a
+// bare executable outside an application bundle gets ErrNoNotifications.
+// Windows asks nothing and answers nil. Linux answers whether a notification
+// service runs. Ask before the first Notify, as at start-up or when the user
+// turns reminders on, so that the question does not come with the first
+// notification:
+//
+//	gowaku.RequestNotifications(ctx, func(err error) {
+//		s.SetState(func() { s.canNotify = err == nil })
+//	})
+//
+// It must be called on the UI goroutine, outside a Build. Like Notify it goes
+// through the host of the tree of ctx; under a gowakutest.Tester the test
+// decides the answer, and outside Run done gets ErrNoNotifications.
+func RequestNotifications(ctx BuildContext, done func(error)) {
+	if done == nil {
+		panic("gowaku: RequestNotifications needs a done function")
+	}
+	trays, ok := ctx.Host().(platform.Trays)
+	if !ok {
+		done(ErrNoNotifications)
+		return
+	}
+	trays.RequestNotifications(done)
 }

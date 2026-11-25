@@ -257,6 +257,15 @@ func (w *Window) Minimize() {
 	}
 }
 
+// SetVisible implements platform.Window. xdg-shell has no way to hide a
+// toplevel and keep it: hiding minimizes, and showing does nothing, as an
+// application cannot bring its window to the front (Activate).
+func (w *Window) SetVisible(visible bool) {
+	if !visible {
+		w.Minimize()
+	}
+}
+
 // ShowWindowMenu implements platform.Window.
 func (w *Window) ShowWindowMenu(physicalX, physicalY int) {
 	if s := &w.p.seat; s.proxy != 0 && w.toplevel != 0 {

@@ -5,6 +5,7 @@ package cocoa
 import (
 	"bytes"
 	"image/png"
+	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -156,27 +157,124 @@ func (t *tray) Close() {
 	}
 }
 
+// notifyState is what macOS said about the notifications of the
+// application. It is shared with the completion handlers of
+// UserNotifications, which run on a queue of their own.
+type notifyState struct {
+	mu sync.Mutex
+	// known says that macOS answered, and granted what it answered. asking
+	// says that a question is out.
+	known, granted, asking bool
+	// pending are the requests that Notify made before the first answer,
+	// retained, and waiters the done functions of RequestNotifications.
+	pending []objc.ID
+	waiters []func(error)
+}
+
 // Notify implements platform.Trays with UNUserNotificationCenter, which only
 // serves an application in a bundle: a bare executable gets
-// ErrNoNotifications.
+// ErrNoNotifications. The first call asks the user, as RequestNotifications
+// does, and the notifications sent until the answer wait for it. Once the
+// user has refused, Notify returns ErrNoNotifications, and asks macOS again,
+// so that a change in System Settings applies to the next one.
 func (p *Platform) Notify(title, body string) error {
 	center := p.notificationCenter()
 	if center == 0 {
 		return platform.ErrNoNotifications
 	}
+	var request objc.ID
 	p.libs.pool(func() {
 		content := class("UNMutableNotificationContent").Send(sel("new")).Send(sel("autorelease"))
 		content.Send(sel("setTitle:"), nsString(title))
 		content.Send(sel("setBody:"), nsString(body))
 		id := class("NSUUID").Send(sel("UUID")).Send(sel("UUIDString"))
-		request := class("UNNotificationRequest").Send(sel("requestWithIdentifier:content:trigger:"), id, content, objc.ID(0))
-		center.Send(sel("addNotificationRequest:withCompletionHandler:"), request, objc.ID(0))
+		request = class("UNNotificationRequest").Send(sel("requestWithIdentifier:content:trigger:"), id, content, objc.ID(0))
+		request.Send(sel("retain"))
 	})
+	n := &p.notify
+	n.mu.Lock()
+	switch {
+	case n.known && n.granted:
+		n.mu.Unlock()
+		p.postRequest(center, request)
+		return nil
+	case n.known:
+		n.mu.Unlock()
+		request.Send(sel("release"))
+		p.askNotifications(center)
+		return platform.ErrNoNotifications
+	}
+	n.pending = append(n.pending, request)
+	n.mu.Unlock()
+	p.askNotifications(center)
 	return nil
 }
 
-// notificationCenter returns the current UNUserNotificationCenter, asking for
-// permission the first time, or zero outside a bundle.
+// RequestNotifications implements platform.Trays. macOS asks the user only
+// the first time; later it answers at once with what the user chose, in
+// System Settings as well.
+func (p *Platform) RequestNotifications(done func(error)) {
+	center := p.notificationCenter()
+	if center == 0 {
+		done(platform.ErrNoNotifications)
+		return
+	}
+	n := &p.notify
+	n.mu.Lock()
+	n.waiters = append(n.waiters, done)
+	n.mu.Unlock()
+	p.askNotifications(center)
+}
+
+// askNotifications asks macOS for leave to show notifications, unless a
+// question is out already.
+func (p *Platform) askNotifications(center objc.ID) {
+	n := &p.notify
+	n.mu.Lock()
+	if n.asking {
+		n.mu.Unlock()
+		return
+	}
+	n.asking = true
+	n.mu.Unlock()
+	answer := objc.NewBlock(func(_ objc.Block, granted bool, _ objc.ID) {
+		n.mu.Lock()
+		n.known, n.granted, n.asking = true, granted, false
+		pending, waiters := n.pending, n.waiters
+		n.pending, n.waiters = nil, nil
+		n.mu.Unlock()
+		for _, r := range pending {
+			if granted {
+				p.postRequest(center, r)
+			} else {
+				r.Send(sel("release"))
+			}
+		}
+		var err error
+		if !granted {
+			err = platform.ErrNoNotifications
+		}
+		for _, done := range waiters {
+			done(err)
+		}
+	})
+	const alertAndSound = 1<<2 | 1<<1 // UNAuthorizationOptionAlert | UNAuthorizationOptionSound
+	p.libs.pool(func() {
+		center.Send(sel("requestAuthorizationWithOptions:completionHandler:"), uint64(alertAndSound), answer)
+	})
+	// The center keeps a copy of the block.
+	answer.Release()
+}
+
+// postRequest hands a retained request to the center, which may be called from any
+// thread, and releases it.
+func (p *Platform) postRequest(center, request objc.ID) {
+	center.Send(sel("addNotificationRequest:withCompletionHandler:"), request, objc.ID(0))
+	request.Send(sel("release"))
+}
+
+// notificationCenter returns the current UNUserNotificationCenter, or zero
+// outside a bundle. The application delegate is its delegate.
 func (p *Platform) notificationCenter() objc.ID {
 	if p.notifications != 0 || p.noNotifications {
 		return p.notifications
@@ -195,14 +293,18 @@ func (p *Platform) notificationCenter() objc.ID {
 			return
 		}
 		center.Send(sel("setDelegate:"), p.appDelegate)
-		ask := objc.NewBlock(func(objc.Block, bool, objc.ID) {})
-		const alertAndSound = 1<<2 | 1<<1 // UNAuthorizationOptionAlert | UNAuthorizationOptionSound
-		center.Send(sel("requestAuthorizationWithOptions:completionHandler:"), uint64(alertAndSound), ask)
-		ask.Release()
 		p.notifications = center.Send(sel("retain"))
 	})
 	p.noNotifications = p.notifications == 0
 	return p.notifications
+}
+
+// presentNotification answers whether a notification shows while the
+// application is in front: as a banner, in the list and with its sound, as
+// it does when the application is not, and as on Windows and Linux.
+func presentNotification(completion objc.Block) {
+	const banner = 1<<4 | 1<<3 | 1<<1 // UNNotificationPresentationOptionBanner | List | Sound
+	callBlock(completion, banner)
 }
 
 // notificationClicked reports a click on a notification to the first tray,
@@ -212,10 +314,16 @@ func (p *Platform) notificationClicked(completion objc.Block) {
 		p.trays[0].on(platform.TrayEvent{Kind: platform.TrayNotificationClick})
 		p.postWake()
 	}
-	if completion != 0 {
-		// The invoke function of a block lies after its isa, flags and
-		// reserved fields (Block_layout of the Blocks ABI).
-		invoke := *(*uintptr)(unsafe.Add(*(*unsafe.Pointer)(unsafe.Pointer(&completion)), 16))
-		purego.SyscallN(invoke, uintptr(completion))
+	callBlock(completion)
+}
+
+// callBlock calls a block of AppKit with integer arguments. Its invoke
+// function lies after its isa, flags and reserved fields (Block_layout of the
+// Blocks ABI).
+func callBlock(b objc.Block, args ...uintptr) {
+	if b == 0 {
+		return
 	}
+	invoke := *(*uintptr)(unsafe.Add(*(*unsafe.Pointer)(unsafe.Pointer(&b)), 16))
+	purego.SyscallN(invoke, append([]uintptr{uintptr(b)}, args...)...)
 }

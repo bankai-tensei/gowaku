@@ -20,6 +20,11 @@ type host struct {
 	trays         []*Tray
 	notifications []Notification
 	dialogs       []*FileDialog
+	// noNotifications is the refusal of SetNotificationsAllowed, and
+	// answers the done functions of RequestNotifications that wait for the
+	// next Pump.
+	noNotifications bool
+	answers         []func(error)
 }
 
 var (

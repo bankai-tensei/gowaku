@@ -45,6 +45,14 @@ const (
 	// the window. It cannot be refused: the application forgets the window,
 	// and still calls Close.
 	EventDestroyed
+	// EventQuit asks the application to quit, from the OS: Quit in the menu
+	// of the application or in the Dock, ⌘Q, logging out. Only macOS sends
+	// it. Window is zero.
+	EventQuit
+	// EventReopen means that the user opened the application again while it
+	// runs and shows no window, with a click on its icon in the Dock. Only
+	// macOS sends it. Window is zero.
+	EventReopen
 )
 
 // String returns the name of the kind.
@@ -92,6 +100,10 @@ func (k EventKind) String() string {
 		return "pinch"
 	case EventDestroyed:
 		return "destroyed"
+	case EventQuit:
+		return "quit"
+	case EventReopen:
+		return "reopen"
 	}
 	return "unknown"
 }

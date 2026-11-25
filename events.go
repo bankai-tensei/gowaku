@@ -16,6 +16,12 @@ func (ap *app) handle(ev platform.Event) {
 	case platform.EventSettings:
 		ap.followSettings()
 		return
+	case platform.EventQuit:
+		ap.quitRequested()
+		return
+	case platform.EventReopen:
+		ap.reopen()
+		return
 	}
 	w := ap.windows[ev.Window]
 	if w == nil || w.closing {

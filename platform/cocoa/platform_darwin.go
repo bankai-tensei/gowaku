@@ -67,6 +67,7 @@ type Platform struct {
 	lastTray        int
 	notifications   objc.ID
 	noNotifications bool
+	notify          notifyState
 }
 
 var _ platform.Platform = (*Platform)(nil)

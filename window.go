@@ -36,6 +36,8 @@ type window struct {
 	size      geom.Size
 	scale     float32
 	minimized bool
+	// hidden means that WindowHandle.Hide took the window off the screen.
+	hidden bool
 
 	// title, focused and maximized are what a title bar that gowaku draws
 	// shows, and decorated says whether it draws one.
@@ -160,8 +162,9 @@ func (ap *app) attach(opts WindowOptions, root Widget, owner *window, native pla
 	if owner != nil {
 		owner.modals = append(owner.modals, w)
 	}
-	w.tree = core.NewTree(rootWidget{window: w, home: root})
-	w.tree.SetHost(windowHost{w})
+	// The host comes first, so that the InitState of the first build reaches
+	// the tray, the notifications and the clipboard.
+	w.tree = core.NewTreeWithHost(rootWidget{window: w, home: root}, windowHost{w})
 	// Work posted from other goroutines wakes the event loop, which ticks.
 	w.tree.SetWake(ap.platform.Wake)
 	w.applyTheme()
@@ -184,6 +187,34 @@ func (w *window) resize(physicalWidth, physicalHeight int, scale float32) {
 			w.root.resized()
 		}
 		w.tree.MarkNeedsPaint()
+	}
+}
+
+// shown reports whether the window is on the screen to draw: neither
+// minimized nor hidden.
+func (w *window) shown() bool { return !w.minimized && !w.hidden }
+
+// hide takes the window off the screen, with the modal windows over it.
+func (w *window) hide() {
+	for _, m := range w.modals {
+		m.hide()
+	}
+	if !w.hidden {
+		w.hidden = true
+		w.native.SetVisible(false)
+	}
+}
+
+// show puts the window back on the screen, with the modal windows over it,
+// the newest in front.
+func (w *window) show() {
+	if w.hidden {
+		w.hidden = false
+		w.native.SetVisible(true)
+		w.tree.MarkNeedsPaint()
+	}
+	for _, m := range w.modals {
+		m.show()
 	}
 }
 

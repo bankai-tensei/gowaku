@@ -120,6 +120,46 @@ func (h *WindowHandle) SetOnCloseRequest(fn func() bool) {
 	h.window.onCloseRequest = fn
 }
 
+// Hide takes the window off the screen and the task bar, with the modal
+// windows open over it, without closing it: its tree, its state and its
+// tray icons stay, and Run goes on. An application that lives in the tray
+// hides its window in OnCloseRequest and returns false, and shows it again
+// from the tray:
+//
+//	OnCloseRequest: func() bool { win.Hide(); return false },
+//	OnQuitRequest:  func() bool { return true },
+//
+// A hidden window draws nothing. On macOS a click on the icon of the
+// application in the Dock shows the hidden windows again. Wayland cannot hide
+// a window, and minimizes it instead. It must be called on the UI goroutine.
+// See docs/ADR/0161-quit-request-hidden-windows-notification-permission.md.
+func (h *WindowHandle) Hide() {
+	if h.app.alive(h.window) {
+		h.window.hide()
+	}
+}
+
+// Show puts a window that Hide hid back on the screen, with its modal
+// windows, and brings it to the front as far as the OS lets an application
+// do that. A window that is not hidden only comes to the front. Wayland
+// cannot bring back a window that Hide minimized: the user does, from the
+// task bar. It must be called on the UI goroutine.
+func (h *WindowHandle) Show() {
+	w := h.window
+	if !h.app.alive(w) {
+		return
+	}
+	if w.hidden {
+		w.show()
+		return
+	}
+	w.native.Activate()
+}
+
+// Hidden reports whether Hide hid the window, and Show has not shown it
+// since. It must be called on the UI goroutine.
+func (h *WindowHandle) Hidden() bool { return h.window.hidden }
+
 // SetTitle changes the title of the window. It must be called on the UI
 // goroutine.
 func (h *WindowHandle) SetTitle(title string) {

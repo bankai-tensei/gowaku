@@ -53,3 +53,7 @@ func Notify(title, body string) error            // ErrNoNotifications
   - 実在のパネル（KDE、waybar）での表示
   - トレイのアイコンのスクロールと中ボタン
   - 画像やボタンの付いた通知
+
+## 後の変更
+
+- 通知の許可を求める `RequestNotifications` を足し、macOS の `Notify` は許可の答えを待つようにした。トレイに常駐するアプリのために `WindowHandle.Hide` / `Show` を足した。ADR 0161。
