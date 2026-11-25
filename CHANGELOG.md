@@ -4,6 +4,8 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 ### Added
 
 - `App.OnQuitRequest`, which answers when the OS asks the whole application to quit, which only macOS does (Cmd+Q, Quit in the Dock, logging out): true quits as `Quit` does, false keeps running. Without it every window gets a close request, as before.
@@ -81,7 +83,8 @@ The first public release.
 - Desktop: multiple windows, modal windows, menus, custom title bars, tray icons, notifications, clipboard, file dialogs, drag and drop.
 - `gowakutest` for tests without a window, `gowakupreview` and `cmd/gowaku-preview` for live previews.
 
-[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/bankai-tensei/gowaku/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bankai-tensei/gowaku/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/bankai-tensei/gowaku/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bankai-tensei/gowaku/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/bankai-tensei/gowaku/compare/v0.1.1...v0.1.2
