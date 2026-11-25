@@ -4,6 +4,21 @@ All notable changes to gowaku are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+
+- `App.OnQuitRequest`, which answers when the OS asks the whole application to quit, which only macOS does (Cmd+Q, Quit in the Dock, logging out): true quits as `Quit` does, false keeps running. Without it every window gets a close request, as before.
+- `WindowHandle.Hide`, `Show` and `Hidden`, which take a window off the screen and the task bar without closing it, so that an application can stay in the tray: hide the window in `OnCloseRequest`, return false, and show it from the tray. A click on the Dock icon shows hidden windows again on macOS. Wayland cannot hide a window, and minimizes it instead.
+- `gowaku.RequestNotifications(ctx, done)`, which asks for leave to show notifications (the user, on macOS) and calls `done` on the UI goroutine with nil or `ErrNoNotifications`.
+- `core.NewTreeWithHost`, which connects a tree to its host before the first build.
+- `gowakutest.Tester.SetNotificationsAllowed`, which decides the answer of `RequestNotifications` and whether `Notify` succeeds.
+- `platform`: `Trays.RequestNotifications`, `Window.SetVisible`, and the events `EventQuit` and `EventReopen`.
+
+### Fixed
+
+- macOS: `Notify` sent the notification without waiting for the user to allow notifications, so that the first one could be lost while macOS asked, and it returned nil although the user had refused. Notifications sent before the answer now wait for it, and once the user has refused `Notify` returns `ErrNoNotifications`.
+- macOS: notifications did not show while the application was in front. They now show as a banner, in the list and with sound, as on Windows and Linux.
+- `ShowTray`, `Notify` and the clipboard functions called from an `InitState` of the first build of a window, or of a `gowakutest.Tester`, found no host and failed, with `ErrNoTray` for `ShowTray`, although its documentation allows `InitState`. The tree now has its host before it is first built.
+
 ## [0.2.1] - 2026-11-24
 
 ### Fixed

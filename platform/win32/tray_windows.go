@@ -248,6 +248,17 @@ func (p *Platform) Notify(title, body string) error {
 	return nil
 }
 
+// RequestNotifications implements platform.Trays. Windows asks the user
+// nothing before the balloons of the tray, and does not tell whether it shows
+// them, so it is nil unless the icon that carries them cannot be made.
+func (p *Platform) RequestNotifications(done func(error)) {
+	_, err := p.trayWindow()
+	if err != nil {
+		err = platform.ErrNoNotifications
+	}
+	done(err)
+}
+
 // dropNotifyIcon takes away the icon that a notification without a tray
 // showed, once its balloon is gone.
 func (p *Platform) dropNotifyIcon() {

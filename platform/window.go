@@ -208,6 +208,11 @@ type Window interface {
 	// far as the OS lets an application do that: a press on the owner of a
 	// modal window activates the modal one.
 	Activate()
+	// SetVisible takes the window off the screen, and the task bar, or puts
+	// it back and activates it. A hidden window keeps its state; it is not
+	// closed. Wayland has no way to hide a window: it minimizes it instead,
+	// and cannot bring it back.
+	SetVisible(visible bool)
 	// Close destroys the OS window. Destroy any gpu surface first.
 	// Closing twice is a no-op.
 	Close()

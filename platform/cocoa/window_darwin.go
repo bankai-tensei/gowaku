@@ -481,6 +481,17 @@ func (w *Window) Activate() {
 	})
 }
 
+// SetVisible implements platform.Window: orderOut:, which takes the window
+// off the screen and out of the Window menu, and makeKeyAndOrderFront: to show
+// it again, as Activate does.
+func (w *Window) SetVisible(visible bool) {
+	if visible {
+		w.Activate()
+		return
+	}
+	w.p.libs.pool(func() { w.window.Send(sel("orderOut:"), objc.ID(0)) })
+}
+
 // Close implements platform.Window.
 func (w *Window) Close() {
 	if w.closed {

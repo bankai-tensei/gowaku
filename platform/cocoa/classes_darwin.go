@@ -134,11 +134,15 @@ func (p *Platform) delegateMethods() []objc.MethodDef {
 			p.postWake()
 		}},
 		{Cmd: sel("applicationShouldTerminate:"), Fn: func(objc.ID, objc.SEL, objc.ID) uint64 {
-			// Quit asks every window to close, which the application may refuse.
-			for _, w := range p.windows {
-				p.enqueue(platform.Event{Kind: platform.EventClose, Window: w.id})
-			}
+			// The application decides, and quits by closing its windows.
+			p.enqueue(platform.Event{Kind: platform.EventQuit})
 			return NSTerminateCancel
+		}},
+		{Cmd: sel("applicationShouldHandleReopen:hasVisibleWindows:"), Fn: func(_ objc.ID, _ objc.SEL, _ objc.ID, visible bool) bool {
+			if !visible {
+				p.enqueue(platform.Event{Kind: platform.EventReopen})
+			}
+			return true
 		}},
 		{Cmd: sel("windowShouldClose:"), Fn: func(_ objc.ID, _ objc.SEL, sender objc.ID) bool {
 			if w := p.byWindow[sender]; w != nil {
@@ -177,6 +181,8 @@ func (p *Platform) delegateMethods() []objc.MethodDef {
 		{Cmd: sel("gowakuTray:"), Fn: func(_ objc.ID, _ objc.SEL, sender objc.ID) { p.chooseTray(sender) }},
 		{Cmd: sel("userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:"),
 			Fn: func(_ objc.ID, _ objc.SEL, _, _ objc.ID, completion objc.Block) { p.notificationClicked(completion) }},
+		{Cmd: sel("userNotificationCenter:willPresentNotification:withCompletionHandler:"),
+			Fn: func(_ objc.ID, _ objc.SEL, _, _ objc.ID, completion objc.Block) { presentNotification(completion) }},
 		{Cmd: sel("windowDidBecomeKey:"), Fn: func(_ objc.ID, _ objc.SEL, n objc.ID) {
 			if w := window(n); w != nil {
 				w.key = true

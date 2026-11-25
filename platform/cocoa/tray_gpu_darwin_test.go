@@ -50,6 +50,11 @@ func TestPlatform_Tray(t *testing.T) {
 		if err := p.Notify("title", "body"); !errors.Is(err, platform.ErrNoNotifications) {
 			t.Errorf("Notify: %v", err)
 		}
+		var asked error
+		p.RequestNotifications(func(err error) { asked = err })
+		if !errors.Is(asked, platform.ErrNoNotifications) {
+			t.Errorf("RequestNotifications: %v", asked)
+		}
 		pt.Close()
 	})
 }

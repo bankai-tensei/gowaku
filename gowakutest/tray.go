@@ -30,11 +30,41 @@ func (h *host) CreateTray(opts platform.TrayOptions, on func(platform.TrayEvent)
 	return t, nil
 }
 
-// Notify implements platform.Trays, for gowaku.Notify.
+// Notify implements platform.Trays, for gowaku.Notify. It records the
+// notification, unless SetNotificationsAllowed refused them.
 func (h *host) Notify(title, body string) error {
+	if h.noNotifications {
+		return platform.ErrNoNotifications
+	}
 	h.notifications = append(h.notifications, Notification{Title: title, Body: body})
 	return nil
 }
+
+// RequestNotifications implements platform.Trays, for
+// gowaku.RequestNotifications: done hears what SetNotificationsAllowed says
+// at the next Pump, as the answer of the desktop comes after the call.
+func (h *host) RequestNotifications(done func(error)) {
+	h.answers = append(h.answers, done)
+}
+
+// answer calls the done functions of RequestNotifications.
+func (h *host) answer() {
+	var err error
+	if h.noNotifications {
+		err = platform.ErrNoNotifications
+	}
+	for len(h.answers) > 0 {
+		done := h.answers[0]
+		h.answers = h.answers[1:]
+		done(err)
+	}
+}
+
+// SetNotificationsAllowed stands for the user letting the application show
+// notifications, or not, which they do by default: refused, gowaku.Notify
+// returns gowaku.ErrNoNotifications and records nothing, and
+// gowaku.RequestNotifications answers with it.
+func (tt *Tester) SetNotificationsAllowed(allowed bool) { tt.host.noNotifications = !allowed }
 
 // Update implements platform.Tray.
 func (t *Tray) Update(opts platform.TrayOptions) { t.opts = opts }

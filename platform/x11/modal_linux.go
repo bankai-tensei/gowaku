@@ -43,3 +43,20 @@ func (w *Window) Activate() {
 	call(p.x.XSendEvent, uintptr(p.display), uintptr(p.root), 0, SubstructureNotifyMask|SubstructureRedirectMask, ptr(&m))
 	call(p.x.XFlush, uintptr(p.display))
 }
+
+// SetVisible implements platform.Window: XWithdrawWindow takes the window
+// from the window manager, task bar and all, as ICCCM 4.1.4 says, and
+// XMapWindow gives it back.
+func (w *Window) SetVisible(visible bool) {
+	if w.xid == 0 {
+		return
+	}
+	p := w.platform
+	if visible {
+		call(p.x.XMapWindow, uintptr(p.display), uintptr(w.xid))
+		w.Activate()
+		return
+	}
+	call(p.x.XWithdrawWindow, uintptr(p.display), uintptr(w.xid), p.screen)
+	call(p.x.XFlush, uintptr(p.display))
+}

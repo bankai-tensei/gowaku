@@ -203,13 +203,12 @@ func New(t testing.TB, root core.Widget, opts Options) *Tester {
 		tt.scale = 1
 	}
 	// The same services as the root of a window of Run.
-	tt.tree = core.NewTree(core.Inherited[*text.Shaper]{Value: shaper, Child: basic.MediaQuery{
+	tt.tree = core.NewTreeWithHost(core.Inherited[*text.Shaper]{Value: shaper, Child: basic.MediaQuery{
 		Data: basic.MediaQueryData{Brightness: b, Scale: tt.scale, ReduceMotion: opts.ReduceMotion, Locale: opts.Locale, Size: tt.size},
 		Child: basic.Localizations{Strings: opts.Strings, Child: themed{
 			tt: tt, child: overlay.Overlay{Child: root},
 		}},
-	}})
-	tt.tree.SetHost(tt.host)
+	}}, tt.host)
 	tt.posted = make(chan struct{}, 1)
 	tt.tree.SetWake(func() {
 		select {
@@ -252,6 +251,7 @@ func (tt *Tester) Now() time.Duration { return tt.now }
 // layout and paint into a display list. The methods that act call it on their
 // own.
 func (tt *Tester) Pump() {
+	tt.host.answer()
 	tt.tree.Tick(tt.now)
 	tt.frame()
 }

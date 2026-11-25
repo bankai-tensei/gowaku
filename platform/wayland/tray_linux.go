@@ -13,6 +13,10 @@ func (p *Platform) CreateTray(opts platform.TrayOptions, on func(platform.TrayEv
 // Notify implements platform.Trays, through org.freedesktop.Notifications.
 func (p *Platform) Notify(title, body string) error { return p.trays().Notify(title, body) }
 
+// RequestNotifications implements platform.Trays: whether a notification
+// service answers.
+func (p *Platform) RequestNotifications(done func(error)) { p.trays().RequestNotifications(done) }
+
 func (p *Platform) trays() *dbus.Trays {
 	if p.trayHost == nil {
 		p.trayHost = &dbus.Trays{}

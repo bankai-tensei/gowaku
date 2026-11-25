@@ -389,13 +389,8 @@ func (m menuMethods) AboutToShowGroup([]int32) ([]int32, []int32, *godbus.Error)
 func (t *Trays) Notify(title, body string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.conn == nil {
-		conn, err := godbus.ConnectSessionBus()
-		if err != nil {
-			slog.Debug("dbus: no session bus for notifications", "err", err)
-			return platform.ErrNoNotifications
-		}
-		t.conn = conn
+	if err := t.connectLocked(); err != nil {
+		return err
 	}
 	var id uint32
 	err := t.conn.Object(notifyName, notifyPath).Call(notifyIface+".Notify", 0,
@@ -412,6 +407,43 @@ func (t *Trays) Notify(title, body string) error {
 	if !t.watching {
 		t.watching = true
 		t.watchClicks()
+	}
+	return nil
+}
+
+// RequestNotifications implements platform.Trays. The notification service
+// asks the user nothing; leave is whether one answers, which also starts a
+// service that D-Bus activates.
+func (t *Trays) RequestNotifications(done func(error)) {
+	done(t.notificationService())
+}
+
+// notificationService reports whether a notification service answers on the
+// session bus.
+func (t *Trays) notificationService() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if err := t.connectLocked(); err != nil {
+		return err
+	}
+	var caps []string
+	if err := t.conn.Object(notifyName, notifyPath).Call(notifyIface+".GetCapabilities", 0).Store(&caps); err != nil {
+		slog.Debug("dbus: no notification service", "err", err)
+		return platform.ErrNoNotifications
+	}
+	return nil
+}
+
+// connectLocked connects to the session bus for the notifications, with t.mu
+// held.
+func (t *Trays) connectLocked() error {
+	if t.conn == nil {
+		conn, err := godbus.ConnectSessionBus()
+		if err != nil {
+			slog.Debug("dbus: no session bus for notifications", "err", err)
+			return platform.ErrNoNotifications
+		}
+		t.conn = conn
 	}
 	return nil
 }

@@ -107,10 +107,28 @@ func TestPlatform_WindowKeysAndQuit(t *testing.T) {
 			t.Errorf("Command+C: got %+v", ev)
 		}
 
-		// Quit, from the menu or the Dock, asks the windows to close.
+		// Quit, from the menu or the Dock, asks the application, which quits
+		// by closing its windows.
 		p.app.Send(sel("terminate:"), objc.ID(0))
-		if ev, ok := waitFor(p, platform.EventClose); !ok || ev.Window != w.ID() {
+		if ev, ok := waitFor(p, platform.EventQuit); !ok || ev.Window != 0 {
 			t.Errorf("terminate: got %+v", ev)
+		}
+
+		// A hidden window leaves the screen, and a click on the Dock icon
+		// while none shows asks the application to show it again.
+		w.SetVisible(false)
+		if objc.Send[bool](w.window, sel("isVisible")) {
+			t.Error("SetVisible(false) left the window on the screen")
+		}
+		p.libs.pool(func() {
+			p.appDelegate.Send(sel("applicationShouldHandleReopen:hasVisibleWindows:"), p.app, false)
+		})
+		if _, ok := waitFor(p, platform.EventReopen); !ok {
+			t.Error("a reopen without visible windows sent no EventReopen")
+		}
+		w.SetVisible(true)
+		if !objc.Send[bool](w.window, sel("isVisible")) {
+			t.Error("SetVisible(true) did not show the window")
 		}
 
 		// The clipboard is the user's: put back what was on it.

@@ -56,3 +56,7 @@ notes サンプルで、未保存の文書があるウィンドウを OS の × 
 
 - シャットダウンとログオフ（WM_QUERYENDSESSION、logind の inhibit）で止める手段は無い。notes は自動保存で内容を失わない。
 - X11 / Wayland の実機での確認は、ビルドと単体テストまで。
+
+## 後の変更
+
+- macOS の ⌘Q・Dock の「終了」・ログアウトは、全ウィンドウへの閉じる要求ではなく `App.OnQuitRequest` に聞くようにした（指定しなければ今までどおり）。ADR 0161。

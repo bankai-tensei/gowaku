@@ -42,6 +42,7 @@ const (
 	SW_MAXIMIZE      = 3
 	SW_MINIMIZE      = 6
 	SW_RESTORE       = 9
+	SW_HIDE          = 0
 	SWP_FRAMECHANGED = 0x0020
 	SWP_NOMOVE_      = 0x0002
 )
@@ -78,6 +79,20 @@ func (w *Window) ToggleMaximize() {
 // Minimize implements platform.Window.
 func (w *Window) Minimize() {
 	_, _, _ = syscall.SyscallN(procShowWindow.Addr(), uintptr(w.hwnd), SW_MINIMIZE)
+}
+
+// SetVisible implements platform.Window: SW_HIDE takes the window and its
+// button off the task bar, and SW_SHOW puts them back.
+func (w *Window) SetVisible(visible bool) {
+	if w.hwnd == 0 {
+		return
+	}
+	if !visible {
+		_, _, _ = syscall.SyscallN(procShowWindow.Addr(), uintptr(w.hwnd), SW_HIDE)
+		return
+	}
+	_, _, _ = syscall.SyscallN(procShowWindow.Addr(), uintptr(w.hwnd), SW_SHOW)
+	w.Activate()
 }
 
 // ShowWindowMenu implements platform.Window. A secondary click on HTCAPTION

@@ -94,8 +94,13 @@ type Tree struct {
 }
 
 // NewTree builds the tree of root.
-func NewTree(root Widget) *Tree {
-	t := &Tree{windowFocused: true, focusVisible: true, paintGeneration: 1}
+func NewTree(root Widget) *Tree { return NewTreeWithHost(root, nil) }
+
+// NewTreeWithHost builds the tree of root connected to host from the start,
+// so that the InitState of the first build already reaches it, as to show a
+// tray icon or ask for leave to notify. SetHost connects it later.
+func NewTreeWithHost(root Widget, host Host) *Tree {
+	t := &Tree{windowFocused: true, focusVisible: true, paintGeneration: 1, host: host}
 	t.root = t.inflate(root, nil)
 	t.rootChanged()
 	return t

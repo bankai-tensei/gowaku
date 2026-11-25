@@ -73,6 +73,14 @@ type Trays interface {
 	CreateTray(opts TrayOptions, on func(TrayEvent)) (Tray, error)
 	// Notify shows a notification of the application. A click on it reaches
 	// the on of the tray it came from, or of the first tray. err is
-	// ErrNoNotifications where the desktop shows none.
+	// ErrNoNotifications where the desktop shows none, or the user does not
+	// let the application show them. Where the desktop asks the user first,
+	// as macOS does, the notifications sent before the answer wait for it, and
+	// go if the user refuses.
 	Notify(title, body string) error
+	// RequestNotifications asks the desktop for leave to show notifications,
+	// asking the user where the desktop does that, and calls done with nil
+	// once Notify can show them, or with ErrNoNotifications. done may run on
+	// any goroutine, and before RequestNotifications returns.
+	RequestNotifications(done func(error))
 }

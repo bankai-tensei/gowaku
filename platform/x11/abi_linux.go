@@ -267,6 +267,7 @@ type xlib struct {
 	XDefaultScreen, XRootWindow, XConnectionNumber                    uintptr
 	XPending, XEventsQueued, XNextEvent, XFlush                       uintptr
 	XCreateWindow, XDestroyWindow, XMapWindow, XSelectInput           uintptr
+	XWithdrawWindow                                                   uintptr
 	XInternAtom, XChangeProperty, XGetWindowProperty, XFree           uintptr
 	XSetWMProtocols, XFilterEvent, XSendEvent                         uintptr
 	XLookupKeysym, XKeysymToKeycode, XLookupString, Xutf8LookupString uintptr
@@ -312,7 +313,7 @@ func (x *xlib) load() error {
 		{"XSetErrorHandler", &x.XSetErrorHandler}, {"XDefaultScreen", &x.XDefaultScreen}, {"XRootWindow", &x.XRootWindow},
 		{"XConnectionNumber", &x.XConnectionNumber}, {"XPending", &x.XPending}, {"XEventsQueued", &x.XEventsQueued},
 		{"XNextEvent", &x.XNextEvent}, {"XFlush", &x.XFlush}, {"XCreateWindow", &x.XCreateWindow},
-		{"XDestroyWindow", &x.XDestroyWindow}, {"XMapWindow", &x.XMapWindow}, {"XSelectInput", &x.XSelectInput},
+		{"XDestroyWindow", &x.XDestroyWindow}, {"XMapWindow", &x.XMapWindow}, {"XWithdrawWindow", &x.XWithdrawWindow}, {"XSelectInput", &x.XSelectInput},
 		{"XInternAtom", &x.XInternAtom}, {"XChangeProperty", &x.XChangeProperty},
 		{"XGetWindowProperty", &x.XGetWindowProperty}, {"XFree", &x.XFree}, {"XSetWMProtocols", &x.XSetWMProtocols},
 		{"XFilterEvent", &x.XFilterEvent}, {"XSendEvent", &x.XSendEvent}, {"XLookupKeysym", &x.XLookupKeysym},

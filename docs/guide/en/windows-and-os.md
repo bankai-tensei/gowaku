@@ -74,7 +74,7 @@ h.Close()
 | `AlwaysOnTop`, `Fullscreen` | As named. Wayland ignores `AlwaysOnTop` |
 | `Transparent` | Shows the desktop through the alpha of what the window draws. On X11 it needs a compositing manager |
 
-`gowaku.WindowOf(ctx)` returns the `*WindowHandle` of the window a widget is in. The handle can `SetTitle`, `SetIcon`, `SetFullscreen`, `SetAlwaysOnTop`, `SetSizeLimits`, `Activate`, `Close` and `RequestClose`, and tell `Fullscreen()` and `Transparent()`. All handle methods run on the UI goroutine.
+`gowaku.WindowOf(ctx)` returns the `*WindowHandle` of the window a widget is in. The handle can `SetTitle`, `SetIcon`, `SetFullscreen`, `SetAlwaysOnTop`, `SetSizeLimits`, `Activate`, `Hide`, `Show`, `Close` and `RequestClose`, and tell `Fullscreen()`, `Transparent()` and `Hidden()`. All handle methods run on the UI goroutine.
 
 ### Asking before closing
 
@@ -103,7 +103,25 @@ func (s *docState) Build(ctx gowaku.BuildContext) gowaku.Widget {
 }
 ```
 
-Closing from the program asks nothing: `Close`, `Quit`, and closing the owner of a modal window. `RequestClose` asks as the close button does. On macOS, Cmd+Q and Quit in the Dock send a close request to every window.
+Closing from the program asks nothing: `Close`, `Quit`, and closing the owner of a modal window. `RequestClose` asks as the close button does.
+
+On macOS the OS can also ask the whole application to quit: Cmd+Q, Quit in the Dock, logging out. `App.OnQuitRequest` answers that request: true quits as `Quit` does, false keeps running. Without it, every window gets a close request, as before, and the application ends once they have all closed. Windows and Linux send no such request, and never call it.
+
+### Staying in the tray
+
+An application that lives in the tray, such as one that reminds of due tasks, hides its window when the user closes it, and quits only when asked to quit:
+
+```go
+var win *gowaku.WindowHandle // WindowOf(ctx), kept from InitState of Home
+gowaku.Run(gowaku.App{
+	Home:           home{},
+	OnCloseRequest: func() bool { win.Hide(); return false }, // close button, Cmd+W
+	OnQuitRequest:  func() bool { return true },              // Cmd+Q, Dock, log out
+})
+// The tray: OnActivate: func() { win.Show() }, and an item that calls gowaku.Quit.
+```
+
+`WindowHandle.Hide` takes the window off the screen and the task bar, with its modal windows, without closing it: its tree and state stay, it draws nothing, and `Run` goes on. `Show` puts it back and brings it to the front; `Hidden` tells. On macOS a click on the icon in the Dock shows the hidden windows again. Wayland has no way to hide a window, so there `Hide` minimizes it and `Show` cannot bring it back; the user does, from the task bar.
 
 ### Modal windows
 
@@ -187,7 +205,7 @@ gowaku draws its menus itself, the same on every OS. The exceptions are the macO
 
 ## Tray icons and notifications
 
-`gowaku.ShowTray` puts an icon in the tray of the desktop. The OS draws its menu, which takes the same `overlay.MenuItem` values as a menu bar. Call it on the UI goroutine during `Run`, for example from a `Post` in `InitState`.
+`gowaku.ShowTray` puts an icon in the tray of the desktop. The OS draws its menu, which takes the same `overlay.MenuItem` values as a menu bar. Call it on the UI goroutine during `Run`, for example from `InitState`.
 
 ```go
 tray, err := gowaku.ShowTray(ctx, gowaku.TrayOptions{
@@ -203,7 +221,18 @@ if errors.Is(err, gowaku.ErrNoTray) {
 
 `tray.Update` replaces what it shows, and `tray.Close` removes it.
 
-`gowaku.Notify(ctx, title, body)` shows a notification: a toast on Windows, the notification service on Linux, the notification center on macOS. A click on it runs `OnNotificationClick` of the first tray. Where the desktop shows no notifications, it returns `gowaku.ErrNoNotifications`. On macOS that includes every program that does not run from an .app bundle; see [Building and shipping](packaging.md).
+`gowaku.Notify(ctx, title, body)` shows a notification: a toast on Windows, the notification service on Linux, the notification center on macOS. It shows also while the application is in front. A click on it runs `OnNotificationClick` of the first tray. Where the desktop shows no notifications, or the user has not allowed them, it returns `gowaku.ErrNoNotifications`. On macOS that includes every program that does not run from an .app bundle; see [Building and shipping](packaging.md).
+
+macOS asks the user before the first notification. `gowaku.RequestNotifications` asks ahead, as at start-up, and tells the answer:
+
+```go
+gowaku.RequestNotifications(ctx, func(err error) {
+	// On the UI goroutine, after the call returned.
+	s.SetState(func() { s.canNotify = err == nil })
+})
+```
+
+Notifications sent before the answer wait for it, and are dropped if the user refuses; after that `Notify` returns `ErrNoNotifications`. A later change in System Settings applies to the next `Notify` or `RequestNotifications`. Windows asks nothing and answers nil; Linux answers whether a notification service runs. Under a `gowakutest.Tester`, `SetNotificationsAllowed` decides the answer.
 
 | | Tray | Notifications |
 |---|---|---|
@@ -293,6 +322,6 @@ It uses ShellExecute on Windows, NSWorkspace on macOS, and on Linux the OpenURI 
 
 | Safe from any goroutine | UI goroutine only |
 |---|---|
-| `Post`, `Quit`, `OpenURL`, `OpenInspector` | `SetState`, `OpenWindow`, `ShowModal`, `TearOffWindow`, `WindowOf` and all `WindowHandle` methods, `ShowTray` and `Tray` methods, `Notify`, `ShowFileDialog`, the clipboard functions, `SetTheme`, `CurrentTheme` |
+| `Post`, `Quit`, `OpenURL`, `OpenInspector` | `SetState`, `OpenWindow`, `ShowModal`, `TearOffWindow`, `WindowOf` and all `WindowHandle` methods, `ShowTray` and `Tray` methods, `Notify`, `RequestNotifications`, `ShowFileDialog`, the clipboard functions, `SetTheme`, `CurrentTheme` |
 
-Design notes, in Japanese: [ADR 0046](../../ADR/0046-menus-and-shortcuts.md) (menus), [ADR 0047](../../ADR/0047-modal-windows.md) (modal windows), [ADR 0048](../../ADR/0048-custom-title-bar.md) (title bar), [ADR 0049](../../ADR/0049-clipboard.md) (clipboard), [ADR 0050](../../ADR/0050-drag-and-drop.md) (drag and drop), [ADR 0051](../../ADR/0051-tray-and-notifications.md) (tray), [ADR 0076](../../ADR/0076-close-request.md) (close requests).
+Design notes, in Japanese: [ADR 0046](../../ADR/0046-menus-and-shortcuts.md) (menus), [ADR 0047](../../ADR/0047-modal-windows.md) (modal windows), [ADR 0048](../../ADR/0048-custom-title-bar.md) (title bar), [ADR 0049](../../ADR/0049-clipboard.md) (clipboard), [ADR 0050](../../ADR/0050-drag-and-drop.md) (drag and drop), [ADR 0051](../../ADR/0051-tray-and-notifications.md) (tray), [ADR 0076](../../ADR/0076-close-request.md) (close requests), [ADR 0161](../../ADR/0161-quit-request-hidden-windows-notification-permission.md) (quit requests, hidden windows, leave to notify).

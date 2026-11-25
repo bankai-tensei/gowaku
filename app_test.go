@@ -47,6 +47,9 @@ type fakePlatform struct {
 	noTray       bool
 	tray         *fakeTray
 	notified     []string
+	// noNotify refuses notifications, and asked counts RequestNotifications.
+	noNotify bool
+	asked    int
 }
 
 type fakeWindow struct {
@@ -67,12 +70,14 @@ type fakeWindow struct {
 	menuAt           [2]int
 	dialogs          []platform.FileDialogOptions
 	activations      int
-	hitTest          func(x, y int) platform.HitArea
-	drop             func(e *platform.DropEvent) input.DropEffect
-	dragged          *input.DragData
-	dragDone         func(input.DropEffect)
-	opts             platform.WindowOptions
-	a11y             *fakeA11y
+	// hidden is what SetVisible last said.
+	hidden   bool
+	hitTest  func(x, y int) platform.HitArea
+	drop     func(e *platform.DropEvent) input.DropEffect
+	dragged  *input.DragData
+	dragDone func(input.DropEffect)
+	opts     platform.WindowOptions
+	a11y     *fakeA11y
 	// origin is where the client area is on the screen, known once placed.
 	origin [2]int
 	placed bool
@@ -141,6 +146,12 @@ func (w *fakeWindow) ToggleMaximize()         { w.maximized = !w.maximized }
 func (w *fakeWindow) Minimize()               { w.minimizes++ }
 func (w *fakeWindow) ShowWindowMenu(x, y int) { w.menuAt = [2]int{x, y} }
 func (w *fakeWindow) Activate()               { w.activations++ }
+func (w *fakeWindow) SetVisible(visible bool) {
+	w.hidden = !visible
+	if visible {
+		w.activations++
+	}
+}
 func (w *fakeWindow) SetIcon(images []*image.NRGBA) {
 	w.icon = images
 	w.icons++
@@ -206,8 +217,19 @@ func (p *fakePlatform) CreateTray(opts platform.TrayOptions, on func(platform.Tr
 	return p.tray, nil
 }
 func (p *fakePlatform) Notify(title, body string) error {
+	if p.noNotify {
+		return platform.ErrNoNotifications
+	}
 	p.notified = append(p.notified, title+": "+body)
 	return nil
+}
+func (p *fakePlatform) RequestNotifications(done func(error)) {
+	p.asked++
+	if p.noNotify {
+		done(platform.ErrNoNotifications)
+		return
+	}
+	done(nil)
 }
 
 // fakeTray records what a tray icon shows.

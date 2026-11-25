@@ -70,6 +70,13 @@ func (h windowHost) CreateTray(opts platform.TrayOptions, on func(platform.TrayE
 // Notify implements platform.Trays, for Notify.
 func (h windowHost) Notify(title, body string) error { return h.w.app.platform.Notify(title, body) }
 
+// RequestNotifications implements platform.Trays, for RequestNotifications:
+// done runs from the post queue, on the UI goroutine.
+func (h windowHost) RequestNotifications(done func(error)) {
+	ap := h.w.app
+	ap.platform.RequestNotifications(func(err error) { ap.post(func() { done(err) }) })
+}
+
 // appTray is a tray icon of the platform that the app closes at the end of
 // Run, unless it is closed before.
 type appTray struct {
